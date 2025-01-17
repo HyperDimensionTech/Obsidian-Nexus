@@ -1,44 +1,65 @@
-import Foundation
+import SwiftUI
+import UIKit
 
-actor ThumbnailService {
-    static let shared = ThumbnailService()
-    private let bookService = BookSearchService()
+class ThumbnailService: ObservableObject {
+    @Published private(set) var isLoading = false
+    private let googleBooksService = GoogleBooksService()
+    private var cache: NSCache<NSString, UIImage> = NSCache()
     
-    func fetchThumbnail(for item: InventoryItem) async throws -> URL? {
-        // If we already have a thumbnail URL, return it
-        if let existingURL = item.thumbnailURL {
-            return existingURL
+    func fetchThumbnail(for item: InventoryItem, completion: @escaping (URL?) -> Void) {
+        guard item.type.isLiterature else {
+            completion(nil)
+            return
         }
         
-        // Otherwise, fetch based on type
-        switch item.type {
-        case .books, .manga:
-            return try await fetchBookThumbnail(title: item.title)
-        case .comics:
-            return try await fetchComicThumbnail(title: item.title)
-        case .games:
-            return try await fetchGameThumbnail(title: item.title)
+        // Try ISBN first if available
+        if let isbn = item.isbn {
+            fetchByISBN(isbn: isbn, completion: completion)
+            return
+        }
+        
+        // Otherwise search by title and author
+        var searchQuery = item.title
+        if let author = item.author {
+            searchQuery += " author:\(author)"
+        }
+        
+        googleBooksService.fetchBooks(query: searchQuery) { result in
+            switch result {
+            case .success(let books):
+                if let firstBook = books.first,
+                   let thumbnail = firstBook.volumeInfo.imageLinks?.thumbnail,
+                   let thumbnailURL = URL(string: thumbnail) {
+                    completion(thumbnailURL)
+                } else {
+                    completion(nil)
+                }
+            case .failure:
+                completion(nil)
+            }
         }
     }
     
-    private func fetchBookThumbnail(title: String) async throws -> URL? {
-        let books = try await bookService.searchBooks(query: title)
-        // Get the first book's thumbnail URL
-        guard let firstBook = books.first,
-              let thumbnailURLString = firstBook.thumbnailURL,
-              let url = URL(string: thumbnailURLString) else {
-            return nil
+    private func fetchByISBN(isbn: String, completion: @escaping (URL?) -> Void) {
+        googleBooksService.fetchBooks(query: "isbn:\(isbn)") { result in
+            switch result {
+            case .success(let books):
+                if let firstBook = books.first,
+                   let thumbnail = firstBook.volumeInfo.imageLinks?.thumbnail,
+                   let thumbnailURL = URL(string: thumbnail) {
+                    completion(thumbnailURL)
+                } else {
+                    completion(nil)
+                }
+            case .failure:
+                completion(nil)
+            }
         }
-        return url
     }
     
-    private func fetchComicThumbnail(title: String) async throws -> URL? {
-        // TODO: Implement comic API integration
-        return nil
-    }
-    
-    private func fetchGameThumbnail(title: String) async throws -> URL? {
-        // TODO: Implement game API integration
-        return nil
+    func fetchThumbnails(for items: [InventoryItem]) async throws -> [UUID: URL] {
+        let results: [UUID: URL] = [:]
+        // Implementation...
+        return results
     }
 } 

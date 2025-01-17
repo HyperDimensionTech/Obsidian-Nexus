@@ -1,11 +1,13 @@
 import SwiftUI
 
-enum ItemCondition: String, CaseIterable, Codable {
-    case new = "New"
-    case likeNew = "Like New"
-    case good = "Good"
-    case fair = "Fair"
-    case poor = "Poor"
+enum ItemCondition: String, CaseIterable, Identifiable, Codable {
+    case new
+    case likeNew = "like new"
+    case good
+    case fair
+    case poor
+    
+    var id: String { rawValue }
     
     var description: String {
         switch self {

@@ -9,9 +9,8 @@ struct LocationTreeView: View {
     
     var body: some View {
         ForEach(locationManager.rootLocations()) { location in
-            LocationTreeNode(
+            LocationNode(
                 location: location,
-                depth: 0,
                 expandedLocations: $expandedLocations,
                 onLocationSelected: onLocationSelected,
                 onEdit: onEdit,
@@ -21,50 +20,64 @@ struct LocationTreeView: View {
     }
 }
 
-struct LocationTreeNode: View {
+struct LocationNode: View {
+    @EnvironmentObject var locationManager: LocationManager
     let location: StorageLocation
-    let depth: Int
     @Binding var expandedLocations: Set<UUID>
     let onLocationSelected: (StorageLocation) -> Void
     let onEdit: (StorageLocation) -> Void
     let onDelete: (StorageLocation) -> Void
-    @EnvironmentObject var locationManager: LocationManager
+    
+    private var isExpanded: Bool {
+        expandedLocations.contains(location.id)
+    }
+    
+    private var children: [StorageLocation] {
+        locationManager.children(of: location.id)
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        DisclosureGroup(
+            isExpanded: Binding(
+                get: { isExpanded },
+                set: { isExpanded in
+                    if isExpanded {
+                        expandedLocations.insert(location.id)
+                    } else {
+                        expandedLocations.remove(location.id)
+                    }
+                }
+            )
+        ) {
+            ForEach(children) { child in
+                LocationNode(
+                    location: child,
+                    expandedLocations: $expandedLocations,
+                    onLocationSelected: onLocationSelected,
+                    onEdit: onEdit,
+                    onDelete: onDelete
+                )
+                .padding(.leading)
+            }
+        } label: {
             HStack {
                 Image(systemName: location.type.icon)
                     .foregroundColor(.accentColor)
-                    .frame(width: 24)
-                
                 Text(location.name)
-                    .font(.body)
-                
                 Spacer()
-                
-                if !locationManager.children(of: location.id).isEmpty {
-                    Button {
-                        withAnimation {
-                            if expandedLocations.contains(location.id) {
-                                expandedLocations.remove(location.id)
-                            } else {
-                                expandedLocations.insert(location.id)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: expandedLocations.contains(location.id) ? "chevron.down" : "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-                
                 Menu {
+                    if location.type.canHaveChildren {
+                        Button {
+                            onLocationSelected(location)
+                        } label: {
+                            Label("Add Item", systemImage: "plus")
+                        }
+                    }
                     Button {
                         onEdit(location)
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
-                    
                     Button(role: .destructive) {
                         onDelete(location)
                     } label: {
@@ -72,26 +85,7 @@ struct LocationTreeNode: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(.vertical, 8)
-            .padding(.leading, CGFloat(depth) * 20)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onLocationSelected(location)
-            }
-            
-            if expandedLocations.contains(location.id) {
-                ForEach(locationManager.children(of: location.id)) { child in
-                    LocationTreeNode(
-                        location: child,
-                        depth: depth + 1,
-                        expandedLocations: $expandedLocations,
-                        onLocationSelected: onLocationSelected,
-                        onEdit: onEdit,
-                        onDelete: onDelete
-                    )
+                        .foregroundColor(.gray)
                 }
             }
         }

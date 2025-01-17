@@ -5,17 +5,37 @@ struct MangaSeriesView: View {
     
     var body: some View {
         List {
-            ForEach(inventoryViewModel.mangaSeries(), id: \.0) { series, volumes in
-                NavigationLink(destination: SeriesDetailView(series: series, volumes: volumes)) {
+            ForEach(inventoryViewModel.mangaSeries(), id: \.0) { series, items in
+                let stats = inventoryViewModel.seriesStats(name: series)
+                NavigationLink {
+                    SeriesDetailView(series: series)
+                } label: {
                     HStack {
-                        Text(series)
+                        VStack(alignment: .leading) {
+                            Text(series)
+                                .font(.headline)
+                            Text("\(items.count) volumes")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         Spacer()
-                        Text("\(volumes.count) volumes")
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .trailing) {
+                            Text(stats.value.formatted(.currency(code: "USD")))
+                            Text("Total Value")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }
         }
         .navigationTitle("Manga Series")
+    }
+}
+
+#Preview {
+    NavigationView {
+        MangaSeriesView()
+            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
     }
 } 

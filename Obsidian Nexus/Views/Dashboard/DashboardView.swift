@@ -4,17 +4,65 @@ struct DashboardView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                StatsOverviewCard()
+        NavigationStack {
+            List {
+                // Collection Overview Section
+                Section {
+                    NavigationLink {
+                        CollectionStatsView()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Collection Overview")
+                                .font(.headline)
+                            
+                            HStack {
+                                Text("\(inventoryViewModel.totalItems) Items")
+                                Text("•")
+                                Text(inventoryViewModel.totalCollectionValue
+                                    .formatted(.currency(code: "USD")))
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
                 
-                CollectionGridView()
+                // Collections Section (existing)
+                Section("Collections") {
+                    ForEach(CollectionType.allCases) { type in
+                        NavigationLink {
+                            CollectionView(type: type)
+                        } label: {
+                            Label {
+                                HStack {
+                                    Text(type.name)
+                                    Spacer()
+                                    Text("\(inventoryViewModel.itemCount(for: type))")
+                                        .foregroundColor(.secondary)
+                                }
+                            } icon: {
+                                Image(systemName: type.iconName)
+                            }
+                        }
+                    }
+                }
                 
-                RecentItemsSection()
+                // Recent Items Section (existing)
+                if !inventoryViewModel.recentItems.isEmpty {
+                    Section("Recent Items") {
+                        ForEach(inventoryViewModel.recentItems) { item in
+                            NavigationLink {
+                                ItemDetailView(item: item)
+                            } label: {
+                                ItemRow(item: item)
+                            }
+                        }
+                    }
+                }
             }
-            .padding()
+            .navigationTitle("Dashboard")
         }
-        .navigationTitle("Dashboard")
     }
 }
 

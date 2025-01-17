@@ -40,8 +40,8 @@ struct EditItemView: View {
                     }
                 }
                 
-                Section("Location") {
-                    LocationPickerView(selectedLocationId: $editedItem.locationId)
+                Section("LOCATION") {
+                    ItemLocationPicker(selectedLocationId: $editedItem.locationId)
                 }
                 
                 Section("Dates") {
@@ -86,7 +86,7 @@ struct EditItemView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveItem()
+                        saveChanges()
                     }
                 }
             }
@@ -98,9 +98,31 @@ struct EditItemView: View {
         }
     }
     
-    private func saveItem() {
+    private func saveChanges() {
+        let updatedItem = InventoryItem(
+            title: editedItem.title,
+            type: editedItem.type,
+            series: editedItem.series,
+            volume: editedItem.volume,
+            condition: editedItem.condition,
+            locationId: editedItem.locationId,
+            notes: editedItem.notes,
+            id: editedItem.id,
+            dateAdded: editedItem.dateAdded,
+            barcode: editedItem.barcode,
+            thumbnailURL: editedItem.thumbnailURL,
+            author: editedItem.author,
+            manufacturer: editedItem.manufacturer,
+            originalPublishDate: editedItem.originalPublishDate,
+            publisher: editedItem.publisher,
+            isbn: editedItem.isbn,
+            price: editedItem.price,
+            purchaseDate: editedItem.purchaseDate,
+            synopsis: editedItem.synopsis
+        )
+        
         do {
-            try inventoryViewModel.updateItem(editedItem)
+            try inventoryViewModel.updateItem(updatedItem)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

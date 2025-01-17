@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var inventoryViewModel: InventoryViewModel
+    @StateObject private var navigationCoordinator = NavigationCoordinator()
     
     init() {
         // Initialize InventoryViewModel with LocationManager
@@ -48,6 +49,7 @@ struct ContentView: View {
         }
         .environmentObject(locationManager)
         .environmentObject(inventoryViewModel)
+        .environmentObject(navigationCoordinator)
         .onAppear {
             locationManager.loadSampleData()
             inventoryViewModel.loadSampleData()

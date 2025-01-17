@@ -8,46 +8,44 @@ struct AddLocationView: View {
     
     @State private var name = ""
     @State private var type: StorageLocation.LocationType = .room
+    @State private var selectedLocationId: UUID?
     @State private var showingError = false
     @State private var errorMessage = ""
-    
-    private var allowedTypes: [StorageLocation.LocationType] {
-        if let parent = parentLocation {
-            return parent.type.allowedChildTypes
-        }
-        return [.room] // Only rooms can be root locations
-    }
-    
-    init(parentLocation: StorageLocation? = nil) {
-        self.parentLocation = parentLocation
-        // Set initial type based on parent
-        if let parent = parentLocation {
-            _type = State(initialValue: parent.type.allowedChildTypes.first ?? .room)
-        } else {
-            _type = State(initialValue: .room)
-        }
-    }
     
     var body: some View {
         Form {
             Section("Location Details") {
                 TextField("Name", text: $name)
                 
-                Picker("Type", selection: $type) {
-                    ForEach(allowedTypes) { type in
-                        Text(type.name)
-                            .tag(type)
-                    }
+                LocationTypePickerView(
+                    selectedType: $type,
+                    parentLocation: parentLocation
+                )
+                
+                if type.category != .room {
+                    LocationPickerView(selectedLocationId: $selectedLocationId)
+                        .onChange(of: selectedLocationId) { oldValue, newValue in
+                            // Reset type if needed based on new parent
+                            if let parentId = newValue,
+                               let parent = locationManager.location(withId: parentId),
+                               !parent.canAdd(childType: type) {
+                                type = parent.type.allowedChildTypes.first ?? .room
+                            }
+                        }
                 }
-                .onChange(of: parentLocation) { oldValue, newValue in
-                    // Reset type to first allowed type when parent changes
-                    if let firstAllowed = allowedTypes.first {
-                        type = firstAllowed
-                    }
+            }
+            
+            Section("Type Details") {
+                LabeledContent {
+                    Text(type.category.rawValue)
+                } label: {
+                    Text("Category")
                 }
                 
-                if let parent = parentLocation {
-                    LabeledContent("Parent", value: parent.name)
+                LabeledContent {
+                    Image(systemName: type.icon)
+                } label: {
+                    Text("Icon")
                 }
             }
         }
@@ -64,7 +62,7 @@ struct AddLocationView: View {
                 Button("Add") {
                     addLocation()
                 }
-                .disabled(name.isEmpty)
+                .disabled(!canAdd)
             }
         }
         .alert("Error", isPresented: $showingError) {
@@ -74,11 +72,19 @@ struct AddLocationView: View {
         }
     }
     
+    private var canAdd: Bool {
+        if name.isEmpty { return false }
+        if type.category != .room && selectedLocationId == nil && parentLocation == nil {
+            return false
+        }
+        return true
+    }
+    
     private func addLocation() {
         let newLocation = StorageLocation(
             name: name,
             type: type,
-            parentId: parentLocation?.id
+            parentId: parentLocation?.id ?? selectedLocationId
         )
         
         do {

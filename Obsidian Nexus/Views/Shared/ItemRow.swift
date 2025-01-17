@@ -9,6 +9,11 @@ struct ItemRow: View {
         return locationManager.location(withId: id)
     }
     
+    private var locationPath: String? {
+        guard let id = item.locationId else { return nil }
+        return locationManager.breadcrumbPath(for: id)
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text(item.title)
@@ -19,10 +24,10 @@ struct ItemRow: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
-                if let location = location {
+                if let path = locationPath {
                     Text("•")
                         .foregroundColor(.secondary)
-                    Text(location.name)
+                    Text(path)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

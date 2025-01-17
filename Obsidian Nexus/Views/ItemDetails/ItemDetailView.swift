@@ -3,6 +3,9 @@ import SwiftUI
 struct ItemDetailView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
+    @StateObject private var thumbnailService = ThumbnailService()
+    
+    @State private var thumbnailURL: URL?
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
     
@@ -15,6 +18,30 @@ struct ItemDetailView: View {
     
     var body: some View {
         List {
+            if item.type.isLiterature {
+                Section {
+                    HStack {
+                        Spacer()
+                        if let url = thumbnailURL {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            } placeholder: {
+                                ProgressView()
+                            }
+                            .frame(height: 200)
+                        } else {
+                            Image(systemName: "book")
+                                .font(.system(size: 100))
+                                .foregroundColor(.gray)
+                                .frame(height: 200)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+            
             Section("Basic Details") {
                 DetailRow(label: "Name", value: item.title)
                 if let creator = item.creator {
@@ -35,12 +62,15 @@ struct ItemDetailView: View {
                     DetailRow(label: "Price", 
                             value: price.formatted(.currency(code: "USD")))
                 }
-                if let date = item.purchaseDate {
+                if let purchaseDate = item.purchaseDate {
                     DetailRow(label: "Purchase Date", 
-                            value: date.formatted(date: .long, time: .omitted))
+                            value: purchaseDate.formatted(date: .long, time: .omitted))
                 }
-                if let location = location {
-                    DetailRow(label: "Location", value: location.name)
+                if let locationId = item.locationId {
+                    DetailRow(
+                        label: "Location", 
+                        value: locationManager.breadcrumbPath(for: locationId)
+                    )
                 }
             }
             
@@ -90,6 +120,15 @@ struct ItemDetailView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Are you sure you want to delete this item? This action cannot be undone.")
+        }
+        .onAppear {
+            loadThumbnail()
+        }
+    }
+    
+    private func loadThumbnail() {
+        thumbnailService.fetchThumbnail(for: item) { url in
+            thumbnailURL = url
         }
     }
 }

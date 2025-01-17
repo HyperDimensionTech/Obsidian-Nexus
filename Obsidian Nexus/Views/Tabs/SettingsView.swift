@@ -1,33 +1,47 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var locationManager: LocationManager
-    @State private var showingAddLocation = false
-    @State private var selectedLocation: StorageLocation?
-    @State private var showingEditSheet = false
+    @EnvironmentObject private var locationManager: LocationManager
+    @EnvironmentObject private var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    
+    @State private var editingLocation: StorageLocation?
     @State private var showingDeleteAlert = false
+    @State private var showingAddItems = false
+    @State private var selectedLocation: StorageLocation?
+    @State private var showingAddLocation = false
     @State private var expandedLocations: Set<UUID> = []
-    @State private var errorMessage: String?
-    @State private var showingError = false
     
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("General")) {
+                Section(header: Text("GENERAL")) {
                     NavigationLink("Account", destination: Text("Account Settings"))
                     NavigationLink("Notifications", destination: Text("Notification Settings"))
                     NavigationLink("Appearance", destination: Text("Appearance Settings"))
                 }
                 
-                Section("Locations") {
+                Section(header: 
+                    HStack {
+                        Text("LOCATIONS")
+                        Spacer()
+                        Button {
+                            selectedLocation = nil
+                            showingAddLocation = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                ) {
                     LocationTreeView(
                         expandedLocations: $expandedLocations,
                         onLocationSelected: { location in
-                            // Handle selection if needed
+                            selectedLocation = location
+                            showingAddItems = true
                         },
                         onEdit: { location in
-                            selectedLocation = location
-                            showingEditSheet = true
+                            editingLocation = location
                         },
                         onDelete: { location in
                             selectedLocation = location
@@ -36,43 +50,38 @@ struct SettingsView: View {
                     )
                 }
                 
-                Section(header: Text("Data")) {
-                    NavigationLink("Import/Export", destination: Text("Import/Export Settings"))
+                Section(header: Text("DATA")) {
+                    NavigationLink("Import/Export", destination: Text("Import/Export"))
                     NavigationLink("Backup", destination: Text("Backup Settings"))
-                }
-                
-                Section(header: Text("About")) {
-                    NavigationLink("Version", destination: Text("Version Info"))
-                    NavigationLink("Help", destination: Text("Help and Support"))
                 }
             }
             .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        selectedLocation = nil
-                        showingAddLocation = true
-                    } label: {
-                        Label("Add Location", systemImage: "plus")
+            .sheet(isPresented: $showingAddItems) {
+                if let location = selectedLocation {
+                    NavigationView {
+                        AddItemsToLocationView(locationId: location.id)
+                            .environmentObject(locationManager)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
                     }
                 }
             }
             .sheet(isPresented: $showingAddLocation) {
                 NavigationView {
                     AddLocationView(parentLocation: selectedLocation)
+                        .environmentObject(locationManager)
                 }
             }
-            .sheet(isPresented: $showingEditSheet) {
-                if let location = selectedLocation {
-                    NavigationView {
-                        EditLocationView(location: location)
-                    }
+            .sheet(item: $editingLocation) { location in
+                NavigationView {
+                    EditLocationView(location: location)
+                        .environmentObject(locationManager)
                 }
             }
             .alert("Delete Location", isPresented: $showingDeleteAlert) {
                 Button("Delete", role: .destructive) {
                     if let location = selectedLocation {
-                        deleteLocation(location)
+                        try? locationManager.removeLocation(location.id)
                     }
                 }
                 Button("Cancel", role: .cancel) { }
@@ -81,22 +90,6 @@ struct SettingsView: View {
                     Text("Are you sure you want to delete '\(location.name)' and all its contents?")
                 }
             }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                if let message = errorMessage {
-                    Text(message)
-                }
-            }
-        }
-    }
-    
-    private func deleteLocation(_ location: StorageLocation) {
-        do {
-            try locationManager.removeLocation(location.id)
-        } catch {
-            errorMessage = error.localizedDescription
-            showingError = true
         }
     }
 }

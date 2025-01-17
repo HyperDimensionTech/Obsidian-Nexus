@@ -35,42 +35,117 @@ struct StorageLocation: Identifiable, Codable {
     }
     
     enum LocationType: String, CaseIterable, Identifiable, Codable {
+        // Rooms
         case room
-        case shelf
+        case office
+        case library
+        case storageRoom
+        case closet
+        case garage
+        
+        // Furniture
+        case bookshelf
         case cabinet
+        case desk
+        case displayCase
+        case entertainmentCenter
+        case dresser
+        
+        // Containers
         case box
+        case bin
+        case drawer
+        case folder
+        case shelf
         
         var id: String { rawValue }
         
         var name: String {
-            rawValue.capitalized
+            switch self {
+            case .entertainmentCenter: return "Entertainment Center"
+            case .displayCase: return "Display Case"
+            case .storageRoom: return "Storage Room"
+            default:
+                return rawValue.capitalized
+            }
         }
         
         var icon: String {
             switch self {
+            // Rooms
             case .room: return "house"
-            case .shelf: return "books.vertical"
+            case .office: return "briefcase"
+            case .library: return "building.columns"
+            case .storageRoom: return "archivebox"
+            case .closet: return "door.left.hand.closed"
+            case .garage: return "car"
+            
+            // Furniture
+            case .bookshelf: return "books.vertical"
             case .cabinet: return "cabinet"
+            case .desk: return "desktopcomputer"
+            case .displayCase: return "sparkles.rectangle.stack"
+            case .entertainmentCenter: return "tv"
+            case .dresser: return "square.stack.3d.up"
+            
+            // Containers
             case .box: return "shippingbox"
+            case .bin: return "tray"
+            case .drawer: return "tray.2"
+            case .folder: return "folder"
+            case .shelf: return "square.split.2x1"
             }
         }
         
         var canHaveChildren: Bool {
-            !allowedChildTypes.isEmpty
+            switch category {
+            case .room, .furniture:
+                return true
+            case .container:
+                // Only allow folders in containers
+                return allowedChildTypes.contains(.folder)
+            }
+        }
+        
+        var category: LocationCategory {
+            switch self {
+            case .room, .office, .library, .storageRoom, .closet, .garage:
+                return .room
+            case .bookshelf, .cabinet, .desk, .displayCase, .entertainmentCenter, .dresser:
+                return .furniture
+            case .box, .bin, .drawer, .folder, .shelf:
+                return .container
+            }
         }
         
         var allowedChildTypes: [LocationType] {
-            switch self {
+            switch category {
             case .room:
-                return [.shelf, .cabinet, .box]
-            case .shelf:
-                return [.box]
-            case .cabinet:
-                return [.box]
-            case .box:
-                return []
+                // Rooms can contain both furniture and containers
+                return LocationType.allCases.filter { $0.category == .furniture || $0.category == .container }
+            case .furniture:
+                // Furniture can only contain containers
+                return LocationType.allCases.filter { $0.category == .container }
+            case .container:
+                // Containers can only contain folders
+                return [.folder]
             }
         }
+        
+        var canContainItems: Bool {
+            switch category {
+            case .room:
+                return true  // Allow rooms to contain items (like furniture)
+            case .furniture, .container:
+                return true  // Furniture and containers can hold items
+            }
+        }
+    }
+    
+    enum LocationCategory: String {
+        case room = "Rooms"
+        case furniture = "Furniture"
+        case container = "Containers"
     }
     
     init(

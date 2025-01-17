@@ -1,26 +1,69 @@
 import SwiftUI
 
 struct SeriesDetailView: View {
+    @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject var locationManager: LocationManager
     let series: String
-    let volumes: [InventoryItem]
+    
+    var items: [InventoryItem] {
+        inventoryViewModel.itemsInSeries(series)
+            .sorted { ($0.volume ?? 0) < ($1.volume ?? 0) }
+    }
+    
+    var stats: (value: Decimal, count: Int, total: Int?) {
+        inventoryViewModel.seriesStats(name: series)
+    }
     
     var body: some View {
-        List(volumes.sorted { ($0.volume ?? 0) < ($1.volume ?? 0) }) { item in
-            NavigationLink(destination: ItemDetailView(item: item)) {
+        List {
+            Section {
                 HStack {
-                    if let volume = item.volume {
-                        Text("Vol. \(volume)")
-                            .frame(width: 60, alignment: .leading)
-                    }
-                    VStack(alignment: .leading) {
-                        Text(item.title)
-                        Text(item.condition.rawValue)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    Text("Series Value")
+                        .font(.headline)
+                    Spacer()
+                    Text(stats.value.formatted(.currency(code: "USD")))
+                        .bold()
+                }
+                
+                HStack {
+                    Text("Volumes")
+                        .font(.headline)
+                    Spacer()
+                    Text("\(stats.count)")
+                        .bold()
+                }
+            }
+            
+            Section("Volumes") {
+                ForEach(items) { item in
+                    NavigationLink {
+                        ItemDetailView(item: item)
+                    } label: {
+                        HStack {
+                            Text("Volume \(item.volume ?? 0)")
+                            Spacer()
+                            if let locationId = item.locationId {
+                                Text(locationManager.breadcrumbPath(for: locationId))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("No Location")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                 }
             }
         }
         .navigationTitle(series)
+    }
+}
+
+#Preview {
+    NavigationView {
+        SeriesDetailView(series: "Sample Series")
+            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+            .environmentObject(LocationManager())
     }
 } 

@@ -1,43 +1,46 @@
 import SwiftUI
 
 struct SearchResultRow: View {
+    @EnvironmentObject var locationManager: LocationManager
     let item: InventoryItem
     
+    private var locationPath: String? {
+        guard let id = item.locationId else { return nil }
+        return locationManager.breadcrumbPath(for: id)
+    }
+    
+    private var typeIcon: String {
+        switch item.type {
+        case .books: return "book"
+        case .manga: return "books.vertical"
+        case .comics: return "magazine"
+        case .games: return "gamecontroller"
+        }
+    }
+    
     var body: some View {
-        HStack(spacing: 12) {
-            // Add thumbnail image if available
-            if let url = item.thumbnailURL {
-                ThumbnailImage(url: url, type: item.type)
-                    .frame(width: 50, height: 50)
-            } else {
-                Image(systemName: item.type.iconName)
-                    .foregroundColor(item.type.color)
-                    .frame(width: 50, height: 50)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.title)
+                .font(.headline)
+            
+            HStack {
+                Label(item.type.name, systemImage: typeIcon)
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                
+                if let path = locationPath {
+                    Text("•")
+                        .foregroundColor(.secondary)
+                    Text(path)
+                        .foregroundColor(.secondary)
+                        .font(.subheadline)
+                }
             }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title)
-                    .font(.headline)
-                    .lineLimit(2)
-                
-                if let series = item.series {
-                    Text(series)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                
-                HStack {
-                    Image(systemName: item.type.iconName)
-                        .foregroundColor(item.type.color)
-                    Text(item.type.name)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+            Text(item.condition.rawValue.capitalized)
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle()) // Ensure the entire row is tappable
     }
 }
 

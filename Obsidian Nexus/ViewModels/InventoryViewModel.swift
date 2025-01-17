@@ -25,13 +25,85 @@ class InventoryViewModel: ObservableObject {
     
     // MARK: - Item Management
     
-    func addItem(_ item: InventoryItem) throws {
-        // Validate item before adding
-        guard !item.title.isEmpty else {
-            throw InventoryError.invalidTitle
+    // Add validation errors
+    enum ValidationError: LocalizedError {
+        case duplicateISBN(String)
+        case duplicateTitle(String)
+        case duplicateInSeries(String, Int)
+        
+        var errorDescription: String? {
+            switch self {
+            case .duplicateISBN(let isbn):
+                return "An item with ISBN \(isbn) already exists in your collection"
+            case .duplicateTitle(let title):
+                return "An item titled '\(title)' already exists in your collection"
+            case .duplicateInSeries(let series, let volume):
+                return "Volume \(volume) of '\(series)' already exists in your collection"
+            }
         }
-        items.append(item)
+    }
+    
+    // Add validation method
+    private func validateItem(_ item: InventoryItem, isEditing: Bool = false) throws {
+        // When editing, we need to exclude the current item from duplicate checks
+        let otherItems = isEditing ? items.filter({ $0.id != item.id }) : items
+        
+        // Check for duplicate ISBN if it exists
+        if let isbn = item.isbn,
+           otherItems.contains(where: { $0.isbn == isbn }) {
+            throw ValidationError.duplicateISBN(isbn)
+        }
+        
+        // For series items, check for duplicate volumes
+        if let series = item.series,
+           let volume = item.volume,
+           otherItems.contains(where: { 
+               $0.series == series && $0.volume == volume 
+           }) {
+            throw ValidationError.duplicateInSeries(series, volume)
+        }
+        
+        // For non-series items, check for duplicate titles
+        if item.series == nil,
+           otherItems.contains(where: { 
+               $0.title.lowercased() == item.title.lowercased() 
+           }) {
+            throw ValidationError.duplicateTitle(item.title)
+        }
+    }
+    
+    // Update addItem method
+    func addItem(_ item: InventoryItem) throws {
+        // Validate before adding
+        try validateItem(item)
+        
+        // Create new item with a guaranteed UUID
+        let newItem = InventoryItem(
+            title: item.title,
+            type: item.type,
+            series: item.series,
+            volume: item.volume,
+            condition: item.condition,
+            locationId: item.locationId,
+            notes: item.notes,
+            id: item.id == UUID() ? UUID() : item.id,  // Generate new ID only if default
+            dateAdded: item.dateAdded,
+            barcode: item.barcode,
+            thumbnailURL: item.thumbnailURL,
+            author: item.author,
+            manufacturer: item.manufacturer,
+            originalPublishDate: item.originalPublishDate,
+            publisher: item.publisher,
+            isbn: item.isbn,
+            price: item.price,
+            purchaseDate: item.purchaseDate,
+            synopsis: item.synopsis
+        )
+        
+        items.append(newItem)
         saveItems()
+        
+        objectWillChange.send()
     }
     
     func deleteItem(_ item: InventoryItem) {
@@ -40,8 +112,8 @@ class InventoryViewModel: ObservableObject {
     }
     
     func updateItem(_ item: InventoryItem) throws {
-        // Validate the item
-        try validateItem(item)
+        // Validate the item with isEditing flag
+        try validateItem(item, isEditing: true)
         
         // Find and update the item
         if let index = items.firstIndex(where: { $0.id == item.id }) {
@@ -50,22 +122,6 @@ class InventoryViewModel: ObservableObject {
         } else {
             throw InventoryError.invalidOperation("Item not found")
         }
-    }
-    
-    private func validateItem(_ item: InventoryItem) throws {
-        // Basic validation
-        guard !item.title.isEmpty else {
-            throw InventoryError.invalidTitle
-        }
-        
-        // Location validation
-        if let locationId = item.locationId {
-            guard locationManager.validateLocationId(locationId) else {
-                throw InventoryError.invalidLocation
-            }
-        }
-        
-        // Add any other validation rules here
     }
     
     // MARK: - Item Queries
@@ -190,5 +246,81 @@ class InventoryViewModel: ObservableObject {
     func handleLocationRename(_ locationId: UUID, newName: String) {
         // Optionally update any cached location names in items
         // This might not be necessary if you always fetch location names through LocationManager
+    }
+    
+    // Helper methods for collections
+    func itemsInSeries(_ series: String) -> [InventoryItem] {
+        items.filter { $0.series == series }
+    }
+    
+    func duplicateExists(_ item: InventoryItem) -> Bool {
+        do {
+            try validateItem(item)
+            return false
+        } catch {
+            return true
+        }
+    }
+    
+    // Add this method
+    func updateItemLocations(items itemIds: Set<UUID>, to locationId: UUID) throws {
+        // Validate location
+        guard locationManager.validateLocationId(locationId) else {
+            throw InventoryError.invalidLocation
+        }
+        
+        // Update each item
+        for itemId in itemIds {
+            if let index = items.firstIndex(where: { $0.id == itemId }) {
+                items[index].locationId = locationId
+            }
+        }
+        
+        // Save changes
+        saveItems()
+    }
+    
+    // Collection value calculations
+    func totalValue(for type: CollectionType? = nil) -> Decimal {
+        let filteredItems = type == nil ? items : items.filter { $0.type == type }
+        return filteredItems.reduce(0) { $0 + ($1.price ?? 0) }
+    }
+    
+    func seriesValue(series: String) -> Decimal {
+        items.filter { $0.series == series }
+            .reduce(0) { $0 + ($1.price ?? 0) }
+    }
+    
+    // Total value of all items
+    var totalCollectionValue: Decimal {
+        items.reduce(0) { $0 + ($1.price ?? 0) }
+    }
+    
+    // Value by collection type
+    func collectionValue(for type: CollectionType) -> Decimal {
+        items.filter { $0.type == type }
+            .reduce(0) { $0 + ($1.price ?? 0) }
+    }
+    
+    // Value and completion for a specific series
+    func seriesStats(name: String) -> (value: Decimal, count: Int, total: Int?) {
+        let seriesItems = items.filter { $0.series == name }
+        let value = seriesItems.reduce(0) { $0 + ($1.price ?? 0) }
+        let count = seriesItems.count
+        
+        // Try to determine total volumes if available
+        let total: Int? = nil // This could be enhanced with a series database
+        
+        return (value, count, total)
+    }
+    
+    // Collection statistics
+    var collectionStats: [(type: CollectionType, count: Int, value: Decimal)] {
+        CollectionType.allCases.map { type in
+            let typeItems = items.filter { $0.type == type }
+            let count = typeItems.count
+            let value = typeItems.reduce(0) { $0 + ($1.price ?? 0) }
+            return (type, count, value)
+        }
     }
 } 

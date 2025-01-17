@@ -11,17 +11,11 @@ class LocationManager: ObservableObject {
     // MARK: - Location Management
     
     func addLocation(_ location: StorageLocation) throws {
-        guard !locations.keys.contains(location.id) else {
-            throw LocationError.duplicateId
-        }
+        try validateLocationAdd(location)
         
         if let parentId = location.parentId {
             guard var parent = locations[parentId] else {
                 throw LocationError.parentNotFound
-            }
-            
-            guard parent.canAdd(childType: location.type) else {
-                throw LocationError.invalidChildType
             }
             
             guard parent.addChild(location.id) else {
@@ -184,6 +178,7 @@ class LocationManager: ObservableObject {
     }
     
     func loadSampleData() {
+        // Create main locations
         let livingRoom = StorageLocation(
             id: UUID(),
             name: "Living Room",
@@ -193,29 +188,98 @@ class LocationManager: ObservableObject {
         do {
             try addLocation(livingRoom)
             
-            let bookshelf = StorageLocation(
+            // Main Bookshelf for manga and comics
+            let mangaShelf = StorageLocation(
                 id: UUID(),
-                name: "Main Bookshelf",
-                type: .shelf,
+                name: "Manga Shelf",
+                type: .bookshelf,
                 parentId: livingRoom.id
             )
-            try addLocation(bookshelf)
+            try addLocation(mangaShelf)
             
-            let cabinet = StorageLocation(
+            // Comics shelf
+            let comicsShelf = StorageLocation(
+                id: UUID(),
+                name: "Comics Shelf",
+                type: .bookshelf,
+                parentId: livingRoom.id
+            )
+            try addLocation(comicsShelf)
+            
+            // Gaming cabinet
+            let gameCabinet = StorageLocation(
                 id: UUID(),
                 name: "Game Cabinet",
                 type: .cabinet,
                 parentId: livingRoom.id
             )
-            try addLocation(cabinet)
+            try addLocation(gameCabinet)
             
-            let mangaBox = StorageLocation(
+            // Storage boxes
+            let onePieceBox = StorageLocation(
                 id: UUID(),
-                name: "Manga Box",
+                name: "One Piece Collection Box",
                 type: .box,
+                parentId: mangaShelf.id
+            )
+            try addLocation(onePieceBox)
+            
+            let marvelBox = StorageLocation(
+                id: UUID(),
+                name: "Marvel Comics Box",
+                type: .box,
+                parentId: comicsShelf.id
+            )
+            try addLocation(marvelBox)
+            
+            let dcBox = StorageLocation(
+                id: UUID(),
+                name: "DC Comics Box",
+                type: .box,
+                parentId: comicsShelf.id
+            )
+            try addLocation(dcBox)
+            
+            let nintendoBox = StorageLocation(
+                id: UUID(),
+                name: "Nintendo Games Box",
+                type: .box,
+                parentId: gameCabinet.id
+            )
+            try addLocation(nintendoBox)
+            
+            let playstationBox = StorageLocation(
+                id: UUID(),
+                name: "PlayStation Games Box",
+                type: .box,
+                parentId: gameCabinet.id
+            )
+            try addLocation(playstationBox)
+            
+            // Literature shelf
+            let literatureShelf = StorageLocation(
+                id: UUID(),
+                name: "Literature Shelf",
+                type: .bookshelf,
                 parentId: livingRoom.id
             )
-            try addLocation(mangaBox)
+            try addLocation(literatureShelf)
+            
+            let fictionBox = StorageLocation(
+                id: UUID(),
+                name: "Fiction Books Box",
+                type: .box,
+                parentId: literatureShelf.id
+            )
+            try addLocation(fictionBox)
+            
+            let nonFictionBox = StorageLocation(
+                id: UUID(),
+                name: "Non-Fiction Books Box",
+                type: .box,
+                parentId: literatureShelf.id
+            )
+            try addLocation(nonFictionBox)
             
         } catch {
             print("Error loading sample data: \(error.localizedDescription)")
@@ -394,6 +458,38 @@ class LocationManager: ObservableObject {
         
         // Notify inventory view model of name change
         inventoryViewModel?.handleLocationRename(locationId, newName: newName)
+    }
+    
+    private func validateLocationAdd(_ location: StorageLocation) throws {
+        // Check for duplicate ID
+        guard !locations.keys.contains(location.id) else {
+            throw LocationError.duplicateId
+        }
+        
+        // Validate category placement
+        switch location.type.category {
+        case .room:
+            // Rooms can only be at root level
+            if location.parentId != nil {
+                throw LocationError.invalidOperation("Rooms must be created at the root level")
+            }
+        case .furniture, .container:
+            // Furniture and containers must be inside a room or appropriate parent
+            guard let parentId = location.parentId,
+                  let parent = locations[parentId] else {
+                throw LocationError.invalidOperation("\(location.type.category.rawValue) must be placed inside a room or appropriate container")
+            }
+            
+            guard parent.canAdd(childType: location.type) else {
+                throw LocationError.invalidChildType
+            }
+        }
+    }
+    
+    func breadcrumbPath(for locationId: UUID) -> String {
+        let ancestors = ancestors(of: locationId).reversed()
+        let locationName = location(withId: locationId)?.name ?? ""
+        return (ancestors.map { $0.name } + [locationName]).joined(separator: " > ")
     }
 }
 
