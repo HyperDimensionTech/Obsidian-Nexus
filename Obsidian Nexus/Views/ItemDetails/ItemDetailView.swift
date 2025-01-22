@@ -127,8 +127,21 @@ struct ItemDetailView: View {
     }
     
     private func loadThumbnail() {
+        if let existingURL = item.thumbnailURL {
+            thumbnailURL = existingURL
+            return
+        }
+        
         thumbnailService.fetchThumbnail(for: item) { url in
-            thumbnailURL = url
+            DispatchQueue.main.async {
+                self.thumbnailURL = url
+                if let url = url {
+                    // Store the URL in the item for future use
+                    var updatedItem = self.item
+                    updatedItem.thumbnailURL = url
+                    try? self.inventoryViewModel.updateItem(updatedItem)
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import RegexBuilder
 
 // MARK: - Models
 struct GoogleBooksResponse: Codable {
@@ -35,15 +36,7 @@ class GoogleBooksService: ObservableObject {
     @Published private(set) var isLoading = false
     private let cache: NSCache<NSString, CachedResponse> = NSCache()
     
-    private var apiKey: String {
-        do {
-            return try ConfigurationManager.shared.requireString(for: "GoogleBooksAPIKey")
-        } catch {
-            print("⚠️ Warning: \(error.localizedDescription)")
-            return ""
-        }
-    }
-    
+    private let apiKey = "AIzaSyDpVBfeY4TNKgOX3n4e_wD13_qYgjQVM8Y"
     private let baseURL = "https://www.googleapis.com/books/v1/volumes"
     
     // Cache response class
@@ -62,7 +55,37 @@ class GoogleBooksService: ObservableObject {
         }
     }
     
+    private func buildSearchQuery(_ query: String) -> String {
+        guard !query.isEmpty else { return "" }
+        
+        // ISBN handling
+        if query.contains("ISBN:") || query.allSatisfy({ $0.isNumber }) {
+            let isbn = query.replacingOccurrences(of: "ISBN:", with: "").trimmingCharacters(in: .whitespaces)
+            if isValidISBN(isbn) {
+                return "isbn:\(isbn)"
+            }
+        }
+        
+        // For manga titles, append manga
+        let cleanQuery = query.trimmingCharacters(in: .whitespaces)
+        if PublisherType.manga.searchKeywords.contains(where: { cleanQuery.lowercased().contains($0) }) {
+            return "\(cleanQuery) manga"
+        }
+        
+        return cleanQuery
+    }
+    
+    private func isValidISBN(_ isbn: String) -> Bool {
+        let cleanISBN = isbn.replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
+        return cleanISBN.count == 10 || cleanISBN.count == 13
+    }
+    
     func fetchBooks(query: String, completion: @escaping (Result<[GoogleBook], Error>) -> Void) {
+        guard !query.isEmpty else {
+            completion(.failure(GoogleBooksError.emptyQuery))
+            return
+        }
+        
         // Check cache first
         if let cachedResponse = cache.object(forKey: query as NSString),
            cachedResponse.isValid {
@@ -72,13 +95,7 @@ class GoogleBooksService: ObservableObject {
         
         isLoading = true
         
-        // Determine if query is ISBN
-        let formattedQuery: String
-        if query.contains("-") || query.replacingOccurrences(of: "-", with: "").count >= 10 {
-            formattedQuery = "isbn:" + query.replacingOccurrences(of: "-", with: "")
-        } else {
-            formattedQuery = query
-        }
+        let formattedQuery = buildSearchQuery(query)
         
         var components = URLComponents(string: baseURL)
         components?.queryItems = [
@@ -102,21 +119,25 @@ class GoogleBooksService: ObservableObject {
                     return
                 }
                 
-                guard let data = data else {
-                    completion(.failure(GoogleBooksError.noData))
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(GoogleBooksError.invalidResponse))
                     return
                 }
                 
-                do {
-                    let decodedResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
-                    let books = decodedResponse.items ?? []
-                    
-                    // Cache the response
-                    self?.cache.setObject(CachedResponse(books: books), forKey: query as NSString)
-                    
-                    completion(.success(books))
-                } catch {
-                    completion(.failure(error))
+                if httpResponse.statusCode == 200 {
+                    if let data = data,
+                       let response = try? JSONDecoder().decode(GoogleBooksResponse.self, from: data) {
+                        let books = response.items ?? []
+                        
+                        // Cache the response
+                        self?.cache.setObject(CachedResponse(books: books), forKey: query as NSString)
+                        
+                        completion(.success(books))
+                    } else {
+                        completion(.failure(GoogleBooksError.invalidResponse))
+                    }
+                } else {
+                    completion(.failure(GoogleBooksError.apiError("Status code: \(httpResponse.statusCode)")))
                 }
             }
         }
@@ -125,19 +146,33 @@ class GoogleBooksService: ObservableObject {
     
     // Helper method to extract volume number from title
     func extractVolumeNumber(from title: String) -> Int? {
+        // Define patterns without try
         let patterns = [
-            "Vol\\.?\\s*(\\d+)",
-            "Volume\\s*(\\d+)",
-            "V(\\d+)",
-            "#(\\d+)"
-        ]
+            Regex {
+                OneOrMore(.whitespace)
+                Capture {
+                    OneOrMore(.digit)
+                }
+                Anchor.endOfLine
+            },
+            Regex {
+                ChoiceOf {
+                    "Vol"
+                    "vol"
+                    "VOL"
+                }
+                Optionally(".")
+                OneOrMore(.whitespace)
+                Capture {
+                    OneOrMore(.digit)
+                }
+            }
+        ]  // Remove compactMap since patterns won't fail
         
         for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-               let match = regex.firstMatch(in: title, options: [], range: NSRange(title.startIndex..., in: title)) {
-                if let range = Range(match.range(at: 1), in: title) {
-                    return Int(title[range])
-                }
+            if let match = try? pattern.firstMatch(in: title),
+               let number = Int(match.1.description) {
+                return number
             }
         }
         return nil
@@ -146,18 +181,27 @@ class GoogleBooksService: ObservableObject {
 
 // MARK: - Errors
 enum GoogleBooksError: LocalizedError {
-    case invalidURL
+    case emptyQuery
+    case invalidResponse
+    case apiError(String)
+    case invalidISBN
     case noData
-    case decodingError
+    case invalidURL
     
     var errorDescription: String? {
         switch self {
+        case .emptyQuery:
+            return "Please enter a search term"
+        case .invalidResponse:
+            return "Unable to process the search results"
+        case .apiError(let message):
+            return "API Error: \(message)"
+        case .invalidISBN:
+            return "Invalid ISBN format"
+        case .noData:
+            return "No data received"
         case .invalidURL:
             return "Invalid URL for Google Books API"
-        case .noData:
-            return "No data received from Google Books API"
-        case .decodingError:
-            return "Failed to decode response from Google Books API"
         }
     }
 } 

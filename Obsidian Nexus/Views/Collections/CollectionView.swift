@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CollectionView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject var locationManager: LocationManager
     let type: CollectionType
     
     var items: [InventoryItem] {
@@ -41,8 +42,10 @@ struct CollectionView: View {
 }
 
 #Preview {
-    NavigationView {
+    let locationManager = LocationManager()
+    return NavigationView {
         CollectionView(type: .books)
-            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+            .environmentObject(InventoryViewModel(locationManager: locationManager))
+            .environmentObject(locationManager)
     }
 } 

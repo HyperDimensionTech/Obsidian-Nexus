@@ -3,7 +3,8 @@ import SwiftUI
 struct BookSearchResultView: View {
     let book: GoogleBook
     let onSelect: (GoogleBook) -> Void
-    
+    @StateObject private var thumbnailService = ThumbnailService()
+    @State private var thumbnailURL: URL?
     @State private var isAdded = false
     @State private var showingSuccess = false
     
@@ -25,13 +26,16 @@ struct BookSearchResultView: View {
             HStack(spacing: 12) {
                 // Thumbnail
                 if let thumbnail = book.volumeInfo.imageLinks?.thumbnail,
-                   let url = URL(string: thumbnail) {
+                   let url = URL(string: thumbnail.replacingOccurrences(of: "http://", with: "https://")) {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                     } placeholder: {
-                        ProgressView()
+                        Image(systemName: "book")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .foregroundColor(.gray)
                     }
                     .frame(width: 60, height: 90)
                 } else {

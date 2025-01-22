@@ -145,10 +145,25 @@ class InventoryViewModel: ObservableObject {
     func searchItems(query: String) -> [InventoryItem] {
         guard !query.isEmpty else { return items }
         
-        let lowercasedQuery = query.lowercased()
+        let searchTerms = query.lowercased().split(separator: " ").map(String.init)
+        
         return items.filter { item in
-            item.title.lowercased().contains(lowercasedQuery) ||
-            (item.series?.lowercased().contains(lowercasedQuery) ?? false)
+            // Check if all search terms match any of these fields
+            searchTerms.allSatisfy { term in
+                // Title match (including "the" handling)
+                let normalizedTitle = item.title.lowercased()
+                    .replacingOccurrences(of: "the ", with: "")
+                    .replacingOccurrences(of: "a ", with: "")
+                    .replacingOccurrences(of: "an ", with: "")
+                
+                // Author match (including partial name matches)
+                let authorMatch = item.author?.lowercased().contains(term) ?? false
+                
+                // Series match
+                let seriesMatch = item.series?.lowercased().contains(term) ?? false
+                
+                return normalizedTitle.contains(term) || authorMatch || seriesMatch
+            }
         }
     }
     

@@ -11,7 +11,8 @@ struct SearchSuggestions: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(CollectionType.allCases) { type in
+                    // Only show literature types
+                    ForEach(CollectionType.literatureTypes, id: \.self) { type in
                         Button(action: {
                             // TODO: Implement search suggestion action
                         }) {

@@ -30,7 +30,7 @@ struct DashboardView: View {
                 
                 // Collections Section (existing)
                 Section("Collections") {
-                    ForEach(CollectionType.allCases) { type in
+                    ForEach(CollectionType.literatureTypes, id: \.self) { type in
                         NavigationLink {
                             CollectionView(type: type)
                         } label: {

@@ -29,6 +29,15 @@ struct InventoryItem: Identifiable, Codable {
             return author
         case .games:
             return manufacturer
+        case .collectibles:
+            // Handle collectibles case
+            return nil
+        case .electronics:
+            // Handle electronics case
+            return nil
+        case .tools:
+            // Handle tools case
+            return nil
         }
     }
     

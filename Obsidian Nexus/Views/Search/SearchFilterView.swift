@@ -25,7 +25,7 @@ private struct TypesSection: View {
     
     var body: some View {
         Section("Types") {
-            ForEach(CollectionType.allCases) { type in
+            ForEach(CollectionType.literatureTypes, id: \.self) { type in
                 Toggle(type.name, isOn: Binding(
                     get: { types.contains(type) },
                     set: { isEnabled in

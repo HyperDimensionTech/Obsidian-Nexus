@@ -46,7 +46,6 @@ enum SearchFilter: String, CaseIterable {
     case manga = "Manga"
     case books = "Books"
     case comics = "Comics"
-    case games = "Games"
     
     var collectionType: CollectionType? {
         switch self {
@@ -54,7 +53,6 @@ enum SearchFilter: String, CaseIterable {
         case .manga: return .manga
         case .books: return .books
         case .comics: return .comics
-        case .games: return .games
         }
     }
 } 

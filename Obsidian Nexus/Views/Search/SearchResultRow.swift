@@ -14,7 +14,7 @@ struct SearchResultRow: View {
         case .books: return "book"
         case .manga: return "books.vertical"
         case .comics: return "magazine"
-        case .games: return "gamecontroller"
+        default: return "questionmark.circle" // Fallback icon for any future types
         }
     }
     

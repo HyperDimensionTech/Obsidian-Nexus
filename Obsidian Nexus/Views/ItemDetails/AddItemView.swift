@@ -1,9 +1,22 @@
 import SwiftUI
 
 struct AddItemView: View {
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
+    
+    // Move mangaPublishers here as a static property
+    private static let mangaPublishers = [
+        "viz",
+        "kodansha",
+        "shogakukan", 
+        "shueisha",
+        "square enix",
+        "seven seas",
+        "yen press",
+        "dark horse manga",
+        "vertical comics"
+    ]
     
     @State private var selectedType: CollectionType = .books
     @State private var searchQuery = ""
@@ -25,15 +38,13 @@ struct AddItemView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Collection Type Picker
-            Picker("Collection Type", selection: $selectedType) {
-                ForEach(CollectionType.allCases) { type in
-                    HStack {
-                        Image(systemName: type.iconName)
-                        Text(type.name)
-                    }
-                    .tag(type)
-                }
+            // Category Picker
+            Picker("Category", selection: $selectedType) {
+                Text("Literature").tag(CollectionType.books)
+                // Future categories - commented out until implemented
+                // Text("Electronics").tag(CollectionType.electronics)
+                // Text("Collectibles").tag(CollectionType.collectibles)
+                // Text("Tools").tag(CollectionType.tools)
             }
             .pickerStyle(.segmented)
             .padding()
@@ -111,10 +122,12 @@ struct AddItemView: View {
         guard !searchQuery.isEmpty else { return }
         isSearching = true
         
+        // Simple, direct search
         googleBooksService.fetchBooks(query: searchQuery) { result in
             isSearching = false
             switch result {
             case .success(let books):
+                print("Found \(books.count) results") // Debug print
                 searchResults = books
             case .failure(let error):
                 errorMessage = error.localizedDescription
@@ -128,26 +141,31 @@ struct AddItemView: View {
         let isbn = book.volumeInfo.industryIdentifiers?
             .first(where: { $0.type == "ISBN_13" })?.identifier
         
+        // Process thumbnail URL
+        var thumbnailURL: URL?
+        if let thumbnail = book.volumeInfo.imageLinks?.thumbnail {
+            thumbnailURL = URL(string: thumbnail.replacingOccurrences(of: "http://", with: "https://"))
+        }
+        
         // Create new inventory item
         let newItem = InventoryItem(
             title: book.volumeInfo.title,
             type: detectItemType(book),
             series: extractSeriesInfo(from: book.volumeInfo.title).series,
             volume: extractSeriesInfo(from: book.volumeInfo.title).volume,
-            condition: .new,
+            condition: .good,
             locationId: nil,
-            notes: nil,
+            notes: book.volumeInfo.description,
             dateAdded: Date(),
             barcode: nil,
-            thumbnailURL: URL(string: book.volumeInfo.imageLinks?.thumbnail ?? ""),
+            thumbnailURL: thumbnailURL,
             author: book.volumeInfo.authors?.first,
             manufacturer: nil,
             originalPublishDate: parseDate(book.volumeInfo.publishedDate),
             publisher: book.volumeInfo.publisher,
             isbn: isbn,
             price: nil,
-            purchaseDate: nil,
-            synopsis: book.volumeInfo.description
+            purchaseDate: nil
         )
         
         do {
@@ -162,26 +180,19 @@ struct AddItemView: View {
     private func detectItemType(_ book: GoogleBook) -> CollectionType {
         let title = book.volumeInfo.title.lowercased()
         let publisher = book.volumeInfo.publisher?.lowercased() ?? ""
+        let description = book.volumeInfo.description?.lowercased() ?? ""
         
-        // Common manga publishers
-        let mangaPublishers = [
-            "viz", "kodansha", "shogakukan", "shueisha", "square enix",
-            "seven seas", "yen press", "dark horse manga", "vertical comics",
-            "tokyopop", "del rey manga"
-        ]
-        
-        // Manga detection logic
-        if mangaPublishers.contains(where: { publisher.contains($0) }) ||
-           title.contains("manga") ||
-           title.contains("vol.") ||
-           title.contains("volume") {
+        // Check manga first (since it's most specific)
+        if PublisherType.manga.publishers.contains(where: { publisher.contains($0) }) ||
+           PublisherType.manga.searchKeywords.contains(where: { title.contains($0) }) ||
+           description.contains("manga") {
             return .manga
         }
         
-        // Comics detection logic
-        let comicPublishers = ["marvel", "dc comics", "image comics", "dark horse comics"]
-        if comicPublishers.contains(where: { publisher.contains($0) }) ||
-           title.contains("comic") {
+        // Then check comics
+        if PublisherType.comics.publishers.contains(where: { publisher.contains($0) }) ||
+           PublisherType.comics.searchKeywords.contains(where: { title.contains($0) }) ||
+           description.contains("comic") {
             return .comics
         }
         
@@ -192,12 +203,14 @@ struct AddItemView: View {
     private func extractSeriesInfo(from title: String) -> (series: String?, volume: Int?) {
         let lowercasedTitle = title.lowercased()
         
-        // Common volume indicators
+        // Common volume indicators with more patterns
         let volumePatterns = [
             "vol\\.?\\s*(\\d+)",
             "volume\\s*(\\d+)",
             "v(\\d+)",
-            "#(\\d+)"
+            "#(\\d+)",
+            "\\s(\\d+)$",  // Number at end
+            "\\s(\\d+)\\s" // Number surrounded by spaces
         ]
         
         // First, try to extract volume number
@@ -207,7 +220,7 @@ struct AddItemView: View {
                let match = regex.firstMatch(in: title, options: [], range: NSRange(title.startIndex..., in: title)),
                let range = Range(match.range(at: 1), in: title) {
                 volumeNumber = Int(title[range])
-                break
+                    break
             }
         }
         
@@ -280,9 +293,12 @@ struct AddItemView: View {
 }
 
 #Preview {
-    NavigationView {
+    let locationManager = LocationManager()
+    let inventoryViewModel = InventoryViewModel(locationManager: locationManager)
+    
+    return NavigationView {
         AddItemView()
-            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
-            .environmentObject(LocationManager())
+            .environmentObject(inventoryViewModel)
+            .environmentObject(locationManager)
     }
 } 
