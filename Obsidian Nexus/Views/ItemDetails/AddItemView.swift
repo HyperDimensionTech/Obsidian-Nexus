@@ -25,6 +25,7 @@ struct AddItemView: View {
     @State private var errorMessage = ""
     @State private var isSearching = false
     @State private var showingManualEntry = false
+    @State private var showingScanner = false
     
     var sortedResults: [GoogleBook] {
         searchResults.sorted { book1, book2 in
@@ -55,13 +56,25 @@ struct AddItemView: View {
                     .foregroundColor(.secondary)
                 TextField("Search by title or ISBN", text: $searchQuery)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
                     .onSubmit {
                         performSearch()
+                    }
+                    .onChange(of: searchQuery) { oldValue, newValue in
+                        print("DEBUG: Search query changed to: \(newValue)")
                     }
                 
                 if isSearching {
                     ProgressView()
                         .padding(.horizontal)
+                } else {
+                    Button(action: { showingScanner = true }) {
+                        Image(systemName: "barcode.viewfinder")
+                            .foregroundColor(.accentColor)
+                    }
+                    .padding(.horizontal, 8)
                 }
             }
             .padding(.horizontal)
@@ -114,6 +127,13 @@ struct AddItemView: View {
         .sheet(isPresented: $showingManualEntry) {
             NavigationView {
                 ManualEntryView(type: selectedType)
+            }
+        }
+        .sheet(isPresented: $showingScanner) {
+            BarcodeScannerView { code in
+                searchQuery = "isbn:" + code  // Add the isbn: prefix
+                showingScanner = false
+                performSearch()
             }
         }
     }

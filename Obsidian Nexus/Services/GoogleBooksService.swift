@@ -35,6 +35,7 @@ struct GoogleBook: Codable, Identifiable {
 class GoogleBooksService: ObservableObject {
     @Published private(set) var isLoading = false
     private let cache: NSCache<NSString, CachedResponse> = NSCache()
+    private let openLibraryService = OpenLibraryService()
     
     private let apiKey = "AIzaSyDpVBfeY4TNKgOX3n4e_wD13_qYgjQVM8Y"
     private let baseURL = "https://www.googleapis.com/books/v1/volumes"
@@ -59,9 +60,11 @@ class GoogleBooksService: ObservableObject {
         guard !query.isEmpty else { return "" }
         
         // ISBN handling
-        if query.contains("ISBN:") || query.allSatisfy({ $0.isNumber }) {
-            let isbn = query.replacingOccurrences(of: "ISBN:", with: "").trimmingCharacters(in: .whitespaces)
+        if query.lowercased().contains("isbn:") || query.allSatisfy({ $0.isNumber }) {
+            let isbn = query.replacingOccurrences(of: "(?i)isbn:", with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
             if isValidISBN(isbn) {
+                print("DEBUG: Searching with ISBN: \(isbn)") // Debug log
                 return "isbn:\(isbn)"
             }
         }
@@ -82,20 +85,14 @@ class GoogleBooksService: ObservableObject {
     
     func fetchBooks(query: String, completion: @escaping (Result<[GoogleBook], Error>) -> Void) {
         guard !query.isEmpty else {
+            print("DEBUG: Empty query received")
             completion(.failure(GoogleBooksError.emptyQuery))
             return
         }
         
-        // Check cache first
-        if let cachedResponse = cache.object(forKey: query as NSString),
-           cachedResponse.isValid {
-            completion(.success(cachedResponse.books))
-            return
-        }
-        
-        isLoading = true
-        
         let formattedQuery = buildSearchQuery(query)
+        print("DEBUG: Original query: \(query)")
+        print("DEBUG: Formatted query: \(formattedQuery)")
         
         var components = URLComponents(string: baseURL)
         components?.queryItems = [
@@ -105,38 +102,60 @@ class GoogleBooksService: ObservableObject {
         ]
         
         guard let url = components?.url else {
+            print("DEBUG: Failed to construct URL")
             completion(.failure(GoogleBooksError.invalidURL))
             isLoading = false
             return
         }
+        
+        print("DEBUG: Final URL: \(url.absoluteString)")
         
         let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
                 if let error = error {
+                    print("DEBUG: Network error: \(error.localizedDescription)")
                     completion(.failure(error))
                     return
                 }
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
+                    print("DEBUG: Invalid response type")
                     completion(.failure(GoogleBooksError.invalidResponse))
                     return
                 }
+                
+                print("DEBUG: Response status code: \(httpResponse.statusCode)")
                 
                 if httpResponse.statusCode == 200 {
                     if let data = data,
                        let response = try? JSONDecoder().decode(GoogleBooksResponse.self, from: data) {
                         let books = response.items ?? []
+                        print("DEBUG: Found \(books.count) books")
                         
-                        // Cache the response
-                        self?.cache.setObject(CachedResponse(books: books), forKey: query as NSString)
+                        // If ISBN search returns no results, try a more general search
+                        if books.isEmpty && query.lowercased().contains("isbn:") {
+                            print("DEBUG: No results for ISBN, trying general search")
+                            let isbn = query.replacingOccurrences(of: "(?i)isbn:", with: "", options: .regularExpression)
+                            
+                            // Try searching without the isbn: prefix
+                            let fallbackQuery = isbn
+                            print("DEBUG: Trying fallback query: \(fallbackQuery)")
+                            self?.fetchBooks(query: fallbackQuery, completion: completion)
+                            return
+                        }
                         
                         completion(.success(books))
                     } else {
+                        print("DEBUG: Failed to decode response")
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: Raw response: \(responseString)")
+                        }
                         completion(.failure(GoogleBooksError.invalidResponse))
                     }
                 } else {
+                    print("DEBUG: API error with status code: \(httpResponse.statusCode)")
                     completion(.failure(GoogleBooksError.apiError("Status code: \(httpResponse.statusCode)")))
                 }
             }
@@ -176,6 +195,35 @@ class GoogleBooksService: ObservableObject {
             }
         }
         return nil
+    }
+    
+    private func searchWithFallback(isbn: String, completion: @escaping (Result<[GoogleBook], Error>) -> Void) {
+        Task {
+            do {
+                if let openLibraryBook = try await openLibraryService.searchByISBN(isbn) {
+                    // Convert OpenLibraryBook to GoogleBook format
+                    let book = GoogleBook(
+                        id: isbn,
+                        volumeInfo: .init(
+                            title: openLibraryBook.title,
+                            authors: openLibraryBook.authors,
+                            publisher: openLibraryBook.publisher,
+                            publishedDate: openLibraryBook.publishDate,
+                            description: nil,
+                            imageLinks: nil,
+                            industryIdentifiers: [
+                                .init(type: "ISBN_13", identifier: isbn)
+                            ]
+                        )
+                    )
+                    completion(.success([book]))
+                } else {
+                    completion(.success([]))
+                }
+            } catch {
+                completion(.failure(error))
+            }
+        }
     }
 }
 
