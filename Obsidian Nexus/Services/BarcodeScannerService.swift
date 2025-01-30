@@ -5,6 +5,7 @@ class BarcodeScannerService: NSObject, ObservableObject, AVCaptureMetadataOutput
     @Published var scannedCode: String?
     @Published var isAuthorized = false
     @Published var error: String?
+    @Published private(set) var isTorchOn = false
     
     private(set) var captureSession: AVCaptureSession?
     
@@ -76,6 +77,30 @@ class BarcodeScannerService: NSObject, ObservableObject, AVCaptureMetadataOutput
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.captureSession?.stopRunning()
         }
+    }
+    
+    func toggleTorch() {
+        guard let device = AVCaptureDevice.default(for: .video) else { return }
+        
+        do {
+            try device.lockForConfiguration()
+            
+            if device.hasTorch {
+                let newMode: AVCaptureDevice.TorchMode = device.torchMode == .on ? .off : .on
+                device.torchMode = newMode
+                isTorchOn = device.torchMode == .on
+            }
+            
+            device.unlockForConfiguration()
+        } catch {
+            print("Torch could not be used")
+        }
+    }
+    
+    func validateISBN(_ isbn: String) async throws -> Bool {
+        // Use existing OpenLibrary or Google Books service to validate
+        // Return true if book is found
+        return false // Placeholder
     }
     
     // MARK: - AVCaptureMetadataOutputObjectsDelegate

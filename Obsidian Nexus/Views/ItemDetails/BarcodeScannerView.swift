@@ -4,6 +4,7 @@ struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = BarcodeScannerViewModel()
     let onScan: (String) -> Void
+    @Namespace private var animation
     
     var body: some View {
         ZStack {
@@ -25,10 +26,48 @@ struct BarcodeScannerView: View {
                             .background(.ultraThinMaterial)
                             .clipShape(Circle())
                     }
-                    .padding()
                     
                     Spacer()
+                    
+                    // Enhanced Torch Toggle Button with haptic feedback
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            viewModel.toggleTorch()
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                        }
+                    }) {
+                        Image(systemName: viewModel.torchEnabled ? "flashlight.on.fill" : "flashlight.off.fill")
+                            .font(.title2)
+                            .foregroundColor(viewModel.torchEnabled ? .yellow : .white)
+                            .padding()
+                            .background(
+                                Circle()
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                viewModel.torchEnabled ? Color.yellow : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            )
+                    }
+                    // Move animations outside Button but remove onTapGesture
+                    .scaleEffect(viewModel.torchEnabled ? 1.1 : 1.0)
+                    .rotationEffect(.degrees(viewModel.torchEnabled ? 360 : 0))
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.torchEnabled)
+                    .overlay(
+                        viewModel.torchEnabled ? 
+                        Circle()
+                            .fill(Color.yellow.opacity(0.3))
+                            .scaleEffect(1.5)
+                            .blur(radius: 20)
+                        : nil
+                    )
+                    .accessibilityLabel(viewModel.torchEnabled ? "Turn off flashlight" : "Turn on flashlight")
                 }
+                .padding()
                 
                 Spacer()
                 
@@ -67,6 +106,10 @@ struct BarcodeScannerView: View {
             viewModel.startScanning()
         }
         .onDisappear {
+            // Ensure torch is off when view disappears
+            if viewModel.torchEnabled {
+                viewModel.toggleTorch()
+            }
             viewModel.stopScanning()
         }
         .onChange(of: viewModel.scannedCode) { oldCode, newCode in

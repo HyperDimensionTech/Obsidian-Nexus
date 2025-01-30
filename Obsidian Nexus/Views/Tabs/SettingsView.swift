@@ -50,6 +50,9 @@ struct SettingsView: View {
                     )
                 }
                 
+                // Temporarily hide DATA MANAGEMENT section
+                // Section(header: Text("DATA MANAGEMENT")) { ... }
+                
                 Section(header: Text("DATA")) {
                     NavigationLink("Import/Export", destination: Text("Import/Export"))
                     NavigationLink("Backup", destination: Text("Backup Settings"))
@@ -97,4 +100,47 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environmentObject(LocationManager())
+}
+
+private struct TrashSection: View {
+    @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @State private var showingEmptyTrashAlert = false
+    
+    var body: some View {
+        List {
+            if inventoryViewModel.trashedItems.isEmpty {
+                Text("No items in trash")
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(inventoryViewModel.trashedItems) { item in
+                    ItemRow(item: item)
+                        .swipeActions {
+                            Button("Restore") {
+                                try? inventoryViewModel.restoreItem(item)
+                            }
+                            .tint(.blue)
+                        }
+                }
+            }
+        }
+        .navigationTitle("Trash")
+        .toolbar {
+            if !inventoryViewModel.trashedItems.isEmpty {
+                Button("Empty Trash", role: .destructive) {
+                    showingEmptyTrashAlert = true
+                }
+            }
+        }
+        .alert("Empty Trash?", isPresented: $showingEmptyTrashAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Empty", role: .destructive) {
+                try? inventoryViewModel.emptyTrash()
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .onAppear {
+            inventoryViewModel.loadTrashedItems()
+        }
+    }
 } 

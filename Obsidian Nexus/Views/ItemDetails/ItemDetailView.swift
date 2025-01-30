@@ -8,6 +8,8 @@ struct ItemDetailView: View {
     @State private var thumbnailURL: URL?
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     let item: InventoryItem
     
@@ -115,7 +117,7 @@ struct ItemDetailView: View {
         }
         .alert("Delete Item", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {
-                inventoryViewModel.deleteItem(item)
+                deleteItem()
             }
             Button("Cancel", role: .cancel) { }
         } message: {
@@ -128,20 +130,17 @@ struct ItemDetailView: View {
     
     private func loadThumbnail() {
         if let existingURL = item.thumbnailURL {
+            print("Using existing thumbnail URL: \(existingURL)")  // Debug
             thumbnailURL = existingURL
-            return
         }
-        
-        thumbnailService.fetchThumbnail(for: item) { url in
-            DispatchQueue.main.async {
-                self.thumbnailURL = url
-                if let url = url {
-                    // Store the URL in the item for future use
-                    var updatedItem = self.item
-                    updatedItem.thumbnailURL = url
-                    try? self.inventoryViewModel.updateItem(updatedItem)
-                }
-            }
+    }
+    
+    private func deleteItem() {
+        do {
+            try inventoryViewModel.deleteItem(item)
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
         }
     }
 }

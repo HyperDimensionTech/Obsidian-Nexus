@@ -109,7 +109,7 @@ struct AddItemView: View {
                     LazyVStack {
                         ForEach(sortedResults, id: \.id) { book in
                             BookSearchResultView(book: book) { selectedBook in
-                                addBookToInventory(selectedBook)
+                                addToCollection(selectedBook)
                             }
                             .padding(.horizontal)
                             Divider()
@@ -156,41 +156,44 @@ struct AddItemView: View {
         }
     }
     
-    private func addBookToInventory(_ book: GoogleBook) {
-        // Extract ISBN if available
-        let isbn = book.volumeInfo.industryIdentifiers?
-            .first(where: { $0.type == "ISBN_13" })?.identifier
+    private func addToCollection(_ book: GoogleBook) {
+        // Detect the correct type
+        let detectedType = detectItemType(book)
         
-        // Process thumbnail URL
-        var thumbnailURL: URL?
-        if let thumbnail = book.volumeInfo.imageLinks?.thumbnail {
-            thumbnailURL = URL(string: thumbnail.replacingOccurrences(of: "http://", with: "https://"))
+        // Process the thumbnail URL to ensure it uses HTTPS
+        let thumbnailURL = book.volumeInfo.imageLinks?.thumbnail.flatMap { urlString -> URL? in
+            var secureUrlString = urlString
+            if urlString.hasPrefix("http://") {
+                secureUrlString = "https://" + urlString.dropFirst(7)
+            }
+            return URL(string: secureUrlString)
         }
         
-        // Create new inventory item
         let newItem = InventoryItem(
             title: book.volumeInfo.title,
-            type: detectItemType(book),
-            series: extractSeriesInfo(from: book.volumeInfo.title).series,
-            volume: extractSeriesInfo(from: book.volumeInfo.title).volume,
+            type: detectedType,
+            series: extractSeriesInfo(from: book.volumeInfo.title).0,
+            volume: extractSeriesInfo(from: book.volumeInfo.title).1,
             condition: .good,
-            locationId: nil,
-            notes: book.volumeInfo.description,
+            notes: nil,
             dateAdded: Date(),
             barcode: nil,
-            thumbnailURL: thumbnailURL,
+            thumbnailURL: thumbnailURL,  // Use the processed HTTPS URL
             author: book.volumeInfo.authors?.first,
             manufacturer: nil,
             originalPublishDate: parseDate(book.volumeInfo.publishedDate),
             publisher: book.volumeInfo.publisher,
-            isbn: isbn,
+            isbn: book.volumeInfo.industryIdentifiers?.first?.identifier,
             price: nil,
-            purchaseDate: nil
+            purchaseDate: nil,
+            synopsis: book.volumeInfo.description
         )
         
         do {
             try inventoryViewModel.addItem(newItem)
-            dismiss()
+            withAnimation {
+                dismiss()
+            }
         } catch {
             errorMessage = error.localizedDescription
             showingError = true
@@ -202,22 +205,28 @@ struct AddItemView: View {
         let publisher = book.volumeInfo.publisher?.lowercased() ?? ""
         let description = book.volumeInfo.description?.lowercased() ?? ""
         
-        // Check manga first (since it's most specific)
-        if PublisherType.manga.publishers.contains(where: { publisher.contains($0) }) ||
-           PublisherType.manga.searchKeywords.contains(where: { title.contains($0) }) ||
+        // Check for manga publishers and keywords
+        let mangaPublishers = ["viz media", "kodansha", "yen press", "dark horse manga", "seven seas"]
+        let mangaKeywords = ["manga", "volume", "vol."]
+        
+        if mangaPublishers.contains(where: { publisher.contains($0) }) ||
+           mangaKeywords.contains(where: { title.contains($0) }) ||
            description.contains("manga") {
             return .manga
         }
         
-        // Then check comics
-        if PublisherType.comics.publishers.contains(where: { publisher.contains($0) }) ||
-           PublisherType.comics.searchKeywords.contains(where: { title.contains($0) }) ||
+        // Check for comics
+        let comicPublishers = ["marvel", "dc comics", "image comics", "dark horse comics"]
+        let comicKeywords = ["comic", "graphic novel"]
+        
+        if comicPublishers.contains(where: { publisher.contains($0) }) ||
+           comicKeywords.contains(where: { title.contains($0) }) ||
            description.contains("comic") {
             return .comics
         }
         
-        // Default to books
-        return .books
+        // Default to selected type if no specific type is detected
+        return selectedType
     }
     
     private func extractSeriesInfo(from title: String) -> (series: String?, volume: Int?) {
@@ -314,7 +323,10 @@ struct AddItemView: View {
 
 #Preview {
     let locationManager = LocationManager()
-    let inventoryViewModel = InventoryViewModel(locationManager: locationManager)
+    let inventoryViewModel = InventoryViewModel(
+        storage: .shared,
+        locationManager: locationManager
+    )
     
     return NavigationView {
         AddItemView()

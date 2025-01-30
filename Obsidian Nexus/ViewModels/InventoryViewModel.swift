@@ -2,20 +2,22 @@ import Foundation
 
 class InventoryViewModel: ObservableObject {
     @Published private(set) var items: [InventoryItem] = []
+    @Published private(set) var trashedItems: [InventoryItem] = []
+    @Published private(set) var trashCount: Int = 0
     
     // Add persistence layer
     private let storage: StorageManager
     private let locationManager: LocationManager
     
-    init(storage: StorageManager = StorageManager.shared,
-         locationManager: LocationManager) {
+    init(storage: StorageManager = .shared, locationManager: LocationManager) {
         self.storage = storage
         self.locationManager = locationManager
+        
+        // Load existing items
         do {
-            items = try storage.load()
+            items = try storage.loadItems()
         } catch {
-            print("Failed to load items: \(error.localizedDescription)")
-            loadSampleData()
+            print("Error loading items: \(error.localizedDescription)")
         }
     }
     
@@ -73,55 +75,33 @@ class InventoryViewModel: ObservableObject {
     }
     
     // Update addItem method
-    func addItem(_ item: InventoryItem) throws {
-        // Validate before adding
+    @discardableResult
+    func addItem(_ item: InventoryItem) throws -> InventoryItem {
         try validateItem(item)
-        
-        // Create new item with a guaranteed UUID
-        let newItem = InventoryItem(
-            title: item.title,
-            type: item.type,
-            series: item.series,
-            volume: item.volume,
-            condition: item.condition,
-            locationId: item.locationId,
-            notes: item.notes,
-            id: item.id == UUID() ? UUID() : item.id,  // Generate new ID only if default
-            dateAdded: item.dateAdded,
-            barcode: item.barcode,
-            thumbnailURL: item.thumbnailURL,
-            author: item.author,
-            manufacturer: item.manufacturer,
-            originalPublishDate: item.originalPublishDate,
-            publisher: item.publisher,
-            isbn: item.isbn,
-            price: item.price,
-            purchaseDate: item.purchaseDate,
-            synopsis: item.synopsis
-        )
-        
-        items.append(newItem)
-        saveItems()
-        
-        objectWillChange.send()
+        try storage.save(item)
+        items = try storage.loadItems()
+        return item
     }
     
-    func deleteItem(_ item: InventoryItem) {
-        items.removeAll { $0.id == item.id }
-        saveItems()
-    }
-    
-    func updateItem(_ item: InventoryItem) throws {
-        // Validate the item with isEditing flag
-        try validateItem(item, isEditing: true)
-        
-        // Find and update the item
-        if let index = items.firstIndex(where: { $0.id == item.id }) {
-            items[index] = item
-            saveItems()
-        } else {
-            throw InventoryError.invalidOperation("Item not found")
+    func deleteItem(_ item: InventoryItem) throws {
+        do {
+            try storage.deleteItem(item.id)
+            // Remove the item from the published items array
+            if let index = items.firstIndex(where: { $0.id == item.id }) {
+                items.remove(at: index)
+            }
+        } catch {
+            print("Error deleting item: \(error.localizedDescription)")
+            throw error
         }
+    }
+    
+    @discardableResult
+    func updateItem(_ item: InventoryItem) throws -> InventoryItem {
+        try validateItem(item, isEditing: true)
+        try storage.update(item)
+        items = try storage.loadItems()
+        return item
     }
     
     // MARK: - Item Queries
@@ -177,66 +157,127 @@ class InventoryViewModel: ObservableObject {
     // MARK: - Sample Data
     
     func loadSampleData() {
-        let livingRoom = StorageLocation(
+        // Sample manga items
+        let onepiece = InventoryItem(
+            title: "One Piece",
+            type: .manga,
+            series: "One Piece",
+            volume: 1,
+            condition: .good,
+            locationId: nil,
+            notes: "First volume of the series",
             id: UUID(),
-            name: "Living Room",
-            type: .room
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: "Eiichiro Oda",
+            manufacturer: nil,
+            originalPublishDate: nil,
+            publisher: "Viz Media",
+            isbn: "9781569319017",
+            price: Decimal(14.99),
+            purchaseDate: nil,
+            synopsis: nil
         )
         
+        let naruto = InventoryItem(
+            title: "Naruto",
+            type: .manga,
+            series: "Naruto",
+            volume: 1,
+            condition: .good,
+            locationId: nil,
+            notes: "Classic ninja series",
+            id: UUID(),
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: "Masashi Kishimoto",
+            manufacturer: nil,
+            originalPublishDate: nil,
+            publisher: "Viz Media",
+            isbn: "9781569319000",
+            price: Decimal(9.99),
+            purchaseDate: nil,
+            synopsis: nil
+        )
+        
+        // Sample comic items
+        let spiderman = InventoryItem(
+            title: "The Amazing Spider-Man",
+            type: .comics,
+            series: "The Amazing Spider-Man",
+            volume: 1,
+            condition: .fair,
+            locationId: nil,
+            notes: "First appearance of Spider-Man",
+            id: UUID(),
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: "Stan Lee",
+            manufacturer: nil,
+            originalPublishDate: nil,
+            publisher: "Marvel Comics",
+            price: Decimal(29.99),
+            purchaseDate: nil,
+            synopsis: nil
+        )
+        
+        // Sample video game
+        let finalFantasy = InventoryItem(
+            title: "Final Fantasy VII",
+            type: .games,
+            series: nil,
+            volume: nil,
+            condition: .good,
+            locationId: nil,
+            notes: "Classic PlayStation RPG",
+            id: UUID(),
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: nil,
+            manufacturer: "Square Enix",
+            originalPublishDate: Calendar.current.date(from: DateComponents(year: 1997)),
+            publisher: nil,
+            isbn: nil,
+            price: Decimal(59.99),
+            purchaseDate: nil,
+            synopsis: nil
+        )
+        
+        // Sample book
+        let dune = InventoryItem(
+            title: "Dune",
+            type: .books,
+            series: nil,
+            volume: nil,
+            condition: .good,
+            locationId: nil,
+            notes: "Science fiction masterpiece",
+            id: UUID(),
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: "Frank Herbert",
+            manufacturer: nil,
+            originalPublishDate: nil,
+            publisher: "Ace Books",
+            isbn: "9780441172719",
+            price: Decimal(18.99),
+            purchaseDate: nil,
+            synopsis: "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the spice melange."
+        )
+        
+        let sampleItems = [onepiece, naruto, spiderman, finalFantasy, dune]
+        
         do {
-            try locationManager.addLocation(livingRoom)
-            
-            items = [
-                // Manga Series - One Piece Volumes
-                InventoryItem(
-                    title: "One Piece Vol. 1",
-                    type: .manga,
-                    series: "One Piece",
-                    volume: 1,
-                    condition: .new,
-                    locationId: livingRoom.id,
-                    notes: "Romance Dawn",
-                    author: "Eiichiro Oda",
-                    originalPublishDate: Calendar.current.date(from: DateComponents(year: 1997, month: 7, day: 22)),
-                    publisher: "Shueisha",
-                    isbn: "978-4088725093",
-                    price: 9.99,
-                    purchaseDate: Calendar.current.date(from: DateComponents(year: 2023, month: 11, day: 1)),
-                    synopsis: "The story follows Monkey D. Luffy, a young man who sets off on a journey from the East Blue Sea to find the titular treasure and proclaim himself the King of the Pirates."
-                ),
-                
-                // Books
-                InventoryItem(
-                    title: "The Lord of the Rings",
-                    type: .books,
-                    series: "The Lord of the Rings",
-                    condition: .good,
-                    locationId: livingRoom.id,
-                    notes: "First edition hardcover",
-                    author: "J.R.R. Tolkien",
-                    originalPublishDate: Calendar.current.date(from: DateComponents(year: 1954, month: 7, day: 29)),
-                    publisher: "Allen & Unwin",
-                    isbn: "978-0261103252",
-                    price: 149.99,
-                    purchaseDate: Calendar.current.date(from: DateComponents(year: 2023, month: 12, day: 15)),
-                    synopsis: "The Lord of the Rings tells of the great quest undertaken by Frodo Baggins and the Fellowship of the Ring."
-                ),
-                
-                // Games
-                InventoryItem(
-                    title: "PlayStation 5",
-                    type: .games,
-                    condition: .likeNew,
-                    locationId: livingRoom.id,
-                    notes: "Digital Edition",
-                    manufacturer: "Sony",
-                    originalPublishDate: Calendar.current.date(from: DateComponents(year: 2020, month: 11, day: 12)),
-                    price: 499.99,
-                    purchaseDate: Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 5)),
-                    synopsis: "Next-generation gaming console featuring ultra-high speed SSD, ray tracing support, and 4K gaming capabilities."
-                )
-                // ... continue with other items using locationId instead of location
-            ]
+            for item in sampleItems {
+                try storage.save(item)
+            }
+            // Refresh items from storage
+            items = try storage.loadItems()
         } catch {
             print("Error loading sample data: \(error.localizedDescription)")
         }
@@ -337,5 +378,38 @@ class InventoryViewModel: ObservableObject {
             let value = typeItems.reduce(0) { $0 + ($1.price ?? 0) }
             return (type, count, value)
         }
+    }
+    
+    // Add method to load items that respects soft deletes
+    func reloadItems() {
+        do {
+            items = try storage.loadItems()
+        } catch {
+            print("Error reloading items: \(error.localizedDescription)")
+        }
+    }
+    
+    func loadTrashedItems() {
+        do {
+            trashedItems = try storage.loadTrashedItems()
+            trashCount = trashedItems.count
+        } catch {
+            print("Error loading trashed items: \(error.localizedDescription)")
+        }
+    }
+    
+    func restoreItem(_ item: InventoryItem) throws {
+        try storage.restoreItem(item.id)
+        if let index = trashedItems.firstIndex(where: { $0.id == item.id }) {
+            trashedItems.remove(at: index)
+        }
+        reloadItems()
+        trashCount -= 1
+    }
+    
+    func emptyTrash() throws {
+        try storage.emptyTrash()
+        trashedItems.removeAll()
+        trashCount = 0
     }
 } 

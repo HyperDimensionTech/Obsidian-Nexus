@@ -383,8 +383,19 @@ class LocationManager: ObservableObject {
     }
     
     func moveLocation(_ locationId: UUID, to newParentId: UUID?) throws {
+        // Existing validation
         guard var location = locations[locationId] else {
             throw LocationError.locationNotFound
+        }
+        
+        // Circular reference check
+        if wouldCreateCircularReference(location, newParentId: newParentId!) {
+            throw LocationError.circularReference
+        }
+        
+        // Parent validation
+        guard let newParent = locations[newParentId!] else {
+            throw LocationError.parentNotFound
         }
         
         // If moving to root level
@@ -408,15 +419,6 @@ class LocationManager: ObservableObject {
         }
         
         // Moving to new parent
-        guard let newParent = locations[newParentId!] else {
-            throw LocationError.parentNotFound
-        }
-        
-        // Check for circular reference
-        if wouldCreateCircularReference(location, newParentId: newParentId!) {
-            throw LocationError.circularReference
-        }
-        
         // Validate parent can accept this type
         guard newParent.canAdd(childType: location.type) else {
             throw LocationError.invalidChildType

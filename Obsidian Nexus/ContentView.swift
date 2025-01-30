@@ -13,11 +13,16 @@ struct ContentView: View {
     @StateObject private var navigationCoordinator = NavigationCoordinator()
     
     init() {
-        // Initialize InventoryViewModel with LocationManager
+        let storage = StorageManager.shared
         let locationManager = LocationManager()
         _locationManager = StateObject(wrappedValue: locationManager)
+        
+        // Now parameter order doesn't matter
         _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(locationManager: locationManager))
+            InventoryViewModel(
+                storage: storage,
+                locationManager: locationManager
+            ))
     }
     
     var body: some View {
@@ -50,10 +55,6 @@ struct ContentView: View {
         .environmentObject(locationManager)
         .environmentObject(inventoryViewModel)
         .environmentObject(navigationCoordinator)
-        .onAppear {
-            locationManager.loadSampleData()
-            inventoryViewModel.loadSampleData()
-        }
     }
 }
 
