@@ -46,11 +46,11 @@ class InventoryViewModel: ObservableObject {
     }
     
     // Add validation method
-    private func validateItem(_ item: InventoryItem, isEditing: Bool = false) throws {
-        // When editing, we need to exclude the current item from duplicate checks
-        let otherItems = isEditing ? items.filter({ $0.id != item.id }) : items
+    private func validateItem(_ item: InventoryItem, isUpdate: Bool = false) throws {
+        // For updates, we need to exclude the current item from duplicate checks
+        let otherItems = isUpdate ? items.filter({ $0.id != item.id }) : items
         
-        // Check for duplicate ISBN if it exists
+        // Check for duplicate ISBN
         if let isbn = item.isbn,
            otherItems.contains(where: { $0.isbn == isbn }) {
             throw ValidationError.duplicateISBN(isbn)
@@ -60,7 +60,7 @@ class InventoryViewModel: ObservableObject {
         if let series = item.series,
            let volume = item.volume,
            otherItems.contains(where: { 
-               $0.series == series && $0.volume == volume 
+               $0.series == series && $0.volume == volume && $0.id != item.id
            }) {
             throw ValidationError.duplicateInSeries(series, volume)
         }
@@ -68,7 +68,7 @@ class InventoryViewModel: ObservableObject {
         // For non-series items, check for duplicate titles
         if item.series == nil,
            otherItems.contains(where: { 
-               $0.title.lowercased() == item.title.lowercased() 
+               $0.title.lowercased() == item.title.lowercased() && $0.id != item.id
            }) {
             throw ValidationError.duplicateTitle(item.title)
         }
@@ -98,7 +98,7 @@ class InventoryViewModel: ObservableObject {
     
     @discardableResult
     func updateItem(_ item: InventoryItem) throws -> InventoryItem {
-        try validateItem(item, isEditing: true)
+        try validateItem(item, isUpdate: true)
         try storage.update(item)
         items = try storage.loadItems()
         return item
@@ -150,8 +150,18 @@ class InventoryViewModel: ObservableObject {
     func mangaSeries() -> [(String, [InventoryItem])] {
         let mangaItems = items.filter { $0.type == .manga }
         let groupedItems = Dictionary(grouping: mangaItems) { $0.series ?? "" }
-        return groupedItems.map { ($0.key, $0.value) }
-            .sorted { $0.0 < $1.0 }
+        return groupedItems.map { series, items in
+            (
+                series,
+                items.sorted { 
+                    if let vol1 = $0.volume, let vol2 = $1.volume {
+                        return vol1 < vol2
+                    }
+                    return $0.title < $1.title
+                }
+            )
+        }
+        .sorted { $0.0 < $1.0 } // Sort series alphabetically
     }
     
     // MARK: - Sample Data
@@ -307,6 +317,14 @@ class InventoryViewModel: ObservableObject {
     // Helper methods for collections
     func itemsInSeries(_ series: String) -> [InventoryItem] {
         items.filter { $0.series == series }
+            .sorted { 
+                // Sort by volume number if both have volumes
+                if let vol1 = $0.volume, let vol2 = $1.volume {
+                    return vol1 < vol2
+                }
+                // Handle cases where volume numbers might be missing
+                return $0.title < $1.title
+            }
     }
     
     func duplicateExists(_ item: InventoryItem) -> Bool {
@@ -328,7 +346,10 @@ class InventoryViewModel: ObservableObject {
         // Update each item
         for itemId in itemIds {
             if let index = items.firstIndex(where: { $0.id == itemId }) {
-                items[index].locationId = locationId
+                var updatedItem = items[index]
+                updatedItem.locationId = locationId
+                try validateItem(updatedItem, isUpdate: true)  // Add isUpdate flag
+                items[index] = updatedItem
             }
         }
         
@@ -411,5 +432,185 @@ class InventoryViewModel: ObservableObject {
         try storage.emptyTrash()
         trashedItems.removeAll()
         trashCount = 0
+    }
+    
+    func handleLocationMove(_ locationId: UUID, newParentId: UUID) {
+        // No need to update items as they reference the location ID directly
+        // and that ID hasn't changed
+        objectWillChange.send()
+    }
+    
+    func updateItemLocation(_ item: InventoryItem, to locationId: UUID?) {
+        print("Updating item \(item.id) location to \(String(describing: locationId))")
+        
+        var updatedItem = item
+        updatedItem.locationId = locationId
+        
+        do {
+            try storage.update(updatedItem)
+            
+            // Verify the update
+            if let repo = storage.itemRepository as? SQLiteItemRepository {
+                repo.verifyItemLocation(item.id)
+            }
+            
+            // Update in-memory state
+            if let index = items.firstIndex(where: { $0.id == item.id }) {
+                items[index] = updatedItem
+            }
+            
+            print("Successfully updated item location")
+        } catch {
+            print("Failed to update item location: \(error.localizedDescription)")
+        }
+    }
+    
+    func bulkUpdateItems(items: [InventoryItem], updates: InventoryItem, fields: Set<String>) throws {
+        guard !items.isEmpty else {
+            throw BulkUpdateError.noItemsSelected
+        }
+        
+        try storage.beginTransaction()
+        
+        do {
+            for var item in items {
+                if fields.contains("type") {
+                    item.type = updates.type
+                }
+                if fields.contains("location") {
+                    item.locationId = updates.locationId
+                }
+                if fields.contains("condition") {
+                    item.condition = updates.condition
+                }
+                if fields.contains("price") {
+                    item.price = updates.price
+                }
+                if fields.contains("purchaseDate") {
+                    item.purchaseDate = updates.purchaseDate
+                }
+                
+                try updateItem(item)
+            }
+            
+            try storage.commitTransaction()
+            
+        } catch {
+            try storage.rollbackTransaction()
+            throw BulkUpdateError.transactionFailed(error.localizedDescription)
+        }
+    }
+    
+    enum BulkUpdateError: LocalizedError {
+        case noItemsSelected
+        case invalidLocation
+        case transactionFailed(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .noItemsSelected:
+                return "No items selected for update"
+            case .invalidLocation:
+                return "Selected location is invalid"
+            case .transactionFailed(let message):
+                return "Failed to update items: \(message)"
+            }
+        }
+    }
+    
+    // Add these methods
+    func booksByAuthor() -> [(String, [InventoryItem])] {
+        let bookItems = items.filter { $0.type == .books }
+        let groupedItems = Dictionary(grouping: bookItems) { $0.author ?? "Unknown Author" }
+        return groupedItems.map { ($0.key, $0.value) }
+            .sorted { $0.0 < $1.0 }
+    }
+    
+    func itemCount(for author: String) -> Int {
+        items.filter { $0.type == .books && $0.author == author }.count
+    }
+    
+    // Add to existing ValidationError enum or create new BulkOperationError
+    enum BulkOperationError: LocalizedError {
+        case noItemsSelected
+        case transactionFailed(String)
+        case deletionFailed(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .noItemsSelected:
+                return "No items selected for deletion"
+            case .transactionFailed(let message):
+                return "Failed to complete operation: \(message)"
+            case .deletionFailed(let message):
+                return "Failed to delete items: \(message)"
+            }
+        }
+    }
+    
+    // Add bulk delete method
+    func bulkDeleteItems(with ids: Set<UUID>) throws {
+        guard !ids.isEmpty else {
+            throw BulkOperationError.noItemsSelected
+        }
+        
+        do {
+            // Begin transaction
+            try storage.beginTransaction()
+            
+            // Delete each item
+            for id in ids {
+                try storage.deleteItem(id)
+            }
+            
+            // Commit transaction
+            try storage.commitTransaction()
+            
+            // Update the published items array
+            items = items.filter { !ids.contains($0.id) }
+            
+        } catch {
+            // Rollback on error
+            try? storage.rollbackTransaction()
+            throw BulkOperationError.deletionFailed(error.localizedDescription)
+        }
+    }
+    
+    func updateItemType(_ item: InventoryItem, newType: CollectionType) throws {
+        // Validate type change
+        if item.type != newType {
+            var updatedItem = item
+            updatedItem.type = newType
+            try validateItem(updatedItem, isUpdate: true)
+            
+            // Update item
+            if let index = items.firstIndex(where: { $0.id == item.id }) {
+                items[index] = updatedItem
+                try storage.save(items)
+            }
+        }
+    }
+    
+    func bulkUpdateType(items: [InventoryItem], newType: CollectionType) throws {
+        try storage.beginTransaction()
+        
+        for var item in items {
+            item.type = newType
+            try validateItem(item, isUpdate: true)
+        }
+        
+        try storage.commitTransaction()
+        try storage.save(self.items)
+    }
+    
+    func authorStats(name: String) -> (value: Decimal, count: Int) {
+        let authorBooks = items.filter { $0.creator == name }
+        let totalValue = authorBooks.compactMap { $0.price }.reduce(0, +)
+        return (value: totalValue, count: authorBooks.count)
+    }
+    
+    func itemsByAuthor(_ author: String) -> [InventoryItem] {
+        items.filter { $0.creator == author }
+            .sorted { $0.title < $1.title }
     }
 } 

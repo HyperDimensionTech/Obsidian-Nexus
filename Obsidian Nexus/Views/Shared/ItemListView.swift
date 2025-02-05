@@ -10,11 +10,10 @@ struct ItemListView: View {
                 ItemRow(item: item)
             }
         }
-        .onAppear {
-            // Ensure locations are loaded
-            if locationManager.locations.isEmpty {
-                locationManager.loadSampleData()
-            }
-        }
     }
+}
+
+#Preview {
+    ItemListView(items: [])
+        .environmentObject(PreviewData.shared.locationManager)
 } 

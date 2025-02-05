@@ -8,21 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var locationManager: LocationManager
     @StateObject private var inventoryViewModel: InventoryViewModel
     @StateObject private var navigationCoordinator = NavigationCoordinator()
     
     init() {
         let storage = StorageManager.shared
-        let locationManager = LocationManager()
+        let locationManager = LocationManager(storage: storage)
         _locationManager = StateObject(wrappedValue: locationManager)
-        
-        // Now parameter order doesn't matter
         _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(
-                storage: storage,
-                locationManager: locationManager
-            ))
+            InventoryViewModel(storage: storage, locationManager: locationManager))
     }
     
     var body: some View {
@@ -60,4 +55,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(PreviewData.shared.locationManager)
+        .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
 }

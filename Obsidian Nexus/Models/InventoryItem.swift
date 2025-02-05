@@ -23,6 +23,9 @@ struct InventoryItem: Identifiable, Codable {
     var purchaseDate: Date?
     var synopsis: String?
     
+    var customImageData: Data?  // For local images
+    var imageSource: ImageSource
+    
     var creator: String? {
         switch type {
         case .books, .manga, .comics:
@@ -39,6 +42,12 @@ struct InventoryItem: Identifiable, Codable {
             // Handle tools case
             return nil
         }
+    }
+    
+    enum ImageSource: String, Codable {
+        case googleBooks
+        case custom
+        case none
     }
     
     init(
@@ -60,7 +69,9 @@ struct InventoryItem: Identifiable, Codable {
         isbn: String? = nil,
         price: Decimal? = nil,
         purchaseDate: Date? = nil,
-        synopsis: String? = nil
+        synopsis: String? = nil,
+        customImageData: Data? = nil,
+        imageSource: ImageSource = .none
     ) {
         self.id = id
         self.title = title
@@ -81,5 +92,7 @@ struct InventoryItem: Identifiable, Codable {
         self.price = price
         self.purchaseDate = purchaseDate
         self.synopsis = synopsis
+        self.customImageData = customImageData
+        self.imageSource = imageSource
     }
 } 

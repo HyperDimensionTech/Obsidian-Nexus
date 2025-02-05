@@ -21,11 +21,23 @@ struct ManualEntryView: View {
     @State private var showingSuccess = false
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var imageData: Data? = nil
+    @State private var imageSource: InventoryItem.ImageSource = .none
     
     var body: some View {
         Form {
+            // Image Section first
+            Section("Image") {
+                ItemImagePicker(imageData: $imageData)
+                    .onChange(of: imageData) { _, newValue in
+                        imageSource = newValue != nil ? .custom : .none
+                    }
+            }
+            
+            // Basic Information
             Section("Basic Information") {
                 TextField("Title", text: $title)
+                    .textInputAutocapitalization(.words)
                 TextField("Series (Optional)", text: $series)
                 TextField("Volume (Optional)", text: $volume)
                     .keyboardType(.numberPad)
@@ -112,7 +124,9 @@ struct ManualEntryView: View {
             isbn: isbn.isEmpty ? nil : isbn,
             price: Decimal(price),
             purchaseDate: purchaseDate,
-            synopsis: synopsis.isEmpty ? nil : synopsis
+            synopsis: synopsis.isEmpty ? nil : synopsis,
+            customImageData: imageData,
+            imageSource: imageSource
         )
         
         do {

@@ -2,8 +2,8 @@ import Foundation
 
 class StorageManager {
     static let shared = StorageManager()
-    private let itemRepository: ItemRepository
-    private let locationRepository: LocationRepository
+    let itemRepository: ItemRepository
+    let locationRepository: LocationRepository
     
     init(itemRepository: ItemRepository = SQLiteItemRepository(),
          locationRepository: LocationRepository = SQLiteLocationRepository()) {
@@ -105,6 +105,11 @@ class StorageManager {
         try locationRepository.fetchChildren(of: parentId)
     }
     
+    func updateLocationName(_ locationId: UUID, newName: String) throws {
+        // Update the database
+        try locationRepository.updateName(locationId, newName: newName)
+    }
+    
     // MARK: - Database Management
     
     func clear() {
@@ -122,5 +127,22 @@ class StorageManager {
 
     func deleteItem(_ id: UUID) throws {
         try itemRepository.delete(id)
+    }
+
+    func updateLocationParent(_ locationId: UUID, newParentId: UUID) throws {
+        // Update the database
+        try locationRepository.updateParent(locationId, newParentId: newParentId)
+    }
+
+    func beginTransaction() throws {
+        try DatabaseManager.shared.beginTransaction()
+    }
+    
+    func commitTransaction() throws {
+        try DatabaseManager.shared.commitTransaction()
+    }
+    
+    func rollbackTransaction() throws {
+        try DatabaseManager.shared.rollbackTransaction()
     }
 } 

@@ -90,6 +90,6 @@ struct LocationsView: View {
 #Preview {
     NavigationView {
         LocationsView()
-            .environmentObject(LocationManager())
+            .environmentObject(PreviewData.shared.locationManager)
     }
 } 

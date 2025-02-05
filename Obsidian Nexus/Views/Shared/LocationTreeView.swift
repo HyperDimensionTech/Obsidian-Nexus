@@ -90,4 +90,20 @@ struct LocationNode: View {
             }
         }
     }
+}
+
+// Keep as shared hierarchical display
+// Used by both selection and management
+// Maintains consistent tree visualization 
+
+#Preview {
+    NavigationView {
+        LocationTreeView(
+            expandedLocations: .constant([]),
+            onLocationSelected: { _ in },
+            onEdit: { _ in },
+            onDelete: { _ in }
+        )
+        .environmentObject(PreviewData.shared.locationManager)
+    }
 } 

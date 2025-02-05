@@ -3,9 +3,57 @@ import Foundation
 class LocationManager: ObservableObject {
     @Published private(set) var locations: [UUID: StorageLocation] = [:]
     private weak var inventoryViewModel: InventoryViewModel?
+    private let storage: StorageManager
     
-    init(inventoryViewModel: InventoryViewModel? = nil) {
+    init(storage: StorageManager = .shared, inventoryViewModel: InventoryViewModel? = nil) {
+        self.storage = storage
         self.inventoryViewModel = inventoryViewModel
+        loadLocations()
+    }
+    
+    private func loadLocations() {
+        do {
+            // Verify database state first
+            if let repo = storage.locationRepository as? SQLiteLocationRepository {
+                repo.verifyDatabaseState()
+            }
+            
+            // Load and process locations
+            let loadedLocations = try storage.loadLocations()
+            var locationDict: [UUID: StorageLocation] = [:]
+            
+            // First pass: create all locations
+            for location in loadedLocations {
+                locationDict[location.id] = location
+            }
+            
+            // Second pass: build parent-child relationships
+            for location in loadedLocations where location.parentId != nil {
+                if var parent = locationDict[location.parentId!] {
+                    if parent.addChild(location.id) {
+                        locationDict[parent.id] = parent
+                    } else {
+                        print("Warning: Failed to add child \(location.id) to parent \(location.parentId!)")
+                    }
+                } else {
+                    print("Warning: Parent \(location.parentId!) not found for location \(location.id)")
+                }
+            }
+            
+            self.locations = locationDict
+            
+        } catch DatabaseManager.DatabaseError.invalidData {
+            print("Error: Invalid data in database")
+            self.locations = [:]
+        } catch {
+            print("Error loading locations: \(error.localizedDescription)")
+            self.locations = [:]
+        }
+    }
+    
+    // Add method to reload locations
+    func reloadLocations() {
+        loadLocations()
     }
     
     // MARK: - Location Management
@@ -13,6 +61,10 @@ class LocationManager: ObservableObject {
     func addLocation(_ location: StorageLocation) throws {
         try validateLocationAdd(location)
         
+        // Save to database first
+        try storage.save(location)
+        
+        // If database save succeeds, update in-memory state
         if let parentId = location.parentId {
             guard var parent = locations[parentId] else {
                 throw LocationError.parentNotFound
@@ -48,7 +100,10 @@ class LocationManager: ObservableObject {
         
         let oldLocation = locations[location.id]
         
-        // Handle parent changes
+        // Save to database first
+        try storage.update(location)
+        
+        // If database update succeeds, update in-memory state
         if oldLocation?.parentId != location.parentId {
             // Remove from old parent
             if let oldParentId = oldLocation?.parentId,
@@ -86,6 +141,10 @@ class LocationManager: ObservableObject {
             throw LocationError.invalidOperation("Cannot delete location that contains items")
         }
         
+        // Delete from database first
+        try storage.deleteLocation(locationId)
+        
+        // If database delete succeeds, update in-memory state
         // Remove from parent
         if let parentId = location.parentId {
             var parent = locations[parentId]
@@ -174,11 +233,17 @@ class LocationManager: ObservableObject {
     }
     
     func rootLocations() -> [StorageLocation] {
-        allLocations().filter { $0.parentId == nil }
+        allLocations()
+            .filter { $0.parentId == nil }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
     
     func loadSampleData() {
-        // Create main locations
+        // Check if we already have locations
+        if !locations.isEmpty {
+            return  // Don't load sample data if we already have locations
+        }
+        
         let livingRoom = StorageLocation(
             id: UUID(),
             name: "Living Room",
@@ -447,19 +512,38 @@ class LocationManager: ObservableObject {
     }
     
     func renameLocation(_ locationId: UUID, to newName: String) throws {
-        guard var location = locations[locationId] else {
-            throw LocationError.locationNotFound
-        }
+        print("Starting location rename process...")
         
         guard !newName.isEmpty else {
+            print("Error: Empty name provided")
             throw LocationError.invalidOperation("Location name cannot be empty")
         }
         
-        location.name = newName
-        locations[locationId] = location
+        guard var location = locations[locationId] else {
+            print("Error: Location \(locationId) not found in memory")
+            throw LocationError.locationNotFound
+        }
         
-        // Notify inventory view model of name change
-        inventoryViewModel?.handleLocationRename(locationId, newName: newName)
+        print("Current location state: \(location)")
+        
+        do {
+            // Update database first
+            try storage.updateLocationName(locationId, newName: newName)
+            print("Database update successful")
+            
+            // If database update succeeds, update in-memory state
+            location.name = newName
+            locations[locationId] = location
+            print("In-memory state updated")
+            
+            // Notify inventory view model of the change
+            inventoryViewModel?.handleLocationRename(locationId, newName: newName)
+            print("ViewModel notified of change")
+            
+        } catch {
+            print("Failed to rename location: \(error.localizedDescription)")
+            throw LocationError.invalidOperation("Failed to rename location: \(error.localizedDescription)")
+        }
     }
     
     private func validateLocationAdd(_ location: StorageLocation) throws {
@@ -492,6 +576,67 @@ class LocationManager: ObservableObject {
         let ancestors = ancestors(of: locationId).reversed()
         let locationName = location(withId: locationId)?.name ?? ""
         return (ancestors.map { $0.name } + [locationName]).joined(separator: " > ")
+    }
+    
+    /// Moves a location and all its contents to a new parent location
+    func migrateLocation(_ locationId: UUID, to newParentId: UUID) throws {
+        // Validate locations exist
+        guard var locationToMove = locations[locationId] else {
+            throw LocationError.locationNotFound
+        }
+        
+        guard let newParent = locations[newParentId] else {
+            throw LocationError.parentNotFound
+        }
+        
+        // Validate move is allowed
+        guard locationToMove.type.category != .room else {
+            throw LocationError.invalidOperation("Rooms cannot be moved to new parents")
+        }
+        
+        // Check for circular reference
+        if wouldCreateCircularReference(locationToMove, newParentId: newParentId) {
+            throw LocationError.circularReference
+        }
+        
+        // Validate new parent can accept this type
+        guard newParent.canAdd(childType: locationToMove.type) else {
+            throw LocationError.invalidOperation("\(newParent.name) cannot contain \(locationToMove.type.name)")
+        }
+        
+        do {
+            // Update database first
+            try storage.updateLocationParent(locationId, newParentId: newParentId)
+            
+            // If database update succeeds, update in-memory state
+            // Remove from old parent
+            if let oldParentId = locationToMove.parentId {
+                var oldParent = locations[oldParentId]
+                oldParent?.removeChild(locationId)
+                if let updatedOldParent = oldParent {
+                    locations[oldParentId] = updatedOldParent
+                }
+            }
+            
+            // Add to new parent
+            var updatedNewParent = newParent
+            guard updatedNewParent.addChild(locationId) else {
+                throw LocationError.addChildFailed
+            }
+            
+            // Update location's parent
+            locationToMove.parentId = newParentId
+            
+            // Save changes to in-memory state
+            locations[locationId] = locationToMove
+            locations[newParentId] = updatedNewParent
+            
+            // Notify inventory view model of the move
+            inventoryViewModel?.handleLocationMove(locationId, newParentId: newParentId)
+            
+        } catch {
+            throw LocationError.invalidOperation("Failed to update location: \(error.localizedDescription)")
+        }
     }
 }
 

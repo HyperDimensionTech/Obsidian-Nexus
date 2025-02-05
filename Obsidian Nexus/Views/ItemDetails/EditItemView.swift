@@ -5,128 +5,235 @@ struct EditItemView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
     
-    let item: InventoryItem
+    // Support both single and multiple items
+    let items: [InventoryItem]
     @State private var editedItem: InventoryItem
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var fieldsToUpdate: Set<String> = []
+    @State private var updateProgress: Double = 0
+    @State private var isUpdating = false
+    @State private var purchaseDate = Date()
+    @State private var price: String = ""
+    @State private var selectedType: CollectionType
     
+    // Add convenience initializer for single item
     init(item: InventoryItem) {
-        self.item = item
+        self.items = [item]
         _editedItem = State(initialValue: item)
+        _selectedType = State(initialValue: item.type)
+    }
+    
+    // Existing initializer for bulk editing
+    init(items: [InventoryItem]) {
+        self.items = items
+        _editedItem = State(initialValue: items.first ?? InventoryItem(title: "", type: .books))
+        _selectedType = State(initialValue: items.first?.type ?? .books)
+    }
+    
+    var isBulkEditing: Bool {
+        items.count > 1
     }
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section("Basic Details") {
-                    TextField("Title", text: $editedItem.title)
-                    
-                    if editedItem.type.isLiterature {
-                        TextField("Author", text: Binding(
-                            get: { editedItem.author ?? "" },
-                            set: { editedItem.author = $0.isEmpty ? nil : $0 }
-                        ))
-                    } else {
-                        TextField("Manufacturer", text: Binding(
-                            get: { editedItem.manufacturer ?? "" },
-                            set: { editedItem.manufacturer = $0.isEmpty ? nil : $0 }
-                        ))
+        Form {
+            if isBulkEditing {
+                Section("Bulk Editing \(items.count) Items") {
+                    Text("Only selected fields will be updated")
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Section("Image") {
+                Toggle("Update Image", isOn: Binding(
+                    get: { fieldsToUpdate.contains("image") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("image")
+                        } else {
+                            fieldsToUpdate.remove("image")
+                        }
                     }
-                    
+                ))
+                
+                if fieldsToUpdate.contains("image") {
+                    ItemImagePicker(imageData: $editedItem.customImageData)
+                }
+            }
+            
+            Section("Basic Information") {
+                Toggle("Update Type", isOn: Binding(
+                    get: { fieldsToUpdate.contains("type") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("type")
+                        } else {
+                            fieldsToUpdate.remove("type")
+                        }
+                    }
+                ))
+                
+                if fieldsToUpdate.contains("type") {
+                    Picker("Type", selection: $selectedType) {
+                        ForEach(CollectionType.allCases) { type in
+                            Text(type.name).tag(type)
+                        }
+                    }
+                }
+                
+                Toggle("Update Location", isOn: Binding(
+                    get: { fieldsToUpdate.contains("location") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("location")
+                        } else {
+                            fieldsToUpdate.remove("location")
+                        }
+                    }
+                ))
+                
+                if fieldsToUpdate.contains("location") {
+                    LocationPicker(selectedLocationId: $editedItem.locationId)
+                        .navigationTitle("Select Location")
+                }
+            }
+            
+            Section("Purchase Info") {
+                Toggle("Update Price", isOn: Binding(
+                    get: { fieldsToUpdate.contains("price") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("price")
+                        } else {
+                            fieldsToUpdate.remove("price")
+                        }
+                    }
+                ))
+                if fieldsToUpdate.contains("price") {
+                    TextField("Price", text: $price)
+                        .keyboardType(.decimalPad)
+                }
+                
+                Toggle("Update Purchase Date", isOn: Binding(
+                    get: { fieldsToUpdate.contains("purchaseDate") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("purchaseDate")
+                        } else {
+                            fieldsToUpdate.remove("purchaseDate")
+                        }
+                    }
+                ))
+                if fieldsToUpdate.contains("purchaseDate") {
+                    DatePicker("Purchase Date", 
+                             selection: $purchaseDate,
+                             displayedComponents: .date)
+                }
+            }
+            
+            Section("Condition") {
+                Toggle("Update Condition", isOn: Binding(
+                    get: { fieldsToUpdate.contains("condition") },
+                    set: { newValue in
+                        if newValue {
+                            fieldsToUpdate.insert("condition")
+                        } else {
+                            fieldsToUpdate.remove("condition")
+                        }
+                    }
+                ))
+                if fieldsToUpdate.contains("condition") {
                     Picker("Condition", selection: $editedItem.condition) {
                         ForEach(ItemCondition.allCases, id: \.self) { condition in
                             Text(condition.rawValue).tag(condition)
                         }
                     }
                 }
-                
-                Section("LOCATION") {
-                    ItemLocationPicker(selectedLocationId: $editedItem.locationId)
-                }
-                
-                Section("Dates") {
-                    DatePicker("Purchase Date", 
-                             selection: Binding(
-                                get: { editedItem.purchaseDate ?? Date() },
-                                set: { editedItem.purchaseDate = $0 }
-                             ),
-                             displayedComponents: .date)
-                    
-                    if editedItem.type.isLiterature {
-                        DatePicker("Original Publish Date",
-                                 selection: Binding(
-                                    get: { editedItem.originalPublishDate ?? Date() },
-                                    set: { editedItem.originalPublishDate = $0 }
-                                 ),
-                                 displayedComponents: .date)
-                    }
-                }
-                
-                Section("Additional Details") {
-                    TextField("Price", value: Binding(
-                        get: { editedItem.price ?? 0 },
-                        set: { editedItem.price = $0 }
-                    ), format: .currency(code: "USD"))
-                    
-                    TextField("Synopsis", text: Binding(
-                        get: { editedItem.synopsis ?? "" },
-                        set: { editedItem.synopsis = $0.isEmpty ? nil : $0 }
-                    ), axis: .vertical)
-                    .lineLimit(3...6)
+            }
+            
+            // Add other bulk-editable fields as needed...
+        }
+        .navigationTitle(isBulkEditing ? "Bulk Edit" : "Edit Item")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel") {
+                    dismiss()
                 }
             }
-            .navigationTitle("Edit Item")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Save") {
+                    saveChanges()
                 }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveChanges()
-                    }
-                }
+                .disabled(isBulkEditing ? fieldsToUpdate.isEmpty : false)
             }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(errorMessage)
-            }
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
     
     private func saveChanges() {
-        let updatedItem = InventoryItem(
-            title: editedItem.title,
-            type: editedItem.type,
-            series: editedItem.series,
-            volume: editedItem.volume,
-            condition: editedItem.condition,
-            locationId: editedItem.locationId,
-            notes: editedItem.notes,
-            id: editedItem.id,
-            dateAdded: editedItem.dateAdded,
-            barcode: editedItem.barcode,
-            thumbnailURL: editedItem.thumbnailURL,
-            author: editedItem.author,
-            manufacturer: editedItem.manufacturer,
-            originalPublishDate: editedItem.originalPublishDate,
-            publisher: editedItem.publisher,
-            isbn: editedItem.isbn,
-            price: editedItem.price,
-            purchaseDate: editedItem.purchaseDate,
-            synopsis: editedItem.synopsis
-        )
-        
         do {
-            try inventoryViewModel.updateItem(updatedItem)
+            let updates = InventoryItem(
+                title: editedItem.title,
+                type: fieldsToUpdate.contains("type") ? selectedType : editedItem.type,
+                condition: editedItem.condition,
+                locationId: fieldsToUpdate.contains("location") ? editedItem.locationId : nil,
+                price: fieldsToUpdate.contains("price") ? Decimal(string: price) : nil,
+                purchaseDate: fieldsToUpdate.contains("purchaseDate") ? purchaseDate : nil
+            )
+            
+            if isBulkEditing {
+                try inventoryViewModel.bulkUpdateItems(items: items, updates: updates, fields: fieldsToUpdate)
+            } else {
+                var updatedItem = editedItem
+                if fieldsToUpdate.contains("type") {
+                    updatedItem.type = selectedType
+                }
+                if fieldsToUpdate.contains("price") {
+                    updatedItem.price = Decimal(string: price)
+                }
+                if fieldsToUpdate.contains("purchaseDate") {
+                    updatedItem.purchaseDate = purchaseDate
+                }
+                if fieldsToUpdate.contains("location") {
+                    updatedItem.locationId = editedItem.locationId
+                }
+                if fieldsToUpdate.contains("condition") {
+                    updatedItem.condition = editedItem.condition
+                }
+                if fieldsToUpdate.contains("image") {
+                    updatedItem.customImageData = editedItem.customImageData
+                    updatedItem.imageSource = editedItem.customImageData != nil ? .custom : .none
+                }
+                try inventoryViewModel.updateItem(updatedItem)
+            }
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
             showingError = true
+        }
+    }
+    
+    private func updateProgressView() -> some View {
+        VStack {
+            ProgressView(value: updateProgress)
+            Text("\(Int(updateProgress * 100))% Complete")
+        }
+        .padding()
+    }
+}
+
+extension Set {
+    mutating func toggle(_ element: Element) {
+        if contains(element) {
+            remove(element)
+        } else {
+            insert(element)
         }
     }
 } 

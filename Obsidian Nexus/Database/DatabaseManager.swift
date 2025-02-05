@@ -70,9 +70,17 @@ class DatabaseManager {
             return
         }
         
-        // Enable foreign keys and WAL mode for better performance and reliability
+        // Enable foreign keys
         executeStatement("PRAGMA foreign_keys = ON;")
-        executeStatement("PRAGMA journal_mode = WAL;")
+        
+        // Set WAL mode with proper error handling
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(connection, "PRAGMA journal_mode = WAL;", -1, &statement, nil) == SQLITE_OK {
+            if sqlite3_step(statement) == SQLITE_ROW {
+                // WAL mode set successfully
+                sqlite3_finalize(statement)
+            }
+        }
         
         if needsSetup {
             print("Creating new database...")
@@ -125,7 +133,7 @@ class DatabaseManager {
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 deleted_at INTEGER,
-                FOREIGN KEY (location_id) REFERENCES locations (id)
+                FOREIGN KEY (location_id) REFERENCES locations(id)
             );
         """
         
@@ -229,43 +237,36 @@ class DatabaseManager {
     func executeStatement(_ sql: String, parameters: [Any] = []) {
         var statement: OpaquePointer?
         
-        print("Executing SQL: \(sql)") // Debug
-        
-        if sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK {
-            bindParameters(statement: statement, parameters: parameters)
-            
-            if sqlite3_step(statement) != SQLITE_DONE {
-                print("Error executing statement: \(sql)")
-                if let errorMessage = String(validatingUTF8: sqlite3_errmsg(connection)) {
-                    print("SQLite error: \(errorMessage)")
-                }
-            }
-        } else {
-            if let errorMessage = String(validatingUTF8: sqlite3_errmsg(connection)) {
-                print("Prepare failed: \(errorMessage)")
-            }
+        guard sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK else {
+            let error = String(cString: sqlite3_errmsg(connection))
+            print("Error preparing statement: \(error)")
+            return
         }
         
-        sqlite3_finalize(statement)
-    }
-    
-    private func bindParameters(statement: OpaquePointer?, parameters: [Any]) {
+        defer {
+            sqlite3_finalize(statement)
+        }
+        
         for (index, param) in parameters.enumerated() {
             let idx = Int32(index + 1)
+            
             switch param {
             case let text as String:
-                sqlite3_bind_text(statement, idx, text.cString(using: .utf8), -1, nil)
+                sqlite3_bind_text(statement, idx, (text as NSString).utf8String, -1, nil)
             case let int as Int:
                 sqlite3_bind_int64(statement, idx, Int64(int))
-            case let double as Double:
-                sqlite3_bind_double(statement, idx, double)
-            case let bool as Bool:
-                sqlite3_bind_int(statement, idx, bool ? 1 : 0)
             case is NSNull:
                 sqlite3_bind_null(statement, idx)
             default:
                 print("Unsupported parameter type: \(type(of: param))")
+                continue
             }
+        }
+        
+        if sqlite3_step(statement) != SQLITE_DONE {
+            let error = String(cString: sqlite3_errmsg(connection))
+            print("Error executing statement: \(sql)")
+            print("SQLite error: \(error)")
         }
     }
     

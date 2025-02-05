@@ -49,4 +49,13 @@ struct LocationSettingsView: View {
             Button("Cancel", role: .cancel) { }
         }
     }
+}
+
+#Preview {
+    NavigationView {
+        LocationSettingsView()
+            .environmentObject(PreviewData.shared.locationManager)
+            .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
+            .environmentObject(NavigationCoordinator())
+    }
 } 

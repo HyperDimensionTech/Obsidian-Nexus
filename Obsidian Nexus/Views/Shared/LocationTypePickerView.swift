@@ -49,6 +49,6 @@ struct LocationTypePickerView: View {
             selectedType: .constant(.room),
             parentLocation: nil
         )
-        .environmentObject(LocationManager())
+        .environmentObject(PreviewData.shared.locationManager)
     }
 } 

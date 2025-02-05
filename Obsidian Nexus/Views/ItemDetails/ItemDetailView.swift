@@ -10,6 +10,7 @@ struct ItemDetailView: View {
     @State private var showingDeleteAlert = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showingImagePicker = false
     
     let item: InventoryItem
     
@@ -20,27 +21,53 @@ struct ItemDetailView: View {
     
     var body: some View {
         List {
-            if item.type.isLiterature {
-                Section {
-                    HStack {
-                        Spacer()
-                        if let url = thumbnailURL {
-                            AsyncImage(url: url) { image in
-                                image
+            Section {
+                HStack {
+                    Spacer()
+                    ZStack(alignment: .bottomTrailing) {
+                        VStack {
+                            if item.imageSource == .custom, let imageData = item.customImageData {
+                                Image(uiImage: UIImage(data: imageData)!)
                                     .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            } placeholder: {
-                                ProgressView()
-                            }
-                            .frame(height: 200)
-                        } else {
-                            Image(systemName: "book")
-                                .font(.system(size: 100))
-                                .foregroundColor(.gray)
+                                    .scaledToFit()
+                                    .frame(height: 200)
+                            } else if let url = thumbnailURL {
+                                AsyncImage(url: url) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                } placeholder: {
+                                    ProgressView()
+                                }
                                 .frame(height: 200)
+                            } else {
+                                Image(systemName: "book")
+                                    .font(.system(size: 100))
+                                    .foregroundColor(.gray)
+                                    .frame(height: 200)
+                            }
                         }
-                        Spacer()
+                        .onTapGesture {
+                            showingImagePicker = true
+                        }
+                        
+                        Button {
+                            showingEditSheet = true
+                        } label: {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.accentColor)
+                                .background(Color(UIColor.systemBackground))
+                                .clipShape(Circle())
+                                .shadow(radius: 1)
+                                .offset(x: 70, y: -5)
+                        }
+                        .zIndex(1)
                     }
+                    .frame(maxWidth: .infinity)
+                    .background(Color(UIColor.systemBackground))
+                    .cornerRadius(8)
+                    Spacer()
                 }
             }
             
@@ -111,9 +138,11 @@ struct ItemDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            EditItemView(item: item)
-                .environmentObject(inventoryViewModel)
-                .environmentObject(locationManager)
+            NavigationStack {
+                EditItemView(item: item)
+                    .environmentObject(inventoryViewModel)
+                    .environmentObject(locationManager)
+            }
         }
         .alert("Delete Item", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {

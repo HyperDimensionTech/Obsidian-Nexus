@@ -1,15 +1,17 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var locationManager: LocationManager
     @StateObject private var inventoryViewModel: InventoryViewModel
     @State private var showingAddItem = false
     @State private var selectedTab: Tab = .home
     
     init() {
-        let locationManager = LocationManager()
+        let storage = StorageManager.shared
+        let locationManager = LocationManager(storage: storage)
         _locationManager = StateObject(wrappedValue: locationManager)
-        _inventoryViewModel = StateObject(wrappedValue: InventoryViewModel(locationManager: locationManager))
+        _inventoryViewModel = StateObject(wrappedValue: 
+            InventoryViewModel(storage: storage, locationManager: locationManager))
     }
     
     enum Tab {
@@ -71,4 +73,6 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environmentObject(PreviewData.shared.locationManager)
+        .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
 } 

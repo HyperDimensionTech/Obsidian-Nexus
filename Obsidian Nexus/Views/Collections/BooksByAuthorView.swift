@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SeriesDetailView: View {
+struct BooksByAuthorView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
     @State private var selectedItems: Set<UUID> = []
@@ -10,21 +10,21 @@ struct SeriesDetailView: View {
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
     
-    let series: String
+    let author: String
     
-    var seriesItems: [InventoryItem] {
-        inventoryViewModel.itemsInSeries(series)
+    var authorItems: [InventoryItem] {
+        inventoryViewModel.itemsByAuthor(author)
     }
     
-    var stats: (value: Decimal, count: Int, total: Int?) {
-        inventoryViewModel.seriesStats(name: series)
+    var stats: (value: Decimal, count: Int) {
+        inventoryViewModel.authorStats(name: author)
     }
     
     var body: some View {
         List(selection: $selectedItems) {
             Section {
                 HStack {
-                    Text("Series Value")
+                    Text("Author Value")
                         .font(.headline)
                     Spacer()
                     Text(stats.value.formatted(.currency(code: "USD")))
@@ -32,7 +32,7 @@ struct SeriesDetailView: View {
                 }
                 
                 HStack {
-                    Text("Volumes")
+                    Text("Books")
                         .font(.headline)
                     Spacer()
                     Text("\(stats.count)")
@@ -40,20 +40,16 @@ struct SeriesDetailView: View {
                 }
             }
             
-            Section("Volumes") {
-                ForEach(seriesItems) { item in
+            Section("Books") {
+                ForEach(authorItems) { item in
                     NavigationLink {
                         ItemDetailView(item: item)
                     } label: {
                         HStack {
-                            Text("Volume \(item.volume ?? 0)")
+                            Text(item.title)
                             Spacer()
                             if let locationId = item.locationId {
                                 Text(locationManager.breadcrumbPath(for: locationId))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("No Location")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -62,7 +58,7 @@ struct SeriesDetailView: View {
                 }
             }
         }
-        .navigationTitle(series)
+        .navigationTitle(author)
         .environment(\.editMode, $isEditMode)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -78,7 +74,9 @@ struct SeriesDetailView: View {
                         .disabled(selectedItems.isEmpty)
                         
                         Button("Select All") {
-                            selectedItems = Set(seriesItems.map { $0.id })
+                            selectedItems = Set(
+                                authorItems.map { $0.id }
+                            )
                         }
                         
                         Button("Delete Selected", role: .destructive) {
@@ -111,7 +109,7 @@ struct SeriesDetailView: View {
         }
         .sheet(isPresented: $showingBulkEditSheet) {
             NavigationStack {
-                EditItemView(items: inventoryViewModel.items.filter { selectedItems.contains($0.id) })
+                EditItemView(items: authorItems)
                     .environmentObject(inventoryViewModel)
                     .environmentObject(locationManager)
             }
@@ -127,13 +125,5 @@ struct SeriesDetailView: View {
             deleteErrorMessage = error.localizedDescription
             showingDeleteError = true
         }
-    }
-}
-
-#Preview {
-    NavigationView {
-        SeriesDetailView(series: "Sample Series")
-            .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
-            .environmentObject(PreviewData.shared.locationManager)
     }
 } 

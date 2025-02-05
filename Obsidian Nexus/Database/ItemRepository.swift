@@ -25,124 +25,219 @@ class SQLiteItemRepository: ItemRepository {
     }
     
     func save(_ item: InventoryItem) throws {
-        print("Attempting to save item: \(item.title)") // Debug
+        print("Saving item \(item.id) with location \(String(describing: item.locationId))")
+        
+        // First check if item already exists
+        let checkSql = "SELECT COUNT(*) FROM items WHERE id = ?;"
+        var checkStatement: OpaquePointer?
+        var exists = false
+        
+        if sqlite3_prepare_v2(db.connection, checkSql, -1, &checkStatement, nil) == SQLITE_OK {
+            sqlite3_bind_text(checkStatement, 1, (item.id.uuidString as NSString).utf8String, -1, nil)
+            
+            if sqlite3_step(checkStatement) == SQLITE_ROW {
+                exists = sqlite3_column_int64(checkStatement, 0) > 0
+            }
+            
+            sqlite3_finalize(checkStatement)
+        }
+        
+        // If item exists, update it instead
+        if exists {
+            print("Item already exists, updating instead")
+            try update(item)
+            return
+        }
         
         let sql = """
             INSERT INTO items (
                 id, title, type, series, volume, condition, location_id,
                 notes, date_added, barcode, thumbnail_url, author,
                 manufacturer, original_publish_date, publisher, isbn,
-                price, purchase_date, synopsis, created_at, updated_at,
-                deleted_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL);
+                price, purchase_date, synopsis, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         
-        let timestamp = Int(Date().timeIntervalSince1970)
-        let parameters: [Any] = [
-            item.id.uuidString,  // Make sure ID is first parameter
-            item.title,
-            item.type.rawValue,
-            item.series as Any,
-            item.volume as Any,
-            item.condition.rawValue,
-            item.locationId?.uuidString as Any,
-            item.notes as Any,
-            Int(item.dateAdded.timeIntervalSince1970),
-            item.barcode as Any,
-            item.thumbnailURL?.absoluteString as Any,
-            item.author as Any,
-            item.manufacturer as Any,
-            item.originalPublishDate.map { Int($0.timeIntervalSince1970) } as Any,
-            item.publisher as Any,
-            item.isbn as Any,
-            (item.price as NSDecimalNumber?)?.doubleValue as Any,
-            item.purchaseDate.map { Int($0.timeIntervalSince1970) } as Any,
-            item.synopsis as Any,
-            timestamp,
-            timestamp
-        ]
+        try db.beginTransaction()
         
-        print("Parameters: \(parameters)") // Debug
-        
-        // Debug parameter binding
-        for (index, param) in parameters.enumerated() {
-            print("Binding parameter \(index + 1): \(param)")
-        }
-        
-        var statement: OpaquePointer?
-        guard sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK else {
-            let error = String(cString: sqlite3_errmsg(db.connection))
-            print("Prepare failed: \(error)") // Debug
-            throw DatabaseManager.DatabaseError.prepareFailed(error)
-        }
-        
-        // Bind parameters
-        for (index, parameter) in parameters.enumerated() {
-            let parameterIndex = Int32(index + 1)
-            switch parameter {
-            case let value as String:
-                sqlite3_bind_text(statement, parameterIndex, (value as NSString).utf8String, -1, nil)
-            case let value as Int:
-                sqlite3_bind_int64(statement, parameterIndex, Int64(value))
-            case let value as Double:
-                sqlite3_bind_double(statement, parameterIndex, value)
-            case is NSNull:
-                sqlite3_bind_null(statement, parameterIndex)
-            default:
-                if let value = parameter as? CustomStringConvertible {
-                    sqlite3_bind_text(statement, parameterIndex, (value.description as NSString).utf8String, -1, nil)
-                } else {
-                    sqlite3_bind_null(statement, parameterIndex)
+        do {
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK else {
+                let error = String(cString: sqlite3_errmsg(db.connection))
+                print("Failed to prepare item save: \(error)")
+                throw DatabaseManager.DatabaseError.prepareFailed(error)
+            }
+            
+            defer {
+                sqlite3_finalize(statement)
+            }
+            
+            let timestamp = Int(Date().timeIntervalSince1970)
+            
+            // Bind parameters with explicit location handling
+            let parameters: [(Any?, Int32)] = [
+                (item.id.uuidString, 1),
+                (item.title, 2),
+                (item.type.rawValue, 3),
+                (item.series, 4),
+                (item.volume, 5),
+                (item.condition.rawValue, 6),
+                (item.locationId?.uuidString, 7),
+                (item.notes, 8),
+                (Int(item.dateAdded.timeIntervalSince1970), 9),
+                (item.barcode, 10),
+                (item.thumbnailURL?.absoluteString, 11),
+                (item.author, 12),
+                (item.manufacturer, 13),
+                (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 14),
+                (item.publisher, 15),
+                (item.isbn, 16),
+                ((item.price as NSDecimalNumber?)?.doubleValue, 17),
+                (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 18),
+                (item.synopsis, 19),
+                (timestamp, 20),
+                (timestamp, 21)
+            ]
+            
+            // Bind each parameter
+            for (value, index) in parameters {
+                switch value {
+                case let text as String:
+                    sqlite3_bind_text(statement, index, (text as NSString).utf8String, -1, nil)
+                case let int as Int:
+                    sqlite3_bind_int64(statement, index, Int64(int))
+                case let double as Double:
+                    sqlite3_bind_double(statement, index, double)
+                case .none:
+                    sqlite3_bind_null(statement, index)
+                default:
+                    if let stringValue = value as? CustomStringConvertible {
+                        sqlite3_bind_text(statement, index, (stringValue.description as NSString).utf8String, -1, nil)
+                    } else {
+                        sqlite3_bind_null(statement, index)
+                    }
                 }
             }
+            
+            if sqlite3_step(statement) != SQLITE_DONE {
+                let error = String(cString: sqlite3_errmsg(db.connection))
+                print("Failed to save item: \(error)")
+                try db.rollbackTransaction()
+                throw DatabaseManager.DatabaseError.insertFailed
+            }
+            
+            try db.commitTransaction()
+            print("Successfully saved item with location")
+            
+        } catch {
+            try? db.rollbackTransaction()
+            print("Error saving item: \(error.localizedDescription)")
+            throw error
         }
-        
-        // Execute
-        if sqlite3_step(statement) != SQLITE_DONE {
-            let error = String(cString: sqlite3_errmsg(db.connection))
-            print("Insert failed: \(error)") // Debug
-            throw DatabaseManager.DatabaseError.insertFailed
-        }
-        
-        sqlite3_finalize(statement)
     }
     
     func update(_ item: InventoryItem) throws {
         let sql = """
             UPDATE items SET
-                title = ?, type = ?, series = ?, volume = ?,
-                condition = ?, location_id = ?, notes = ?,
-                barcode = ?, thumbnail_url = ?, author = ?,
-                manufacturer = ?, original_publish_date = ?,
-                publisher = ?, isbn = ?, price = ?,
-                purchase_date = ?, synopsis = ?,
+                title = ?, 
+                type = ?, 
+                series = ?, 
+                volume = ?,
+                condition = ?, 
+                location_id = ?, 
+                notes = ?,
+                barcode = ?, 
+                thumbnail_url = ?, 
+                author = ?,
+                manufacturer = ?, 
+                original_publish_date = ?,
+                publisher = ?, 
+                isbn = ?, 
+                price = ?,
+                purchase_date = ?, 
+                synopsis = ?,
                 updated_at = ?
-            WHERE id = ?;
+            WHERE id = ? AND deleted_at IS NULL;
         """
         
-        let parameters: [Any] = [
-            item.title,
-            item.type.rawValue,
-            item.series as Any,
-            item.volume as Any,
-            item.condition.rawValue,
-            item.locationId?.uuidString as Any,
-            item.notes as Any,
-            item.barcode as Any,
-            item.thumbnailURL?.absoluteString as Any,
-            item.author as Any,
-            item.manufacturer as Any,
-            item.originalPublishDate.map { Int($0.timeIntervalSince1970) } as Any,
-            item.publisher as Any,
-            item.isbn as Any,
-            (item.price as NSDecimalNumber?)?.doubleValue as Any,
-            item.purchaseDate.map { Int($0.timeIntervalSince1970) } as Any,
-            item.synopsis as Any,
-            Int(Date().timeIntervalSince1970),
-            item.id.uuidString
-        ]
+        let timestamp = Int(Date().timeIntervalSince1970)
+        print("Updating item \(item.id) with location \(String(describing: item.locationId))")
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.beginTransaction()
+        
+        do {
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK else {
+                let error = String(cString: sqlite3_errmsg(db.connection))
+                print("Failed to prepare item update: \(error)")
+                throw DatabaseManager.DatabaseError.prepareFailed(error)
+            }
+            
+            defer {
+                sqlite3_finalize(statement)
+            }
+            
+            // Bind all parameters
+            let parameters: [(Any?, Int32)] = [
+                (item.title, 1),
+                (item.type.rawValue, 2),
+                (item.series, 3),
+                (item.volume, 4),
+                (item.condition.rawValue, 5),
+                (item.locationId?.uuidString, 6),
+                (item.notes, 7),
+                (item.barcode, 8),
+                (item.thumbnailURL?.absoluteString, 9),
+                (item.author, 10),
+                (item.manufacturer, 11),
+                (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 12),
+                (item.publisher, 13),
+                (item.isbn, 14),
+                ((item.price as NSDecimalNumber?)?.doubleValue, 15),
+                (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 16),
+                (item.synopsis, 17),
+                (timestamp, 18),
+                (item.id.uuidString, 19)
+            ]
+            
+            // Bind each parameter with proper type handling
+            for (value, index) in parameters {
+                switch value {
+                case let text as String:
+                    sqlite3_bind_text(statement, index, (text as NSString).utf8String, -1, nil)
+                case let int as Int:
+                    sqlite3_bind_int64(statement, index, Int64(int))
+                case let double as Double:
+                    sqlite3_bind_double(statement, index, double)
+                case .none:
+                    sqlite3_bind_null(statement, index)
+                default:
+                    if let stringValue = value as? CustomStringConvertible {
+                        sqlite3_bind_text(statement, index, (stringValue.description as NSString).utf8String, -1, nil)
+                    } else {
+                        sqlite3_bind_null(statement, index)
+                    }
+                }
+            }
+            
+            if sqlite3_step(statement) != SQLITE_DONE {
+                let error = String(cString: sqlite3_errmsg(db.connection))
+                print("Failed to execute item update: \(error)")
+                try db.rollbackTransaction()
+                throw DatabaseManager.DatabaseError.updateFailed
+            }
+            
+            let rowsAffected = sqlite3_changes(db.connection)
+            print("Rows affected by item update: \(rowsAffected)")
+            
+            try db.commitTransaction()
+            print("Successfully updated item with location")
+            
+        } catch {
+            try? db.rollbackTransaction()
+            print("Error updating item: \(error.localizedDescription)")
+            throw error
+        }
     }
     
     func delete(_ id: UUID) throws {
@@ -398,5 +493,34 @@ class SQLiteItemRepository: ItemRepository {
             ORDER BY deleted_at DESC
         """
         return try fetchItems(sql)
+    }
+    
+    // Add a method to verify item-location relationship
+    func verifyItemLocation(_ itemId: UUID) {
+        let sql = """
+            SELECT i.id, i.title, i.location_id, l.id, l.name 
+            FROM items i 
+            LEFT JOIN locations l ON i.location_id = l.id 
+            WHERE i.id = ? AND i.deleted_at IS NULL;
+        """
+        
+        var statement: OpaquePointer?
+        
+        if sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_text(statement, 1, (itemId.uuidString as NSString).utf8String, -1, nil)
+            
+            if sqlite3_step(statement) == SQLITE_ROW {
+                let itemTitle = sqlite3_column_text(statement, 1).map { String(cString: $0) } ?? "unknown"
+                let locationId = sqlite3_column_text(statement, 2).map { String(cString: $0) }
+                let locationName = sqlite3_column_text(statement, 4).map { String(cString: $0) }
+                
+                print("Item Location Verification:")
+                print("Item: \(itemTitle)")
+                print("Location ID: \(locationId ?? "nil")")
+                print("Location Name: \(locationName ?? "nil")")
+            }
+            
+            sqlite3_finalize(statement)
+        }
     }
 } 
