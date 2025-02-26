@@ -37,7 +37,20 @@ struct ItemImagePicker: View {
             Task {
                 if let data = try? await newValue?.loadTransferable(type: Data.self) {
                     await MainActor.run {
-                        self.imageData = data
+                        // Compress image before storing
+                        if let uiImage = UIImage(data: data) {
+                            let maxSize: CGFloat = 1024 // Max dimension
+                            let scale = min(maxSize/uiImage.size.width, maxSize/uiImage.size.height, 1.0)
+                            let newSize = CGSize(width: uiImage.size.width * scale, 
+                                               height: uiImage.size.height * scale)
+                            
+                            let renderer = UIGraphicsImageRenderer(size: newSize)
+                            let compressedImage = renderer.image { context in
+                                uiImage.draw(in: CGRect(origin: .zero, size: newSize))
+                            }
+                            
+                            self.imageData = compressedImage.jpegData(compressionQuality: 0.7)
+                        }
                     }
                 }
             }

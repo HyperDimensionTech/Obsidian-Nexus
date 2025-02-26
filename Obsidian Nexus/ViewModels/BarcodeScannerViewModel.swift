@@ -3,11 +3,11 @@ import AVFoundation
 import Combine
 
 @MainActor
-class BarcodeScannerViewModel: ObservableObject {
-    @Published private(set) var scannedCode: String?
+class BarcodeScannerViewModel: NSObject, ObservableObject {
+    @Published var scannedCode: String?
     @Published private(set) var isAuthorized = false
-    @Published private(set) var error: String?
-    @Published private(set) var isScanning = false
+    @Published var error: String?
+    @Published var isScanning = false
     
     @Published private(set) var scanHistory: [String] = []
     @Published private(set) var torchEnabled = false
@@ -25,6 +25,7 @@ class BarcodeScannerViewModel: ObservableObject {
     
     init(scannerService: BarcodeScannerService = BarcodeScannerService()) {
         self.scannerService = scannerService
+        super.init()
         setupBindings()
     }
     

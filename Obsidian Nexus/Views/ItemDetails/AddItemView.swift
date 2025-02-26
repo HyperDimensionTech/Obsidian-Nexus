@@ -26,6 +26,14 @@ struct AddItemView: View {
     @State private var isSearching = false
     @State private var showingManualEntry = false
     @State private var showingScanner = false
+    @State private var continuousEntryMode = false
+    @State private var addedCount = 0
+    @State private var failedScans: [(code: String, reason: String)] = []
+    @State private var showingResults = false
+    @State private var lastAddedTitle: String?
+    @State private var showingAddConfirmation = false
+    @FocusState private var isSearchFieldFocused: Bool
+    @State private var successfulScans: [(title: String, isbn: String?)] = []
     
     var sortedResults: [GoogleBook] {
         searchResults.sorted { book1, book2 in
@@ -50,34 +58,73 @@ struct AddItemView: View {
             .pickerStyle(.segmented)
             .padding()
             
-            // Search Bar
+            // Search Bar with Continuous Mode Toggle
             HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                TextField("Search by title or ISBN", text: $searchQuery)
+                TextField("Search by title, author, or ISBN...", text: $searchQuery)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.search)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .focused($isSearchFieldFocused)
                     .onSubmit {
-                        performSearch()
-                    }
-                    .onChange(of: searchQuery) { oldValue, newValue in
-                        print("DEBUG: Search query changed to: \(newValue)")
+                        if continuousEntryMode {
+                            handleContinuousSearch()
+                        } else {
+                            performSearch()
+                        }
                     }
                 
-                if isSearching {
-                    ProgressView()
-                        .padding(.horizontal)
-                } else {
+                if searchQuery.isEmpty {
                     Button(action: { showingScanner = true }) {
                         Image(systemName: "barcode.viewfinder")
-                            .foregroundColor(.accentColor)
+                            .font(.system(size: 20))
                     }
-                    .padding(.horizontal, 8)
+                } else {
+                    Button(action: { searchQuery = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
                 }
             }
             .padding(.horizontal)
+            
+            // Continuous Mode Toggle
+            Toggle("Continuous Entry Mode", isOn: Binding(
+                get: { continuousEntryMode },
+                set: { newValue in 
+                    continuousEntryMode = newValue
+                    if newValue {
+                        // Focus the search field when continuous mode is enabled
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isSearchFieldFocused = true
+                        }
+                    }
+                }
+            ))
+            .toggleStyle(.button)
+            .tint(.blue)
+            .padding(.horizontal)
+            
+            if continuousEntryMode {
+                HStack {
+                    Text("Added: \(addedCount)")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button("Review Results") {
+                        showingResults = true
+                    }
+                    .disabled(addedCount == 0)
+                }
+                .padding(.horizontal)
+                
+                if let title = lastAddedTitle {
+                    Text("Last added: \(title)")
+                        .foregroundColor(.green)
+                        .padding(.horizontal)
+                        .transition(.opacity)
+                }
+            }
             
             // Manual Entry Button
             Button {
@@ -135,6 +182,13 @@ struct AddItemView: View {
                 showingScanner = false
                 performSearch()
             }
+        }
+        .sheet(isPresented: $showingResults) {
+            ScanResultsView(
+                scannedCount: addedCount,
+                successfulScans: successfulScans,
+                failedScans: failedScans
+            )
         }
     }
     
@@ -318,6 +372,74 @@ struct AddItemView: View {
         }
         
         return nil
+    }
+    
+    private func handleContinuousSearch() {
+        guard !searchQuery.isEmpty else { return }
+        
+        // Check if it's an ISBN
+        let query = searchQuery.trimmingCharacters(in: .whitespaces)
+        let isbnQuery = query.replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
+        
+        if isbnQuery.count == 10 || isbnQuery.count == 13 {
+            isSearching = true
+            
+            // Search for the ISBN
+            googleBooksService.fetchBooks(query: "isbn:\(isbnQuery)") { result in
+                DispatchQueue.main.async {
+                    self.isSearching = false
+                    
+                    switch result {
+                    case .success(let books):
+                        if let book = books.first {
+                            do {
+                                let newItem = self.inventoryViewModel.createItemFromGoogleBook(book)
+                                try self.inventoryViewModel.addItem(newItem)
+                                self.addedCount += 1
+                                self.lastAddedTitle = book.volumeInfo.title
+                                self.successfulScans.append((
+                                    title: book.volumeInfo.title,
+                                    isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+                                ))
+                                
+                                // Clear search field for next entry
+                                self.searchQuery = ""
+                                
+                                // Show confirmation briefly
+                                withAnimation {
+                                    self.showingAddConfirmation = true
+                                }
+                                
+                                // Clear confirmation after delay
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                    withAnimation {
+                                        self.showingAddConfirmation = false
+                                        self.lastAddedTitle = nil
+                                    }
+                                }
+                                
+                                // Re-focus the search field for the next scan
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    self.isSearchFieldFocused = true
+                                }
+                            } catch {
+                                self.failedScans.append((isbnQuery, error.localizedDescription))
+                                self.searchQuery = ""
+                            }
+                        } else {
+                            self.failedScans.append((isbnQuery, "No book found"))
+                            self.searchQuery = ""
+                        }
+                    case .failure(let error):
+                        self.failedScans.append((isbnQuery, error.localizedDescription))
+                        self.searchQuery = ""
+                    }
+                }
+            }
+        } else {
+            // Not an ISBN, perform regular search
+            performSearch()
+        }
     }
 }
 

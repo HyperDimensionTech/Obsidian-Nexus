@@ -73,6 +73,16 @@ class StorageManager {
         try itemRepository.emptyTrash()
     }
     
+    func saveBatch(_ items: [InventoryItem]) throws {
+        do {
+            try itemRepository.saveBatch(items)
+        } catch let error as DatabaseManager.DatabaseError {
+            throw error
+        } catch {
+            throw DatabaseManager.DatabaseError.insertFailed
+        }
+    }
+    
     // MARK: - Location Operations
     
     func save(_ location: StorageLocation) throws {
@@ -144,5 +154,9 @@ class StorageManager {
     
     func rollbackTransaction() throws {
         try DatabaseManager.shared.rollbackTransaction()
+    }
+
+    func classifyItem(title: String, publisher: String?, description: String?) -> CollectionType {
+        return itemRepository.classifyItem(title: title, publisher: publisher, description: description)
     }
 } 

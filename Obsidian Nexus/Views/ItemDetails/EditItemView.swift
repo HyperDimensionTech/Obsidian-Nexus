@@ -184,7 +184,10 @@ struct EditItemView: View {
                 condition: editedItem.condition,
                 locationId: fieldsToUpdate.contains("location") ? editedItem.locationId : nil,
                 price: fieldsToUpdate.contains("price") ? Decimal(string: price) : nil,
-                purchaseDate: fieldsToUpdate.contains("purchaseDate") ? purchaseDate : nil
+                purchaseDate: fieldsToUpdate.contains("purchaseDate") ? purchaseDate : nil,
+                customImageData: fieldsToUpdate.contains("image") ? editedItem.customImageData : nil,
+                imageSource: fieldsToUpdate.contains("image") ? 
+                    (editedItem.customImageData != nil ? .custom : .none) : .none
             )
             
             if isBulkEditing {
@@ -207,6 +210,9 @@ struct EditItemView: View {
                     updatedItem.condition = editedItem.condition
                 }
                 if fieldsToUpdate.contains("image") {
+                    print("Image update requested")
+                    print("Has image data: \(editedItem.customImageData != nil)")
+                    print("Image source: \(editedItem.imageSource)")
                     updatedItem.customImageData = editedItem.customImageData
                     updatedItem.imageSource = editedItem.customImageData != nil ? .custom : .none
                 }

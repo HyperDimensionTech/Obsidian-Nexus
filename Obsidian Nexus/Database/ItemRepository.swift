@@ -1,6 +1,9 @@
 import Foundation
 import SQLite3
 
+// Just use the type directly since we're in the same module
+typealias ImageSource = InventoryItem.ImageSource
+
 protocol ItemRepository {
     func save(_ item: InventoryItem) throws
     func update(_ item: InventoryItem) throws
@@ -15,6 +18,11 @@ protocol ItemRepository {
     func restoreItem(_ id: UUID) throws
     func emptyTrash() throws
     func getTrashCount() throws -> Int
+    func saveBatch(_ items: [InventoryItem]) throws
+    
+    // Add new methods
+    func getClassificationRules() -> [MediaTypeRule]
+    func classifyItem(title: String, publisher: String?, description: String?) -> CollectionType
 }
 
 class SQLiteItemRepository: ItemRepository {
@@ -54,8 +62,9 @@ class SQLiteItemRepository: ItemRepository {
                 id, title, type, series, volume, condition, location_id,
                 notes, date_added, barcode, thumbnail_url, author,
                 manufacturer, original_publish_date, publisher, isbn,
-                price, purchase_date, synopsis, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                price, purchase_date, synopsis, created_at, updated_at,
+                custom_image_data, image_source
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         
         try db.beginTransaction()
@@ -96,7 +105,9 @@ class SQLiteItemRepository: ItemRepository {
                 (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 18),
                 (item.synopsis, 19),
                 (timestamp, 20),
-                (timestamp, 21)
+                (timestamp, 21),
+                (item.customImageData, 22),
+                (item.imageSource.rawValue, 23)
             ]
             
             // Bind each parameter
@@ -108,6 +119,10 @@ class SQLiteItemRepository: ItemRepository {
                     sqlite3_bind_int64(statement, index, Int64(int))
                 case let double as Double:
                     sqlite3_bind_double(statement, index, double)
+                case let data as Data:
+                    _ = data.withUnsafeBytes { bytes in
+                        sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(data.count), nil)
+                    }
                 case .none:
                     sqlite3_bind_null(statement, index)
                 default:
@@ -143,25 +158,55 @@ class SQLiteItemRepository: ItemRepository {
                 type = ?, 
                 series = ?, 
                 volume = ?,
-                condition = ?, 
-                location_id = ?, 
+                condition = ?,
+                location_id = ?,
                 notes = ?,
-                barcode = ?, 
-                thumbnail_url = ?, 
+                barcode = ?,
+                thumbnail_url = ?,
                 author = ?,
-                manufacturer = ?, 
+                manufacturer = ?,
                 original_publish_date = ?,
-                publisher = ?, 
-                isbn = ?, 
+                publisher = ?,
+                isbn = ?,
                 price = ?,
-                purchase_date = ?, 
+                purchase_date = ?,
                 synopsis = ?,
-                updated_at = ?
-            WHERE id = ? AND deleted_at IS NULL;
+                updated_at = ?,
+                custom_image_data = ?,
+                image_source = ?
+            WHERE id = ?;
         """
         
         let timestamp = Int(Date().timeIntervalSince1970)
         print("Updating item \(item.id) with location \(String(describing: item.locationId))")
+        
+        let parameters: [(Any?, Int32)] = [
+            (item.title, 1),
+            (item.type.rawValue, 2),
+            (item.series, 3),
+            (item.volume, 4),
+            (item.condition.rawValue, 5),
+            (item.locationId?.uuidString, 6),
+            (item.notes, 7),
+            (item.barcode, 8),
+            (item.thumbnailURL?.absoluteString, 9),
+            (item.author, 10),
+            (item.manufacturer, 11),
+            (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 12),
+            (item.publisher, 13),
+            (item.isbn, 14),
+            ((item.price as NSDecimalNumber?)?.doubleValue, 15),
+            (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 16),
+            (item.synopsis, 17),
+            (timestamp, 18),
+            (item.customImageData, 19),
+            (item.imageSource.rawValue, 20),
+            (item.id.uuidString, 21)
+        ]
+        
+        // Add debug prints
+        print("Updating with image data: \(item.customImageData != nil)")
+        print("SQL Error: \(String(cString: sqlite3_errmsg(db.connection)))")
         
         try db.beginTransaction()
         
@@ -178,29 +223,6 @@ class SQLiteItemRepository: ItemRepository {
             }
             
             // Bind all parameters
-            let parameters: [(Any?, Int32)] = [
-                (item.title, 1),
-                (item.type.rawValue, 2),
-                (item.series, 3),
-                (item.volume, 4),
-                (item.condition.rawValue, 5),
-                (item.locationId?.uuidString, 6),
-                (item.notes, 7),
-                (item.barcode, 8),
-                (item.thumbnailURL?.absoluteString, 9),
-                (item.author, 10),
-                (item.manufacturer, 11),
-                (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 12),
-                (item.publisher, 13),
-                (item.isbn, 14),
-                ((item.price as NSDecimalNumber?)?.doubleValue, 15),
-                (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 16),
-                (item.synopsis, 17),
-                (timestamp, 18),
-                (item.id.uuidString, 19)
-            ]
-            
-            // Bind each parameter with proper type handling
             for (value, index) in parameters {
                 switch value {
                 case let text as String:
@@ -209,6 +231,10 @@ class SQLiteItemRepository: ItemRepository {
                     sqlite3_bind_int64(statement, index, Int64(int))
                 case let double as Double:
                     sqlite3_bind_double(statement, index, double)
+                case let data as Data:
+                    _ = data.withUnsafeBytes { bytes in
+                        sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(data.count), nil)
+                    }
                 case .none:
                     sqlite3_bind_null(statement, index)
                 default:
@@ -365,6 +391,23 @@ class SQLiteItemRepository: ItemRepository {
             : nil
         let synopsis = sqlite3_column_text(statement, 18).map { String(cString: $0) }
         
+        let imageData: Data? = {
+            if let blob = sqlite3_column_blob(statement, 22) {
+                let length = sqlite3_column_bytes(statement, 22)
+                let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(length))
+                buffer.initialize(from: blob.assumingMemoryBound(to: UInt8.self), count: Int(length))
+                return Data(bytesNoCopy: buffer, count: Int(length), deallocator: .free)
+            }
+            return nil
+        }()
+        
+        let imageSource = {
+            if let sourceText = sqlite3_column_text(statement, 23) {
+                return ImageSource(rawValue: String(cString: sourceText)) ?? .none
+            }
+            return ImageSource.none
+        }()
+        
         return InventoryItem(
             title: title,
             type: type,
@@ -384,7 +427,9 @@ class SQLiteItemRepository: ItemRepository {
             isbn: isbn,
             price: price,
             purchaseDate: purchaseDate,
-            synopsis: synopsis
+            synopsis: synopsis,
+            customImageData: imageData,
+            imageSource: imageSource
         )
     }
     
@@ -522,5 +567,83 @@ class SQLiteItemRepository: ItemRepository {
             
             sqlite3_finalize(statement)
         }
+    }
+    
+    func saveBatch(_ items: [InventoryItem]) throws {
+        try db.beginTransaction()
+        do {
+            for item in items {
+                try save(item)
+            }
+            try db.commitTransaction()
+        } catch {
+            try? db.rollbackTransaction()
+            throw error
+        }
+    }
+    
+    // Add new methods
+    func getClassificationRules() -> [MediaTypeRule] {
+        let sql = """
+            SELECT id, pattern, pattern_type, priority, media_type
+            FROM classification_rules
+            ORDER BY priority, pattern;
+        """
+        
+        var rules: [MediaTypeRule] = []
+        var statement: OpaquePointer?
+        
+        if sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK {
+            while sqlite3_step(statement) == SQLITE_ROW {
+                let id = Int(sqlite3_column_int64(statement, 0))
+                let pattern = String(cString: sqlite3_column_text(statement, 1))
+                let patternType = MediaTypeRule.PatternType(rawValue: String(cString: sqlite3_column_text(statement, 2)))!
+                let priority = Int(sqlite3_column_int64(statement, 3))
+                let mediaType = CollectionType(rawValue: String(cString: sqlite3_column_text(statement, 4)))!
+                
+                let rule = MediaTypeRule(
+                    id: id,
+                    pattern: pattern,
+                    patternType: patternType,
+                    priority: priority,
+                    mediaType: mediaType
+                )
+                rules.append(rule)
+            }
+        }
+        sqlite3_finalize(statement)
+        return rules
+    }
+    
+    func classifyItem(title: String, publisher: String?, description: String?) -> CollectionType {
+        let rules = getClassificationRules()
+        
+        // Check publisher rules first
+        if let publisher = publisher?.lowercased() {
+            if let match = rules.first(where: { rule in
+                rule.patternType == .publisher && publisher.contains(rule.pattern.lowercased())
+            }) {
+                return match.mediaType
+            }
+        }
+        
+        // Then check title
+        let lowercaseTitle = title.lowercased()
+        if let match = rules.first(where: { rule in
+            rule.patternType == .title && lowercaseTitle.contains(rule.pattern.lowercased())
+        }) {
+            return match.mediaType
+        }
+        
+        // Finally check description
+        if let description = description?.lowercased() {
+            if let match = rules.first(where: { rule in
+                rule.patternType == .description && description.contains(rule.pattern.lowercased())
+            }) {
+                return match.mediaType
+            }
+        }
+        
+        return .books // Default type
     }
 } 

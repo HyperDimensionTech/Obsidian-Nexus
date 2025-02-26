@@ -133,6 +133,8 @@ class DatabaseManager {
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 deleted_at INTEGER,
+                custom_image_data BLOB,
+                image_source TEXT,
                 FOREIGN KEY (location_id) REFERENCES locations(id)
             );
         """
@@ -150,6 +152,18 @@ class DatabaseManager {
             );
         """
         
+        let createClassificationRulesTable = """
+            CREATE TABLE IF NOT EXISTS classification_rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pattern TEXT NOT NULL,
+                pattern_type TEXT NOT NULL,
+                priority INTEGER NOT NULL,
+                media_type TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+        """
+        
         // Execute in correct order with error handling
         do {
             try beginTransaction()
@@ -157,6 +171,7 @@ class DatabaseManager {
             executeStatement(createLocationsTable)
             executeStatement(createItemsTable)
             executeStatement(createCustomFieldsTable)
+            executeStatement(createClassificationRulesTable)
             
             // Create indexes
             let createIndexes = [
@@ -169,6 +184,36 @@ class DatabaseManager {
             
             for index in createIndexes {
                 executeStatement(index)
+            }
+            
+            // Add initial rules if table is empty
+            let checkRules = "SELECT COUNT(*) FROM classification_rules;"
+            if executeScalar(checkRules) == 0 {
+                let timestamp = Int(Date().timeIntervalSince1970)
+                let initialRules = """
+                    INSERT INTO classification_rules 
+                    (pattern, pattern_type, priority, media_type, created_at, updated_at)
+                    VALUES 
+                    ('viz media', 'publisher', 1, 'manga', ?, ?),
+                    ('viz', 'publisher', 1, 'manga', ?, ?),
+                    ('kodansha', 'publisher', 1, 'manga', ?, ?),
+                    ('seven seas', 'publisher', 1, 'manga', ?, ?),
+                    ('yen press', 'publisher', 1, 'manga', ?, ?),
+                    ('shogakukan', 'publisher', 1, 'manga', ?, ?),
+                    ('shueisha', 'publisher', 1, 'manga', ?, ?),
+                    ('manga', 'title', 2, 'manga', ?, ?),
+                    ('vol.', 'title', 2, 'manga', ?, ?),
+                    ('volume', 'title', 2, 'manga', ?, ?),
+                    ('marvel', 'publisher', 1, 'comics', ?, ?),
+                    ('dc comics', 'publisher', 1, 'comics', ?, ?),
+                    ('image comics', 'publisher', 1, 'comics', ?, ?),
+                    ('dark horse', 'publisher', 1, 'comics', ?, ?),
+                    ('comic', 'title', 2, 'comics', ?, ?),
+                    ('graphic novel', 'title', 2, 'comics', ?, ?);
+                """
+                
+                let parameters = Array(repeating: timestamp, count: 18) // 9 rules * 2 timestamps each
+                executeStatement(initialRules, parameters: parameters)
             }
             
             try commitTransaction()
@@ -229,7 +274,16 @@ class DatabaseManager {
     private func migrateIfNeeded() {
         let version = getDatabaseVersion()
         if version < currentVersion {
-            // Add migration logic here when needed
+            // Add migration for image columns
+            let migrations = [
+                "ALTER TABLE items ADD COLUMN custom_image_data BLOB;",
+                "ALTER TABLE items ADD COLUMN image_source TEXT;"
+            ]
+            
+            for migration in migrations {
+                executeStatement(migration)
+            }
+            
             setDatabaseVersion(currentVersion)
         }
     }
@@ -255,6 +309,10 @@ class DatabaseManager {
                 sqlite3_bind_text(statement, idx, (text as NSString).utf8String, -1, nil)
             case let int as Int:
                 sqlite3_bind_int64(statement, idx, Int64(int))
+            case let data as Data:
+                _ = data.withUnsafeBytes { bytes in
+                    sqlite3_bind_blob(statement, idx, bytes.baseAddress, Int32(data.count), nil)
+                }
             case is NSNull:
                 sqlite3_bind_null(statement, idx)
             default:
@@ -280,6 +338,26 @@ class DatabaseManager {
     
     func rollbackTransaction() throws {
         executeStatement("ROLLBACK;")
+    }
+    
+    func executeScalar(_ sql: String) -> Int {
+        var statement: OpaquePointer?
+        var result: Int64 = 0
+        
+        guard sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK else {
+            print("Error preparing scalar query: \(String(cString: sqlite3_errmsg(connection)))")
+            return 0
+        }
+        
+        defer {
+            sqlite3_finalize(statement)
+        }
+        
+        if sqlite3_step(statement) == SQLITE_ROW {
+            result = sqlite3_column_int64(statement, 0)
+        }
+        
+        return Int(result)
     }
     
     deinit {

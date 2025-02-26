@@ -4,6 +4,8 @@ class InventoryViewModel: ObservableObject {
     @Published private(set) var items: [InventoryItem] = []
     @Published private(set) var trashedItems: [InventoryItem] = []
     @Published private(set) var trashCount: Int = 0
+    @Published var continuousScanEnabled = false
+    @Published var pendingItems: [InventoryItem] = []
     
     // Add persistence layer
     private let storage: StorageManager
@@ -78,9 +80,12 @@ class InventoryViewModel: ObservableObject {
     @discardableResult
     func addItem(_ item: InventoryItem) throws -> InventoryItem {
         try validateItem(item)
-        try storage.save(item)
+        var newItem = item
+        // Clean up series name before adding
+        newItem.series = cleanupSeriesName(item.series)
+        try storage.save(newItem)
         items = try storage.loadItems()
-        return item
+        return newItem
     }
     
     func deleteItem(_ item: InventoryItem) throws {
@@ -98,10 +103,17 @@ class InventoryViewModel: ObservableObject {
     
     @discardableResult
     func updateItem(_ item: InventoryItem) throws -> InventoryItem {
+        print("ViewModel updating item with image size: \(item.customImageData?.count ?? 0) bytes")  // Debug
         try validateItem(item, isUpdate: true)
-        try storage.update(item)
+        var updatedItem = item
+        updatedItem.series = cleanupSeriesName(item.series)
+        try storage.update(updatedItem)
+        
+        // Add debug print
+        print("Updating item with image source: \(updatedItem.imageSource), has image data: \(updatedItem.customImageData != nil)")
+        
         items = try storage.loadItems()
-        return item
+        return updatedItem
     }
     
     // MARK: - Item Queries
@@ -149,10 +161,12 @@ class InventoryViewModel: ObservableObject {
     
     func mangaSeries() -> [(String, [InventoryItem])] {
         let mangaItems = items.filter { $0.type == .manga }
-        let groupedItems = Dictionary(grouping: mangaItems) { $0.series ?? "" }
+        let groupedItems = Dictionary(grouping: mangaItems) { 
+            cleanupSeriesName($0.series ?? "") ?? ""  // Clean up here
+        }
         return groupedItems.map { series, items in
             (
-                series,
+                cleanupSeriesName(series) ?? series,  // And here
                 items.sorted { 
                     if let vol1 = $0.volume, let vol2 = $1.volume {
                         return vol1 < vol2
@@ -161,7 +175,7 @@ class InventoryViewModel: ObservableObject {
                 }
             )
         }
-        .sorted { $0.0 < $1.0 } // Sort series alphabetically
+        .sorted { $0.0 < $1.0 }
     }
     
     // MARK: - Sample Data
@@ -612,5 +626,162 @@ class InventoryViewModel: ObservableObject {
     func itemsByAuthor(_ author: String) -> [InventoryItem] {
         items.filter { $0.creator == author }
             .sorted { $0.title < $1.title }
+    }
+    
+    private func cleanupSeriesName(_ name: String?) -> String? {
+        guard let name = name, !name.isEmpty else { return nil }
+        var cleaned = name
+            .trimmingCharacters(in: .punctuationCharacters)
+            .trimmingCharacters(in: .whitespaces)
+        
+        // Remove trailing commas and spaces if they exist
+        while cleaned.hasSuffix(",") || cleaned.hasSuffix(" ") {
+            cleaned = String(cleaned.dropLast())
+        }
+        
+        return cleaned.isEmpty ? nil : cleaned
+    }
+    
+    func addBatchItems(_ items: [InventoryItem]) throws {
+        try storage.saveBatch(items)
+        items.forEach { item in
+            if !self.items.contains(where: { $0.id == item.id }) {
+                self.items.append(item)
+            }
+        }
+    }
+    
+    func createItemFromGoogleBook(_ book: GoogleBook) -> InventoryItem {
+        print("===== Processing Book =====")
+        print("Title: \(book.volumeInfo.title)")
+        print("Publisher: \(book.volumeInfo.publisher ?? "nil")")
+        print("Type before: \(detectItemType(book))")
+        
+        let (series, volume) = extractSeriesInfo(from: book.volumeInfo.title)
+        print("Series extraction result - series: \(series ?? "nil"), volume: \(volume ?? -1)")
+        
+        let type = detectItemType(book)
+        print("Final type: \(type)")
+        
+        let item = InventoryItem(
+            title: book.volumeInfo.title,
+            type: type,
+            series: series,
+            volume: volume,
+            condition: .good,
+            barcode: book.volumeInfo.industryIdentifiers?.first?.identifier,
+            thumbnailURL: book.volumeInfo.imageLinks?.thumbnail.flatMap { urlString -> URL? in
+                var secureUrlString = urlString
+                if urlString.hasPrefix("http://") {
+                    secureUrlString = "https://" + urlString.dropFirst(7)
+                }
+                return URL(string: secureUrlString)
+            },
+            author: book.volumeInfo.authors?.first,
+            originalPublishDate: parseDate(book.volumeInfo.publishedDate),
+            publisher: book.volumeInfo.publisher,
+            isbn: book.volumeInfo.industryIdentifiers?.first?.identifier,
+            synopsis: book.volumeInfo.description,
+            imageSource: .googleBooks
+        )
+        print("Created item - title: \(item.title), type: \(item.type), series: \(item.series ?? "nil"), volume: \(item.volume ?? -1)")
+        print("========================")
+        return item
+    }
+    
+    private func detectItemType(_ book: GoogleBook) -> CollectionType {
+        // Try database classification first
+        let databaseType = storage.classifyItem(
+            title: book.volumeInfo.title,
+            publisher: book.volumeInfo.publisher,
+            description: book.volumeInfo.description
+        )
+        
+        // If database classification returns books (default), try fallback method
+        if databaseType == .books {
+            // Fallback to hardcoded rules
+            let publisher = book.volumeInfo.publisher?.lowercased() ?? ""
+            if publisher.contains("viz") || publisher.contains("kodansha") || 
+               publisher.contains("seven seas") || publisher.contains("yen press") {
+                return .manga
+            }
+            
+            let title = book.volumeInfo.title.lowercased()
+            let description = book.volumeInfo.description?.lowercased() ?? ""
+            
+            if title.contains("manga") || description.contains("manga") ||
+               title.contains("vol.") || title.contains("volume") {
+                return .manga
+            } else if title.contains("comic") || description.contains("comic") {
+                return .comics
+            }
+        }
+        
+        return databaseType
+    }
+    
+    private func extractSeriesInfo(from title: String) -> (String?, Int?) {
+        print("🔍 Attempting to extract series info from: \(title)")
+        
+        // Common manga volume patterns
+        let patterns = [
+            // Full series name with colon (keep everything before subtitle)
+            "^(.*?):.*$",
+            // Standard volume patterns
+            "^(.*?),?\\s*(?:Vol\\.?|Volume)\\s*(\\d+)",
+            "^(.*?)\\s+(\\d+)$",
+            "^(.*?),?\\s*(?:Vol\\.?|Volume)\\s*(\\d+):",
+            "^(.*?)\\s+(?:Vol\\.?|Volume)\\s*(\\d+)",
+            // Handle "Series Name - Subtitle" pattern
+            "^([^-]+)\\s*-.*$"
+        ]
+        
+        for (index, pattern) in patterns.enumerated() {
+            print("Trying pattern \(index): \(pattern)")
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: title, options: [], range: NSRange(title.startIndex..., in: title)) {
+                
+                print("✅ Matched pattern index: \(index)")
+                
+                let seriesRange = match.range(at: 1)
+                let volumeRange = match.numberOfRanges > 2 ? match.range(at: 2) : NSRange(location: 0, length: 0)
+                
+                if let seriesRange = Range(seriesRange, in: title) {
+                    // Get the full series name for titles with colons
+                    let series = if index == 0 {
+                        // For colon pattern, keep the full title as series
+                        title
+                    } else {
+                        String(title[seriesRange])
+                            .trimmingCharacters(in: .whitespaces)
+                            .trimmingCharacters(in: .punctuationCharacters)
+                    }
+                    
+                    if volumeRange.location == 0 {
+                        print("📚 Extracted series (no volume): \(series)")
+                        return (series, nil)
+                    }
+                    
+                    if let volumeRange = Range(volumeRange, in: title),
+                       let volume = Int(title[volumeRange]) {
+                        print("📚 Extracted series: \(series), volume: \(volume)")
+                        return (series, volume)
+                    }
+                    
+                    print("📚 Returning series without volume: \(series)")
+                    return (series, nil)
+                }
+            }
+        }
+        
+        print("❌ No pattern match found")
+        return (nil, nil)
+    }
+    
+    private func parseDate(_ dateString: String?) -> Date? {
+        guard let dateString = dateString else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: dateString)
     }
 } 
