@@ -27,32 +27,37 @@ struct BarcodeScannerView: View {
             // Overlay Layout
             GeometryReader { geometry in
                 VStack(spacing: 0) {
-                    // Top Bar
+                    // Top Bar - Simplified with SF Symbols and better spacing
                     HStack {
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark")
-                                .font(.title2)
+                                .font(.headline)
                                 .foregroundColor(.white)
-                                .padding()
+                                .frame(width: 36, height: 36)
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
                         
                         Spacer()
                         
-                        Toggle("Continuous", isOn: $continuousScanEnabled)
-                            .toggleStyle(.button)
-                            .tint(.blue)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
+                        Toggle(isOn: $continuousScanEnabled) {
+                            Text("Continuous")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .toggleStyle(.button)
+                        .tint(Color.blue)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
                         
                         Button(action: { viewModel.toggleTorch() }) {
                             Image(systemName: viewModel.torchEnabled ? "flashlight.on.fill" : "flashlight.off.fill")
-                                .font(.title2)
+                                .font(.headline)
                                 .foregroundColor(viewModel.torchEnabled ? .yellow : .white)
-                                .padding()
+                                .frame(width: 36, height: 36)
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
@@ -61,36 +66,100 @@ struct BarcodeScannerView: View {
                     
                     Spacer()
                     
-                    // Fixed Position Scan Frame
-                    Rectangle()
-                        .strokeBorder(.white, lineWidth: 2)
-                        .frame(width: 250, height: 150)
-                        .background(Color.black.opacity(0.1))
-                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    // Scan Frame - More modern with rounded corners and subtle animation
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.white.opacity(0.8), lineWidth: 3)
+                            .frame(width: 250, height: 150)
+                            .background(Color.black.opacity(0.1))
+                        
+                        // Add subtle scanning animation
+                        if continuousScanEnabled {
+                            Rectangle()
+                                .fill(LinearGradient(
+                                    gradient: Gradient(colors: [.clear, .blue.opacity(0.3), .clear]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ))
+                                .frame(width: 240, height: 3)
+                                .offset(y: -60)
+                                .animation(
+                                    Animation.easeInOut(duration: 1.5)
+                                        .repeatForever(autoreverses: true),
+                                    value: UUID() // Force continuous animation
+                                )
+                        }
+                    }
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                     
                     Spacer()
                     
-                    // Bottom Status Area
-                    VStack(spacing: 8) {
+                    // Bottom Status Area - Cleaner with better visual hierarchy
+                    VStack(spacing: 12) {
                         if continuousScanEnabled {
-                            Text("Scanned: \(scannedCount)")
-                                .font(.headline)
-                                .foregroundColor(.white)
+                            HStack(spacing: 16) {
+                                VStack(alignment: .center) {
+                                    Text("\(scannedCount)")
+                                        .font(.system(size: 28, weight: .bold))
+                                        .foregroundColor(.white)
+                                    Text("Scanned")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                
+                                if let title = lastAddedTitle {
+                                    VStack(alignment: .leading) {
+                                        Text("Last Added:")
+                                            .font(.caption)
+                                            .foregroundColor(.white.opacity(0.8))
+                                        Text(title)
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(.green)
+                                            .lineLimit(1)
+                                            .transition(.opacity)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
+                            .padding(.horizontal)
                             
-                            if let title = lastAddedTitle {
-                                Text("Added: \(title)")
-                                    .foregroundColor(.green)
-                                    .transition(.opacity)
+                            // Review button - More prominent with SF Symbol
+                            if scannedCount > 0 {
+                                Button(action: {
+                                    showingResults = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "list.bullet.clipboard")
+                                        Text("Review Scanned Items")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, 4)
                             }
                         }
                         
                         Text(continuousScanEnabled ? "Ready to scan next item..." : "Position barcode within frame")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundColor(.white)
+                            .padding(.bottom, 8)
                     }
-                    .padding()
-                    .frame(height: 100)
-                    .background(.ultraThinMaterial)
+                    .padding(.vertical, 16)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        // Gradient background for better readability
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.black.opacity(0.7), Color.black.opacity(0.5)]),
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
                 }
             }
         }
@@ -117,7 +186,14 @@ struct BarcodeScannerView: View {
             ScanResultsView(
                 scannedCount: scannedCount, 
                 successfulScans: successfulScans,
-                failedScans: failedScans
+                failedScans: failedScans,
+                onContinue: {
+                    showingResults = false
+                },
+                onFinish: {
+                    showingResults = false
+                    dismiss()
+                }
             )
         }
         .toolbar {
@@ -126,6 +202,7 @@ struct BarcodeScannerView: View {
                     Button("Review (\(scannedCount))") {
                         showingResults = true
                     }
+                    .disabled(scannedCount == 0)
                 }
             }
         }
@@ -135,6 +212,19 @@ struct BarcodeScannerView: View {
         // Stop scanning while processing
         viewModel.stopScanning()
         
+        // Define manga publishers list here since we can't access the private one in AddItemView
+        let mangaPublishers = [
+            "viz",
+            "kodansha",
+            "shogakukan", 
+            "shueisha",
+            "square enix",
+            "seven seas",
+            "yen press",
+            "dark horse manga",
+            "vertical comics"
+        ]
+        
         // Search and add
         googleBooksService.fetchBooks(query: "isbn:\(code)") { result in
             DispatchQueue.main.async {
@@ -142,8 +232,21 @@ struct BarcodeScannerView: View {
                 case .success(let books):
                     if let book = books.first {
                         do {
+                            // Create the item with proper classification
                             let newItem = inventoryViewModel.createItemFromGoogleBook(book)
-                            try inventoryViewModel.addItem(newItem)
+                            
+                            // Ensure the item type is correctly set based on publisher
+                            if let publisher = book.volumeInfo.publisher?.lowercased(), 
+                               mangaPublishers.contains(where: { publisher.contains($0) }) {
+                                // This is a manga - make sure it's classified as such
+                                var updatedItem = newItem
+                                updatedItem.type = .manga
+                                try inventoryViewModel.addItem(updatedItem)
+                            } else {
+                                // Regular book or already classified correctly
+                                try inventoryViewModel.addItem(newItem)
+                            }
+                            
                             scannedCount += 1
                             lastAddedTitle = book.volumeInfo.title
                             successfulScans.append((
@@ -191,6 +294,8 @@ struct ScanResultsView: View {
     let scannedCount: Int
     let successfulScans: [(title: String, isbn: String?)]
     let failedScans: [(code: String, reason: String)]
+    let onContinue: () -> Void
+    let onFinish: () -> Void
     
     var body: some View {
         NavigationView {
@@ -232,9 +337,15 @@ struct ScanResultsView: View {
             }
             .navigationTitle("Scan Results")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Continue Scanning") {
+                        onContinue()
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                    Button("Finish") {
+                        onFinish()
                     }
                 }
             }

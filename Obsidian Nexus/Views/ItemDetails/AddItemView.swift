@@ -187,7 +187,17 @@ struct AddItemView: View {
             ScanResultsView(
                 scannedCount: addedCount,
                 successfulScans: successfulScans,
-                failedScans: failedScans
+                failedScans: failedScans,
+                onContinue: {
+                    showingResults = false
+                    // Optionally re-focus the search field
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isSearchFieldFocused = true
+                    }
+                },
+                onFinish: {
+                    showingResults = false
+                }
             )
         }
     }
