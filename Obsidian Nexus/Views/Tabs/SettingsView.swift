@@ -13,7 +13,7 @@ struct SettingsView: View {
     @State private var expandedLocations: Set<UUID> = []
     
     var body: some View {
-        NavigationView {
+        NavigationStack(path: $navigationCoordinator.path) {
             List {
                 Section(header: Text("GENERAL")) {
                     NavigationLink("Account", destination: Text("Account Settings"))
@@ -94,12 +94,31 @@ struct SettingsView: View {
                 }
             }
         }
+        .onAppear {
+            // Add notification observer when view appears
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("TabDoubleTapped"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                // Only respond to settings tab double-taps
+                if let tab = notification.object as? String, tab == "Settings" {
+                    // Reset navigation when Settings tab is double-tapped
+                    // Use DispatchQueue.main to ensure we're on the main thread
+                    DispatchQueue.main.async {
+                        navigationCoordinator.navigateToRoot()
+                    }
+                }
+            }
+        }
     }
 }
 
 #Preview {
     SettingsView()
         .environmentObject(LocationManager())
+        .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+        .environmentObject(NavigationCoordinator())
 }
 
 private struct TrashSection: View {

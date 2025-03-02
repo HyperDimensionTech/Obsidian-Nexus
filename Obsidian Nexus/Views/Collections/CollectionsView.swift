@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CollectionsView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     
     var body: some View {
         ScrollView {
@@ -20,4 +21,10 @@ struct CollectionsView: View {
         }
         .navigationTitle("Collections")
     }
+}
+
+#Preview {
+    CollectionsView()
+        .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+        .environmentObject(NavigationCoordinator())
 } 

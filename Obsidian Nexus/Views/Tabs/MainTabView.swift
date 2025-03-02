@@ -3,8 +3,10 @@ import SwiftUI
 struct MainTabView: View {
     @StateObject private var locationManager: LocationManager
     @StateObject private var inventoryViewModel: InventoryViewModel
+    @StateObject private var navigationCoordinator = NavigationCoordinator()
     @State private var showingAddItem = false
     @State private var selectedTab: Tab = .home
+    @State private var previousTab: Tab = .home
     
     init() {
         let storage = StorageManager.shared
@@ -16,7 +18,6 @@ struct MainTabView: View {
     
     enum Tab {
         case home
-        case collections
         case search
         case add
         case settings
@@ -30,15 +31,9 @@ struct MainTabView: View {
                 }
                 .tag(Tab.home)
             
-            CollectionsView()
-                .tabItem {
-                    Label("Collections", systemImage: "books")
-                }
-                .tag(Tab.collections)
-            
             SearchView()
                 .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
+                    Label("Browse & Search", systemImage: "magnifyingglass")
                 }
                 .tag(Tab.search)
             
@@ -58,6 +53,9 @@ struct MainTabView: View {
                 }
                 .tag(Tab.settings)
         }
+        .onChange(of: selectedTab) { oldTab, newTab in
+            handleTabSelection(oldTab: oldTab, newTab: newTab)
+        }
         .sheet(isPresented: $showingAddItem) {
             NavigationView {
                 AddItemView()
@@ -68,6 +66,25 @@ struct MainTabView: View {
         }
         .environmentObject(locationManager)
         .environmentObject(inventoryViewModel)
+        .environmentObject(navigationCoordinator)
+    }
+    
+    private func handleTabSelection(oldTab: Tab, newTab: Tab) {
+        // If tapping the same tab again
+        if newTab == previousTab {
+            // Post a notification that can be observed by any view to reset its state
+            NotificationCenter.default.post(
+                name: Notification.Name("TabDoubleTapped"),
+                object: newTab
+            )
+            
+            // Trigger haptic feedback for double tap
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+        }
+        
+        // Update previous tab
+        previousTab = newTab
     }
 }
 

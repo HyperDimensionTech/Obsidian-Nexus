@@ -1,4 +1,68 @@
 import SwiftUI
+import CoreHaptics
+
+// MARK: - Sort Options
+enum BookSortOption: String, CaseIterable, Identifiable {
+    case relevance = "Relevance"
+    case titleAsc = "Title (A-Z)"
+    case titleDesc = "Title (Z-A)"
+    case authorAsc = "Author (A-Z)"
+    case authorDesc = "Author (Z-A)"
+    case publisherAsc = "Publisher (A-Z)"
+    case publisherDesc = "Publisher (Z-A)"
+    case newestFirst = "Newest First"
+    case oldestFirst = "Oldest First"
+    
+    var id: String { self.rawValue }
+    
+    func sortBooks(_ books: [GoogleBook]) -> [GoogleBook] {
+        switch self {
+        case .relevance:
+            // Default order from API
+            return books
+        case .titleAsc:
+            return books.sorted { $0.volumeInfo.title.localizedCaseInsensitiveCompare($1.volumeInfo.title) == .orderedAscending }
+        case .titleDesc:
+            return books.sorted { $0.volumeInfo.title.localizedCaseInsensitiveCompare($1.volumeInfo.title) == .orderedDescending }
+        case .authorAsc:
+            return books.sorted {
+                let author1 = $0.volumeInfo.authors?.first ?? ""
+                let author2 = $1.volumeInfo.authors?.first ?? ""
+                return author1.localizedCaseInsensitiveCompare(author2) == .orderedAscending
+            }
+        case .authorDesc:
+            return books.sorted {
+                let author1 = $0.volumeInfo.authors?.first ?? ""
+                let author2 = $1.volumeInfo.authors?.first ?? ""
+                return author1.localizedCaseInsensitiveCompare(author2) == .orderedDescending
+            }
+        case .publisherAsc:
+            return books.sorted {
+                let publisher1 = $0.volumeInfo.publisher ?? ""
+                let publisher2 = $1.volumeInfo.publisher ?? ""
+                return publisher1.localizedCaseInsensitiveCompare(publisher2) == .orderedAscending
+            }
+        case .publisherDesc:
+            return books.sorted {
+                let publisher1 = $0.volumeInfo.publisher ?? ""
+                let publisher2 = $1.volumeInfo.publisher ?? ""
+                return publisher1.localizedCaseInsensitiveCompare(publisher2) == .orderedDescending
+            }
+        case .newestFirst:
+            return books.sorted {
+                let date1 = AddItemView.parseDate($0.volumeInfo.publishedDate) ?? Date.distantPast
+                let date2 = AddItemView.parseDate($1.volumeInfo.publishedDate) ?? Date.distantPast
+                return date1 > date2
+            }
+        case .oldestFirst:
+            return books.sorted {
+                let date1 = AddItemView.parseDate($0.volumeInfo.publishedDate) ?? Date.distantPast
+                let date2 = AddItemView.parseDate($1.volumeInfo.publishedDate) ?? Date.distantPast
+                return date1 < date2
+            }
+        }
+    }
+}
 
 struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
@@ -34,154 +98,97 @@ struct AddItemView: View {
     @State private var showingAddConfirmation = false
     @FocusState private var isSearchFieldFocused: Bool
     @State private var successfulScans: [(title: String, isbn: String?)] = []
+    @State private var addedItemScale: CGFloat = 1.0
+    @State private var showToast = false
+    @State private var toastMessage = ""
+    @State private var hapticEngine: CHHapticEngine?
+    @State private var selectedSortOption: BookSortOption = .relevance
+    @State private var showingSortOptions = false
     
     var sortedResults: [GoogleBook] {
-        searchResults.sorted { book1, book2 in
-            if let vol1 = googleBooksService.extractVolumeNumber(from: book1.volumeInfo.title),
-               let vol2 = googleBooksService.extractVolumeNumber(from: book2.volumeInfo.title) {
+        // First apply the existing volume sorting logic
+        let volumeSorted = searchResults.sorted { (book1, book2) -> Bool in
+            // Extract volume numbers if present
+            let vol1 = googleBooksService.extractVolumeNumber(from: book1.volumeInfo.title) ?? 0
+            let vol2 = googleBooksService.extractVolumeNumber(from: book2.volumeInfo.title) ?? 0
+            
+            // If both have volume numbers, sort by volume
+            if vol1 > 0 && vol2 > 0 {
                 return vol1 < vol2
             }
+            
+            // Otherwise sort by title
             return book1.volumeInfo.title < book2.volumeInfo.title
         }
+        
+        // Then apply the selected sort option
+        return selectedSortOption.sortBooks(volumeSorted)
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Category Picker
-            Picker("Category", selection: $selectedType) {
-                Text("Literature").tag(CollectionType.books)
-                // Future categories - commented out until implemented
-                // Text("Electronics").tag(CollectionType.electronics)
-                // Text("Collectibles").tag(CollectionType.collectibles)
-                // Text("Tools").tag(CollectionType.tools)
-            }
-            .pickerStyle(.segmented)
-            .padding()
-            
-            // Search Bar with Continuous Mode Toggle
-            HStack {
-                TextField("Search by title, author, or ISBN...", text: $searchQuery)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-                    .focused($isSearchFieldFocused)
-                    .onSubmit {
-                        if continuousEntryMode {
-                            handleContinuousSearch()
-                        } else {
-                            performSearch()
-                        }
-                    }
+        ZStack {
+            VStack(spacing: 16) {
+                // Smaller, centered title
+                Text("Add Item")
+                    .font(.headline)
+                    .padding(.top, 8)
+                    .accessibilityAddTraits(.isHeader)
                 
-                if searchQuery.isEmpty {
-                    Button(action: { showingScanner = true }) {
-                        Image(systemName: "barcode.viewfinder")
-                            .font(.system(size: 20))
-                    }
-                } else {
-                    Button(action: { searchQuery = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .padding(.horizontal)
-            
-            // Continuous Mode Toggle
-            Toggle("Continuous Entry Mode", isOn: Binding(
-                get: { continuousEntryMode },
-                set: { newValue in 
-                    continuousEntryMode = newValue
-                    if newValue {
-                        // Focus the search field when continuous mode is enabled
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isSearchFieldFocused = true
-                        }
-                    }
-                }
-            ))
-            .toggleStyle(.button)
-            .tint(.blue)
-            .padding(.horizontal)
-            
-            if continuousEntryMode {
-                HStack {
-                    Text("Added: \(addedCount)")
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    Button("Review Results") {
-                        showingResults = true
-                    }
-                    .disabled(addedCount == 0)
-                }
-                .padding(.horizontal)
+                searchBarView
+                actionButtonsView
+                continuousModeToggleView
                 
-                if let title = lastAddedTitle {
-                    Text("Last added: \(title)")
-                        .foregroundColor(.green)
-                        .padding(.horizontal)
-                        .transition(.opacity)
+                // Continuous Mode Status (only shown when active)
+                if continuousEntryMode {
+                    continuousModeStatusView
                 }
+                
+                // Add sort options UI
+                if !searchResults.isEmpty {
+                    sortOptionsView
+                }
+                
+                resultsView
             }
             
-            // Manual Entry Button
-            Button {
-                showingManualEntry = true
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.pencil")
-                    Text("Manual Entry")
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-            }
-            .padding()
-            
-            Divider()
-            
-            // Results
-            if searchResults.isEmpty && !isSearching {
-                ContentUnavailableView {
-                    Label("No Results", systemImage: "magnifyingglass")
-                } description: {
-                    Text("Search for items to add to your collection")
-                }
-            } else {
-                ScrollView {
-                    LazyVStack {
-                        ForEach(sortedResults, id: \.id) { book in
-                            BookSearchResultView(book: book) { selectedBook in
-                                addToCollection(selectedBook)
-                            }
-                            .padding(.horizontal)
-                            Divider()
-                        }
-                    }
-                }
+            // Toast notification
+            if showToast {
+                toastView
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Item added")
+                    .accessibilityValue(toastMessage)
+                    .accessibilityAddTraits(.updatesFrequently)
             }
         }
-        .navigationTitle("Add Item")
+        .navigationBarHidden(true) // Hide the default navigation bar title
         .alert("Error", isPresented: $showingError) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage)
         }
+        .accessibilityAction(.escape) {
+            // Provide an escape action for accessibility users
+            dismiss()
+        }
         .sheet(isPresented: $showingManualEntry) {
             NavigationView {
                 ManualEntryView(type: selectedType)
             }
+            .accessibilityLabel("Manual Entry")
+            .accessibilityHint("Enter item details manually")
         }
         .sheet(isPresented: $showingScanner) {
             BarcodeScannerView { code in
                 searchQuery = "isbn:" + code  // Add the isbn: prefix
                 showingScanner = false
-                performSearch()
+                if continuousEntryMode {
+                    handleContinuousSearch()
+                } else {
+                    performSearch()
+                }
             }
+            .accessibilityLabel("Barcode Scanner")
+            .accessibilityHint("Point camera at a barcode to scan")
         }
         .sheet(isPresented: $showingResults) {
             ScanResultsView(
@@ -192,7 +199,7 @@ struct AddItemView: View {
                     showingResults = false
                     // Optionally re-focus the search field
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        isSearchFieldFocused = true
+                        self.isSearchFieldFocused = true
                     }
                 },
                 onFinish: {
@@ -200,7 +207,407 @@ struct AddItemView: View {
                 }
             )
         }
+        .confirmationDialog("Sort Options", isPresented: $showingSortOptions) {
+            ForEach(BookSortOption.allCases) { option in
+                Button(option.rawValue) {
+                    selectedSortOption = option
+                }
+                .accessibilityHint("Sort results by \(option.rawValue)")
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .onAppear(perform: prepareHaptics)
+        .onDisappear(perform: cleanupResources)
     }
+    
+    // MARK: - Lifecycle Methods
+    
+    private func prepareHaptics() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        
+        do {
+            hapticEngine = try CHHapticEngine()
+            try hapticEngine?.start()
+            
+            // Set up haptic engine reset handler
+            hapticEngine?.resetHandler = {
+                // The engine stopped; attempt to restart it
+                do {
+                    try self.hapticEngine?.start()
+                } catch {
+                    print("Failed to restart the haptic engine: \(error.localizedDescription)")
+                }
+            }
+            
+            // Set up haptic engine stopped handler
+            hapticEngine?.stoppedHandler = { reason in
+                print("Haptic engine stopped: \(reason.rawValue)")
+            }
+        } catch {
+            print("There was an error creating the haptic engine: \(error.localizedDescription)")
+        }
+    }
+    
+    private func cleanupResources() {
+        // Stop the haptic engine to free resources
+        hapticEngine?.stop()
+        
+        // Clear any large data sets that aren't needed
+        if !continuousEntryMode {
+            searchResults = []
+        }
+    }
+    
+    // MARK: - Extracted Subviews
+    
+    private var searchBarView: some View {
+        HStack {
+            TextField("Search by title, author, or ISBN...", text: $searchQuery)
+                .font(.system(size: 16))
+                .padding(12)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                .focused($isSearchFieldFocused)
+                .onSubmit {
+                    if continuousEntryMode {
+                        handleContinuousSearch()
+                    } else {
+                        performSearch()
+                    }
+                }
+                .accessibilityLabel("Search field")
+                .accessibilityHint("Enter a book title, author name, or ISBN to search")
+        }
+        .padding(.horizontal)
+    }
+    
+    private var actionButtonsView: some View {
+        HStack(spacing: 12) {
+            // Search button with magnifying glass icon (now gray)
+            Button(action: performSearch) {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16))
+                    Text("Search")
+                        .fontWeight(.medium)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .accessibilityLabel("Search")
+            .accessibilityHint("Search for books with the entered query")
+            
+            // Scan button
+            Button(action: { showingScanner = true }) {
+                HStack {
+                    Image(systemName: "barcode.viewfinder")
+                        .font(.system(size: 16))
+                    Text("Scan")
+                        .fontWeight(.medium)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.accentColor)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .accessibilityLabel("Scan barcode")
+            .accessibilityHint("Open camera to scan a book barcode")
+        }
+        .padding(.horizontal)
+    }
+    
+    private var continuousModeToggleView: some View {
+        Toggle(isOn: $continuousEntryMode) {
+            HStack {
+                Image(systemName: "repeat")
+                    .imageScale(.small)
+                Text("Continuous Entry Mode")
+                    .font(.subheadline)
+            }
+        }
+        .toggleStyle(.button)
+        .tint(continuousEntryMode ? .green : .gray)
+        .padding(.horizontal)
+        .onChange(of: continuousEntryMode) { _, newValue in
+            if newValue {
+                // Focus the search field when continuous mode is enabled
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isSearchFieldFocused = true
+                }
+                
+                // Announce mode change for VoiceOver users
+                UIAccessibility.post(notification: .announcement, argument: "Continuous entry mode enabled")
+            } else if addedCount > 0 {
+                // Announce summary when disabling with items added
+                UIAccessibility.post(notification: .announcement, argument: "Continuous mode disabled. Added \(addedCount) items.")
+            }
+        }
+        .accessibilityLabel("Continuous Entry Mode")
+        .accessibilityHint("When enabled, allows you to scan multiple items in sequence")
+        .accessibilityValue(continuousEntryMode ? "Enabled" : "Disabled")
+    }
+    
+    private var continuousModeStatusView: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("Added: \(addedCount)")
+                    .font(.headline)
+                
+                if let title = lastAddedTitle {
+                    Text("Last added: \(title)")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                        .lineLimit(1)
+                        .scaleEffect(addedItemScale)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: addedItemScale)
+                }
+            }
+            
+            Spacer()
+            
+            Button(action: { showingResults = true }) {
+                Text("Review")
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            }
+            .disabled(addedCount == 0)
+            .opacity(addedCount == 0 ? 0.5 : 1)
+            .accessibilityLabel("Review added items")
+            .accessibilityHint("View the list of successfully added items")
+            .accessibilityAddTraits(addedCount == 0 ? [] : [.isButton])
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6).opacity(0.5))
+        .cornerRadius(8)
+        .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Continuous mode status")
+        .accessibilityValue("\(addedCount) items added\(lastAddedTitle != nil ? ", last added: \(lastAddedTitle!)" : "")")
+    }
+    
+    private var sortOptionsView: some View {
+        HStack {
+            Text("\(searchResults.count) results")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Button(action: {
+                showingSortOptions = true
+            }) {
+                HStack {
+                    Text("Sort: \(selectedSortOption.rawValue)")
+                        .font(.subheadline)
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+                .foregroundColor(.accentColor)
+            }
+            .accessibilityLabel("Sort options")
+            .accessibilityHint("Change how search results are sorted")
+            .accessibilityValue("Currently sorted by \(selectedSortOption.rawValue)")
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+    
+    private var resultsView: some View {
+        Group {
+            if isSearching {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .padding()
+                    .frame(maxHeight: .infinity, alignment: .center)
+                    .accessibilityLabel("Searching")
+                    .accessibilityHint("Please wait while we search for results")
+            } else if searchResults.isEmpty {
+                emptyStateView
+            } else {
+                searchResultsListView
+            }
+        }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            // Modified Empty State
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 50))
+                .foregroundColor(.gray)
+                .accessibilityHidden(true)
+            
+            Text("Search for books to add")
+                .font(.headline)
+                .foregroundColor(.gray)
+            
+            Text("Enter a title, author, or ISBN in the search field above")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+            Spacer()
+            
+            // Repositioned Manual Entry Button
+            manualEntryButton
+        }
+        .frame(maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("No search results")
+        .accessibilityHint("Enter a search term or use manual entry to add an item")
+    }
+    
+    private var searchResultsListView: some View {
+        VStack {
+            // Results list
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(sortedResults, id: \.id) { book in
+                        EnhancedBookSearchResultView(book: book) { selectedBook in
+                            addToCollection(selectedBook)
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        
+                        Divider()
+                            .padding(.horizontal)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .accessibilityLabel("Search results")
+            }
+            
+            // Keep Manual Entry button visible even with results
+            manualEntryButton
+        }
+    }
+    
+    private var manualEntryButton: some View {
+        Button {
+            showingManualEntry = true
+        } label: {
+            HStack {
+                Image(systemName: "square.and.pencil")
+                Text("Manual Entry")
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .padding(.horizontal)
+        .padding(.bottom)
+        .accessibilityLabel("Manual Entry")
+        .accessibilityHint("Add an item by manually entering its details")
+    }
+    
+    private var toastView: some View {
+        VStack {
+            Spacer()
+            
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .accessibilityHidden(true)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Added to Collection")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text(toastMessage)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(1)
+                }
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.green)
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                    .accessibilityHidden(true)
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+    
+    // MARK: - Haptic Feedback Methods
+    
+    private func triggerSuccessHaptic() {
+        if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+            triggerAdvancedHaptic()
+        } else {
+            triggerBasicHaptic()
+        }
+    }
+    
+    private func triggerAdvancedHaptic() {
+        guard let engine = hapticEngine else { return }
+        
+        // Create a pattern of haptic events
+        var events = [CHHapticEvent]()
+        
+        // Create an intense, sharp tap
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0)
+        let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
+        let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
+        events.append(event)
+        
+        // Convert the events into a pattern and play it
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            print("Failed to play haptic pattern: \(error.localizedDescription)")
+        }
+    }
+    
+    private func triggerBasicHaptic() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+    
+    // MARK: - UI Helper Methods
+    
+    private func showSuccessToast(title: String) {
+        toastMessage = title
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            showToast = true
+        }
+        
+        // Hide the toast after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation {
+                showToast = false
+            }
+        }
+        
+        // Announce the addition for VoiceOver users
+        UIAccessibility.post(notification: .announcement, argument: "Added \(title) to collection")
+    }
+    
+    // MARK: - Core Functionality Methods
     
     private func performSearch() {
         guard !searchQuery.isEmpty else { return }
@@ -221,28 +628,47 @@ struct AddItemView: View {
     }
     
     private func addToCollection(_ book: GoogleBook) {
+        // Create a new inventory item from the book
+        let newItem = createInventoryItem(from: book)
+        
+        do {
+            try inventoryViewModel.addItem(newItem)
+            
+            // Provide feedback
+            triggerSuccessHaptic()
+            showSuccessToast(title: book.volumeInfo.title)
+            
+            if !continuousEntryMode {
+                withAnimation {
+                    dismiss()
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            showingError = true
+        }
+    }
+    
+    private func createInventoryItem(from book: GoogleBook) -> InventoryItem {
         // Detect the correct type
         let detectedType = detectItemType(book)
         
         // Process the thumbnail URL to ensure it uses HTTPS
-        let thumbnailURL = book.volumeInfo.imageLinks?.thumbnail.flatMap { urlString -> URL? in
-            var secureUrlString = urlString
-            if urlString.hasPrefix("http://") {
-                secureUrlString = "https://" + urlString.dropFirst(7)
-            }
-            return URL(string: secureUrlString)
-        }
+        let thumbnailURL = processBookThumbnailURL(book.volumeInfo.imageLinks?.thumbnail)
         
-        let newItem = InventoryItem(
+        // Extract series and volume information
+        let (series, volume) = extractSeriesInfo(from: book.volumeInfo.title)
+        
+        return InventoryItem(
             title: book.volumeInfo.title,
             type: detectedType,
-            series: extractSeriesInfo(from: book.volumeInfo.title).0,
-            volume: extractSeriesInfo(from: book.volumeInfo.title).1,
+            series: series,
+            volume: volume,
             condition: .good,
             notes: nil,
             dateAdded: Date(),
             barcode: nil,
-            thumbnailURL: thumbnailURL,  // Use the processed HTTPS URL
+            thumbnailURL: thumbnailURL,
             author: book.volumeInfo.authors?.first,
             manufacturer: nil,
             originalPublishDate: parseDate(book.volumeInfo.publishedDate),
@@ -252,17 +678,19 @@ struct AddItemView: View {
             purchaseDate: nil,
             synopsis: book.volumeInfo.description
         )
-        
-        do {
-            try inventoryViewModel.addItem(newItem)
-            withAnimation {
-                dismiss()
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-            showingError = true
-        }
     }
+    
+    private func processBookThumbnailURL(_ urlString: String?) -> URL? {
+        guard let urlString = urlString else { return nil }
+        
+        var secureUrlString = urlString
+        if urlString.hasPrefix("http://") {
+            secureUrlString = "https://" + urlString.dropFirst(7)
+        }
+        return URL(string: secureUrlString)
+    }
+    
+    // MARK: - Data Processing Methods
     
     private func detectItemType(_ book: GoogleBook) -> CollectionType {
         let title = book.volumeInfo.title.lowercased()
@@ -296,6 +724,16 @@ struct AddItemView: View {
     private func extractSeriesInfo(from title: String) -> (series: String?, volume: Int?) {
         let lowercasedTitle = title.lowercased()
         
+        // Extract volume number
+        let volumeNumber = extractVolumeNumber(from: title)
+        
+        // Extract series name
+        let seriesName = extractSeriesName(from: title, lowercasedTitle: lowercasedTitle)
+        
+        return (seriesName, volumeNumber)
+    }
+    
+    private func extractVolumeNumber(from title: String) -> Int? {
         // Common volume indicators with more patterns
         let volumePatterns = [
             "vol\\.?\\s*(\\d+)",
@@ -306,36 +744,32 @@ struct AddItemView: View {
             "\\s(\\d+)\\s" // Number surrounded by spaces
         ]
         
-        // First, try to extract volume number
-        var volumeNumber: Int?
+        // Try to extract volume number using patterns
         for pattern in volumePatterns {
             if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
                let match = regex.firstMatch(in: title, options: [], range: NSRange(title.startIndex..., in: title)),
                let range = Range(match.range(at: 1), in: title) {
-                volumeNumber = Int(title[range])
-                    break
+                return Int(title[range])
             }
         }
         
-        // Then extract series name
-        var seriesName: String?
-        
+        return nil
+    }
+    
+    private func extractSeriesName(from title: String, lowercasedTitle: String) -> String? {
         // Try different volume separators
         let separators = [" vol", " volume", " v", "#"]
         for separator in separators {
             if let range = lowercasedTitle.range(of: separator, options: .caseInsensitive) {
-                seriesName = String(title[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-                break
+                return String(title[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
             }
         }
         
         // If no series name found, try splitting by comma or hyphen
-        if seriesName == nil {
-            if let commaRange = title.range(of: ",") {
-                seriesName = String(title[..<commaRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            } else if let hyphenRange = title.range(of: " - ") {
-                seriesName = String(title[..<hyphenRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            }
+        if let commaRange = title.range(of: ",") {
+            return String(title[..<commaRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+        } else if let hyphenRange = title.range(of: " - ") {
+            return String(title[..<hyphenRange.lowerBound]).trimmingCharacters(in: .whitespaces)
         }
         
         // Special handling for common manga series patterns
@@ -349,15 +783,15 @@ struct AddItemView: View {
         // Check if the title starts with any known series
         for (key, value) in knownSeries {
             if lowercasedTitle.starts(with: key) {
-                seriesName = value
-                break
+                return value
             }
         }
         
-        return (seriesName, volumeNumber)
+        return nil
     }
     
-    private func parseDate(_ dateString: String?) -> Date? {
+    // Add static parseDate method for use in BookSortOption
+    static func parseDate(_ dateString: String?) -> Date? {
         guard let dateString = dateString else { return nil }
         
         let dateFormatter = DateFormatter()
@@ -384,6 +818,12 @@ struct AddItemView: View {
         return nil
     }
     
+    private func parseDate(_ dateString: String?) -> Date? {
+        return AddItemView.parseDate(dateString)
+    }
+    
+    // MARK: - Continuous Mode Methods
+    
     private func handleContinuousSearch() {
         guard !searchQuery.isEmpty else { return }
         
@@ -392,64 +832,195 @@ struct AddItemView: View {
         let isbnQuery = query.replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
         
         if isbnQuery.count == 10 || isbnQuery.count == 13 {
-            isSearching = true
-            
-            // Search for the ISBN
-            googleBooksService.fetchBooks(query: "isbn:\(isbnQuery)") { result in
-                DispatchQueue.main.async {
-                    self.isSearching = false
-                    
-                    switch result {
-                    case .success(let books):
-                        if let book = books.first {
-                            do {
-                                let newItem = self.inventoryViewModel.createItemFromGoogleBook(book)
-                                try self.inventoryViewModel.addItem(newItem)
-                                self.addedCount += 1
-                                self.lastAddedTitle = book.volumeInfo.title
-                                self.successfulScans.append((
-                                    title: book.volumeInfo.title,
-                                    isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
-                                ))
-                                
-                                // Clear search field for next entry
-                                self.searchQuery = ""
-                                
-                                // Show confirmation briefly
-                                withAnimation {
-                                    self.showingAddConfirmation = true
-                                }
-                                
-                                // Clear confirmation after delay
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                    withAnimation {
-                                        self.showingAddConfirmation = false
-                                        self.lastAddedTitle = nil
-                                    }
-                                }
-                                
-                                // Re-focus the search field for the next scan
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    self.isSearchFieldFocused = true
-                                }
-                            } catch {
-                                self.failedScans.append((isbnQuery, error.localizedDescription))
-                                self.searchQuery = ""
-                            }
-                        } else {
-                            self.failedScans.append((isbnQuery, "No book found"))
-                            self.searchQuery = ""
-                        }
-                    case .failure(let error):
-                        self.failedScans.append((isbnQuery, error.localizedDescription))
-                        self.searchQuery = ""
-                    }
-                }
-            }
+            handleISBNSearch(isbnQuery)
         } else {
             // Not an ISBN, perform regular search
             performSearch()
         }
+    }
+    
+    private func handleISBNSearch(_ isbnQuery: String) {
+        isSearching = true
+        
+        // Search for the ISBN
+        googleBooksService.fetchBooks(query: "isbn:\(isbnQuery)") { result in
+            DispatchQueue.main.async {
+                self.isSearching = false
+                
+                switch result {
+                case .success(let books):
+                    if let book = books.first {
+                        self.processFoundBook(book, isbnQuery)
+                    } else {
+                        self.handleFailedScan(isbnQuery, reason: "No book found")
+                    }
+                case .failure(let error):
+                    self.handleFailedScan(isbnQuery, reason: error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    private func processFoundBook(_ book: GoogleBook, _ isbnQuery: String) {
+        do {
+            let newItem = self.inventoryViewModel.createItemFromGoogleBook(book)
+            try self.inventoryViewModel.addItem(newItem)
+            
+            // Update UI state
+            self.addedCount += 1
+            self.lastAddedTitle = book.volumeInfo.title
+            self.successfulScans.append((
+                title: book.volumeInfo.title,
+                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+            ))
+            
+            // Clear search field for next entry
+            self.searchQuery = ""
+            
+            // Provide feedback
+            self.triggerSuccessHaptic()
+            self.showSuccessToast(title: book.volumeInfo.title)
+            
+            // Announce for VoiceOver in continuous mode
+            if continuousEntryMode {
+                UIAccessibility.post(notification: .announcement, argument: "Added \(book.volumeInfo.title). Ready for next scan.")
+            }
+            
+            // Animate the last added item
+            self.animateLastAddedItem()
+            
+            // Re-focus the search field for the next scan
+            self.refocusSearchField()
+        } catch {
+            self.handleFailedScan(isbnQuery, reason: error.localizedDescription)
+        }
+    }
+    
+    private func handleFailedScan(_ code: String, reason: String) {
+        failedScans.append((code, reason))
+        searchQuery = ""
+        
+        // Announce the failure for VoiceOver users
+        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+    }
+    
+    private func animateLastAddedItem() {
+        addedItemScale = 1.2
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.addedItemScale = 1.0
+        }
+    }
+    
+    private func refocusSearchField() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.isSearchFieldFocused = true
+        }
+    }
+}
+
+// Enhanced Book Search Result View with improved thumbnail display
+struct EnhancedBookSearchResultView: View {
+    let book: GoogleBook
+    let onSelect: (GoogleBook) -> Void
+    @State private var isAdded = false
+    
+    var body: some View {
+        Button(action: {
+            withAnimation {
+                isAdded = true
+            }
+            onSelect(book)
+            
+            // Reset after delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation {
+                    isAdded = false
+                }
+            }
+        }) {
+            HStack(spacing: 12) {
+                // Improved Thumbnail
+                if let thumbnail = book.volumeInfo.imageLinks?.thumbnail,
+                   let url = URL(string: thumbnail.replacingOccurrences(of: "http://", with: "https://")) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .frame(width: 60, height: 90)
+                                .accessibilityHidden(true)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 60, height: 90)
+                                .cornerRadius(4)
+                                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                                .accessibilityHidden(true)
+                        case .failure:
+                            Image(systemName: "book.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 60, height: 90)
+                                .foregroundColor(.gray)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(4)
+                                .accessibilityHidden(true)
+                        @unknown default:
+                            Image(systemName: "book")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 60, height: 90)
+                                .foregroundColor(.gray)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                } else {
+                    Image(systemName: "book.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 60, height: 90)
+                        .foregroundColor(.gray)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(4)
+                        .accessibilityHidden(true)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(book.volumeInfo.title)
+                        .font(.headline)
+                        .lineLimit(2)
+                    
+                    if let authors = book.volumeInfo.authors {
+                        Text(authors.joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    if let publisher = book.volumeInfo.publisher {
+                        Text(publisher)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle")
+                    .foregroundColor(isAdded ? .green : .accentColor)
+                    .imageScale(.large)
+                    .scaleEffect(isAdded ? 1.2 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAdded)
+                    .accessibilityHidden(true)
+            }
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(book.volumeInfo.title)")
+        .accessibilityHint("Tap to add to your collection\(book.volumeInfo.authors?.isEmpty == false ? ". By \(book.volumeInfo.authors!.joined(separator: ", "))" : "")\(book.volumeInfo.publisher != nil ? ". Published by \(book.volumeInfo.publisher!)" : "")")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -464,5 +1035,7 @@ struct AddItemView: View {
         AddItemView()
             .environmentObject(inventoryViewModel)
             .environmentObject(locationManager)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Add Item Screen")
     }
 } 
