@@ -197,6 +197,59 @@ class GoogleBooksService: ObservableObject {
         return nil
     }
     
+    // Fetch a book directly by its Google Books ID
+    func fetchBookById(_ id: String, completion: @escaping (Result<GoogleBook, Error>) -> Void) {
+        guard !id.isEmpty else {
+            completion(.failure(GoogleBooksError.emptyQuery))
+            return
+        }
+        
+        let urlString = "\(baseURL)/\(id)?key=\(apiKey)"
+        
+        guard let url = URL(string: urlString) else {
+            completion(.failure(GoogleBooksError.invalidURL))
+            return
+        }
+        
+        print("DEBUG: Fetching book by ID: \(id)")
+        print("DEBUG: URL: \(urlString)")
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("DEBUG: Network error: \(error.localizedDescription)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(GoogleBooksError.invalidResponse))
+                    return
+                }
+                
+                print("DEBUG: Response status code: \(httpResponse.statusCode)")
+                
+                if httpResponse.statusCode == 200 {
+                    if let data = data,
+                       let book = try? JSONDecoder().decode(GoogleBook.self, from: data) {
+                        print("DEBUG: Successfully fetched book: \(book.volumeInfo.title)")
+                        completion(.success(book))
+                    } else {
+                        print("DEBUG: Failed to decode book")
+                        if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                            print("DEBUG: Raw response: \(responseString)")
+                        }
+                        completion(.failure(GoogleBooksError.invalidResponse))
+                    }
+                } else {
+                    print("DEBUG: API error with status code: \(httpResponse.statusCode)")
+                    completion(.failure(GoogleBooksError.apiError("Status code: \(httpResponse.statusCode)")))
+                }
+            }
+        }
+        task.resume()
+    }
+    
     private func searchWithFallback(isbn: String, completion: @escaping (Result<[GoogleBook], Error>) -> Void) {
         Task {
             do {
@@ -225,6 +278,87 @@ class GoogleBooksService: ObservableObject {
             }
         }
     }
+    
+    // Fetch books by ISBN
+    func fetchBooksByISBN(_ isbn: String, completion: @escaping (Result<[GoogleBook], Error>) -> Void) {
+        // Clean the ISBN by removing any non-numeric characters
+        let cleanedISBN = isbn.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        
+        // Check if we have a cached result
+        let cacheKey = NSString(string: "isbn:\(cleanedISBN)")
+        if let cachedResponse = cache.object(forKey: cacheKey), cachedResponse.isValid {
+            completion(.success(cachedResponse.books))
+            return
+        }
+        
+        // Set loading state
+        isLoading = true
+        
+        // Build the query URL
+        let query = "isbn:\(cleanedISBN)"
+        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(baseURL)?q=\(encodedQuery)&maxResults=10&key=\(apiKey)") else {
+            isLoading = false
+            completion(.failure(GoogleBooksError.invalidURL))
+            return
+        }
+        
+        // Make the network request
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            // Reset loading state
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            
+            // Handle network errors
+            if let error = error {
+                print("Network error: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+            
+            // Check for valid response
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("Invalid response")
+                completion(.failure(GoogleBooksError.invalidResponse))
+                return
+            }
+            
+            // Check for HTTP errors
+            if httpResponse.statusCode != 200 {
+                print("HTTP error: \(httpResponse.statusCode)")
+                completion(.failure(GoogleBooksError.httpError(httpResponse.statusCode)))
+                return
+            }
+            
+            // Check for data
+            guard let data = data else {
+                print("No data received")
+                completion(.failure(GoogleBooksError.noData))
+                return
+            }
+            
+            // Parse the JSON response
+            do {
+                let decoder = JSONDecoder()
+                let response = try decoder.decode(GoogleBooksResponse.self, from: data)
+                let books = response.items ?? []
+                
+                // Cache the result
+                DispatchQueue.main.async {
+                    let cachedResponse = CachedResponse(books: books)
+                    self.cache.setObject(cachedResponse, forKey: cacheKey)
+                }
+                
+                completion(.success(books))
+            } catch {
+                print("JSON decoding error: \(error.localizedDescription)")
+                completion(.failure(error))
+            }
+        }.resume()
+    }
 }
 
 // MARK: - Errors
@@ -235,6 +369,7 @@ enum GoogleBooksError: LocalizedError {
     case invalidISBN
     case noData
     case invalidURL
+    case httpError(Int)
     
     var errorDescription: String? {
         switch self {
@@ -250,6 +385,8 @@ enum GoogleBooksError: LocalizedError {
             return "No data received"
         case .invalidURL:
             return "Invalid URL for Google Books API"
+        case .httpError(let code):
+            return "HTTP Error: \(code)"
         }
     }
 } 

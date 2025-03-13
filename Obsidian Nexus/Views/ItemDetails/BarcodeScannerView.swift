@@ -5,6 +5,21 @@ struct BarcodeScannerView: View {
     @StateObject private var viewModel = BarcodeScannerViewModel()
     @EnvironmentObject private var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
+    @StateObject private var isbnMappingService = ISBNMappingService()
+    
+    // Move mangaPublishers here as a static property
+    private static let mangaPublishers = [
+        "viz",
+        "kodansha",
+        "shogakukan", 
+        "shueisha",
+        "square enix",
+        "seven seas",
+        "yen press",
+        "dark horse manga",
+        "vertical comics"
+    ]
+    
     @State private var continuousScanEnabled = false
     @State private var scannedCount = 0
     @State private var failedScans: [(code: String, reason: String)] = []
@@ -12,6 +27,12 @@ struct BarcodeScannerView: View {
     @State private var lastAddedTitle: String?
     @State private var showingAddConfirmation = false
     @State private var successfulScans: [(title: String, isbn: String?)] = []
+    @State private var currentFailedISBN = ""
+    @State private var showingLinkPrompt = false
+    @State private var showingISBNLinking = false
+    @State private var showingSuccessMessage = false
+    @State private var successMessage = ""
+    @State private var isDuplicate = false
     
     let onScan: (String) -> Void
     @Namespace private var animation
@@ -22,6 +43,32 @@ struct BarcodeScannerView: View {
             if let session = viewModel.captureSession {
                 CameraPreview(session: session)
                     .ignoresSafeArea()
+            }
+            
+            // Success Message Overlay
+            if showingSuccessMessage {
+                VStack {
+                    HStack {
+                        Image(systemName: isDuplicate ? "checkmark.circle.fill" : "plus.circle.fill")
+                            .foregroundColor(isDuplicate ? .orange : .green)
+                            .font(.system(size: 24))
+                        Text(successMessage)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                }
+                .transition(.opacity)
+                .onAppear {
+                    // Auto-hide after 2 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        withAnimation {
+                            showingSuccessMessage = false
+                        }
+                    }
+                }
             }
             
             // Overlay Layout
@@ -178,8 +225,27 @@ struct BarcodeScannerView: View {
             if continuousScanEnabled {
                 handleContinuousScan(code)
             } else {
-                onScan(code) // Original behavior for manual mode
-                dismiss()
+                // Check for ISBN mappings first
+                if let mapping = isbnMappingService.getMappingForISBN(code) {
+                    // Use the Google Books ID from user mapping
+                    googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
+                        DispatchQueue.main.async {
+                            switch result {
+                            case .success(let book):
+                                // Pass the mapped book's ISBN to maintain compatibility
+                                onScan(book.volumeInfo.industryIdentifiers?.first?.identifier ?? code)
+                                dismiss()
+                            case .failure(_):
+                                // If direct fetch fails, try a title search as fallback
+                                self.searchByTitle(mapping.title, originalIsbn: code)
+                            }
+                        }
+                    }
+                } else {
+                    // No mapping found, proceed with regular scan
+                    onScan(code)
+                    dismiss()
+                }
             }
         }
         .sheet(isPresented: $showingResults) {
@@ -195,6 +261,34 @@ struct BarcodeScannerView: View {
                     dismiss()
                 }
             )
+        }
+        .sheet(isPresented: $showingISBNLinking) {
+            ISBNLinkingView(
+                isbn: currentFailedISBN,
+                onBookSelected: { book in
+                    // Process the selected book
+                    self.processFoundBook(book, currentFailedISBN)
+                    
+                    // Announce success for VoiceOver users
+                    UIAccessibility.post(
+                        notification: .announcement,
+                        argument: "ISBN \(currentFailedISBN) linked to \(book.volumeInfo.title)"
+                    )
+                }
+            )
+        }
+        .alert("ISBN Not Found", isPresented: $showingLinkPrompt) {
+            Button("Link Now", role: .none) {
+                showingISBNLinking = true
+                showingLinkPrompt = false
+            }
+            Button("Skip", role: .cancel) {
+                // Just continue scanning
+                viewModel.clearScannedCode()
+                viewModel.startScanning()
+            }
+        } message: {
+            Text("Would you like to link this ISBN to a book in Google Books?")
         }
         .toolbar {
             if continuousScanEnabled {
@@ -212,78 +306,144 @@ struct BarcodeScannerView: View {
         // Stop scanning while processing
         viewModel.stopScanning()
         
-        // Define manga publishers list here since we can't access the private one in AddItemView
-        let mangaPublishers = [
-            "viz",
-            "kodansha",
-            "shogakukan", 
-            "shueisha",
-            "square enix",
-            "seven seas",
-            "yen press",
-            "dark horse manga",
-            "vertical comics"
-        ]
+        // First check user-defined mappings
+        if let mapping = isbnMappingService.getMappingForISBN(code) {
+            // Use the Google Books ID from user mapping
+            googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let book):
+                        self.processFoundBook(book, code)
+                        // Resume scanning after processing
+                        self.viewModel.startScanning()
+                    case .failure(_):
+                        // If direct fetch fails, try a title search as fallback
+                        self.searchByTitle(mapping.title, originalIsbn: code)
+                    }
+                }
+            }
+            return
+        }
         
-        // Search and add
-        googleBooksService.fetchBooks(query: "isbn:\(code)") { result in
+        // If no mapping found, perform a regular ISBN search
+        googleBooksService.fetchBooksByISBN(code) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let books):
                     if let book = books.first {
-                        do {
-                            // Create the item with proper classification
-                            let newItem = inventoryViewModel.createItemFromGoogleBook(book)
-                            
-                            // Ensure the item type is correctly set based on publisher
-                            if let publisher = book.volumeInfo.publisher?.lowercased(), 
-                               mangaPublishers.contains(where: { publisher.contains($0) }) {
-                                // This is a manga - make sure it's classified as such
-                                var updatedItem = newItem
-                                updatedItem.type = .manga
-                                try inventoryViewModel.addItem(updatedItem)
-                            } else {
-                                // Regular book or already classified correctly
-                                try inventoryViewModel.addItem(newItem)
-                            }
-                            
-                            scannedCount += 1
-                            lastAddedTitle = book.volumeInfo.title
-                            successfulScans.append((
-                                title: book.volumeInfo.title,
-                                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
-                            ))
-                            
-                            // Show confirmation briefly
-                            withAnimation {
-                                showingAddConfirmation = true
-                            }
-                            
-                            // Clear after delay and prepare for next scan
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                withAnimation {
-                                    showingAddConfirmation = false
-                                    lastAddedTitle = nil
-                                }
-                                // Resume scanning
-                                viewModel.clearScannedCode()
-                                viewModel.startScanning()
-                            }
-                        } catch {
-                            failedScans.append((code, error.localizedDescription))
-                            viewModel.clearScannedCode()
-                            viewModel.startScanning()
-                        }
+                        self.processFoundBook(book, code)
                     } else {
-                        failedScans.append((code, "No book found"))
-                        viewModel.clearScannedCode()
-                        viewModel.startScanning()
+                        self.handleNoBookFound(code)
                     }
                 case .failure(let error):
-                    failedScans.append((code, error.localizedDescription))
-                    viewModel.clearScannedCode()
-                    viewModel.startScanning()
+                    self.handleFailedScan(code, reason: error.localizedDescription)
                 }
+                
+                // Resume scanning after processing
+                self.viewModel.startScanning()
+            }
+        }
+    }
+    
+    private func processFoundBook(_ book: GoogleBook, _ isbnQuery: String) {
+        do {
+            // Check if item already exists
+            let existingItem = inventoryViewModel.items.first { item in
+                item.isbn == isbnQuery || 
+                (item.type == .manga && item.title == book.volumeInfo.title)
+            }
+            
+            if existingItem != nil {
+                isDuplicate = true
+                successMessage = "\(book.volumeInfo.title) already in collection"
+                withAnimation {
+                    showingSuccessMessage = true
+                }
+                return
+            }
+            
+            // Create the item with proper classification
+            let newItem = inventoryViewModel.createItemFromGoogleBook(book)
+            
+            // Ensure the item type is correctly set based on publisher
+            if let publisher = book.volumeInfo.publisher?.lowercased(), 
+               BarcodeScannerView.mangaPublishers.contains(where: { publisher.contains($0) }) {
+                // This is a manga - make sure it's classified as such
+                var updatedItem = newItem
+                updatedItem.type = .manga
+                try inventoryViewModel.addItem(updatedItem)
+            } else {
+                // Regular book or already classified correctly
+                try inventoryViewModel.addItem(newItem)
+            }
+            
+            scannedCount += 1
+            lastAddedTitle = book.volumeInfo.title
+            successfulScans.append((
+                title: book.volumeInfo.title,
+                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+            ))
+            
+            // Show success message
+            isDuplicate = false
+            successMessage = "Added \(book.volumeInfo.title)"
+            withAnimation {
+                showingSuccessMessage = true
+            }
+            
+            // Provide feedback
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            
+            // Announce for VoiceOver users
+            UIAccessibility.post(notification: .announcement, argument: "Added \(book.volumeInfo.title). Ready for next scan.")
+            
+        } catch {
+            handleFailedScan(isbnQuery, reason: error.localizedDescription)
+        }
+    }
+    
+    private func handleNoBookFound(_ isbnQuery: String, error: String? = nil) {
+        let reason = error ?? "No book found"
+        
+        // Store the failed ISBN for later use
+        currentFailedISBN = isbnQuery
+        
+        // Add to failed scans
+        failedScans.append((code: isbnQuery, reason: reason))
+        
+        // Show link prompt
+        showingLinkPrompt = true
+        
+        // Announce the failure for VoiceOver users
+        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+    }
+    
+    private func handleFailedScan(_ code: String, reason: String) {
+        failedScans.append((code, reason))
+        
+        // Announce the failure for VoiceOver users
+        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+        
+        // Provide haptic feedback
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+    }
+    
+    private func searchByTitle(_ title: String, originalIsbn: String) {
+        googleBooksService.fetchBooks(query: title) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let books):
+                    if let book = books.first {
+                        self.processFoundBook(book, originalIsbn)
+                    } else {
+                        self.handleNoBookFound(originalIsbn, error: "No book found for mapped title")
+                    }
+                case .failure(_):
+                    self.handleNoBookFound(originalIsbn, error: "Failed to search by title")
+                }
+                
+                // Resume scanning after processing
+                self.viewModel.startScanning()
             }
         }
     }

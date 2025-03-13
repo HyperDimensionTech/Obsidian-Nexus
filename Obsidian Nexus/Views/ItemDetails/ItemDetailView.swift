@@ -11,12 +11,93 @@ struct ItemDetailView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showingImagePicker = false
+    @State private var dragOffset = CGSize.zero
+    @State private var currentItem: InventoryItem
+    @State private var isTransitioning = false
     
     let item: InventoryItem
     
+    init(item: InventoryItem) {
+        self.item = item
+        _currentItem = State(initialValue: item)
+    }
+    
     private var location: StorageLocation? {
-        guard let id = item.locationId else { return nil }
+        guard let id = currentItem.locationId else { return nil }
         return locationManager.location(withId: id)
+    }
+    
+    private var filteredItems: [InventoryItem] {
+        // First filter by type
+        let sameTypeItems = inventoryViewModel.items.filter { $0.type == currentItem.type }
+        
+        // If this is a volumed series (manga/comics), filter by series and sort by volume
+        if let currentSeries = currentItem.series, currentItem.volume != nil {
+            print("DEBUG: Current item is part of series '\(currentSeries)' volume \(currentItem.volume ?? 0)")
+            
+            let seriesItems = sameTypeItems.filter { $0.series == currentSeries }
+            let sortedItems = seriesItems.sorted { (item1, item2) in
+                guard let vol1 = item1.volume, let vol2 = item2.volume else {
+                    return item1.title < item2.title // Fallback to title sort if no volume
+                }
+                return vol1 < vol2
+            }
+            
+            print("DEBUG: Found \(seriesItems.count) items in series '\(currentSeries)'")
+            print("DEBUG: Volumes in order: \(sortedItems.map { $0.volume ?? 0 })")
+            
+            return sortedItems
+        }
+        
+        // For non-volumed items, just return same type items sorted by title
+        return sameTypeItems.sorted { $0.title < $1.title }
+    }
+    
+    private var currentIndex: Int? {
+        let index = filteredItems.firstIndex(where: { $0.id == currentItem.id })
+        print("DEBUG: Current item index: \(index ?? -1)")
+        return index
+    }
+    
+    private var hasNextItem: Bool {
+        guard let index = currentIndex else { return false }
+        let hasNext = index < filteredItems.count - 1
+        
+        if let currentSeries = currentItem.series, let currentVolume = currentItem.volume {
+            let nextItem = hasNext ? filteredItems[index + 1] : nil
+            print("DEBUG: Next item check for series '\(currentSeries)' - Current: Vol \(currentVolume), Next: Vol \(nextItem?.volume ?? -1)")
+        }
+        
+        return hasNext
+    }
+    
+    private var hasPreviousItem: Bool {
+        guard let index = currentIndex else { return false }
+        let hasPrev = index > 0
+        
+        if let currentSeries = currentItem.series, let currentVolume = currentItem.volume {
+            let prevItem = hasPrev ? filteredItems[index - 1] : nil
+            print("DEBUG: Previous item check for series '\(currentSeries)' - Current: Vol \(currentVolume), Previous: Vol \(prevItem?.volume ?? -1)")
+        }
+        
+        return hasPrev
+    }
+    
+    private func switchToItem(_ newItem: InventoryItem) {
+        isTransitioning = true
+        thumbnailURL = nil // Clear the current thumbnail immediately
+        
+        // Use a quicker, more immediate animation
+        withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
+            currentItem = newItem
+            dragOffset = .zero
+        }
+        
+        // Load the new thumbnail with minimal delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            loadThumbnail()
+            isTransitioning = false
+        }
     }
     
     var body: some View {
@@ -26,27 +107,52 @@ struct ItemDetailView: View {
                     Spacer()
                     ZStack(alignment: .bottomTrailing) {
                         VStack {
-                            if item.imageSource == .custom, let imageData = item.customImageData {
+                            if currentItem.imageSource == .custom, let imageData = currentItem.customImageData {
                                 Image(uiImage: UIImage(data: imageData)!)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 200)
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
+                                        removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
+                                    ))
                             } else if let url = thumbnailURL {
-                                AsyncImage(url: url) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                } placeholder: {
-                                    ProgressView()
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .empty:
+                                        ProgressView()
+                                            .frame(height: 200)
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(height: 200)
+                                            .transition(.asymmetric(
+                                                insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
+                                                removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
+                                            ))
+                                    case .failure(_):
+                                        Image(systemName: "book")
+                                            .font(.system(size: 100))
+                                            .foregroundColor(.gray)
+                                            .frame(height: 200)
+                                    @unknown default:
+                                        EmptyView()
+                                    }
                                 }
-                                .frame(height: 200)
                             } else {
                                 Image(systemName: "book")
                                     .font(.system(size: 100))
                                     .foregroundColor(.gray)
                                     .frame(height: 200)
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
+                                        removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
+                                    ))
                             }
                         }
+                        .animation(.easeInOut(duration: 0.15), value: thumbnailURL)
+                        .animation(.easeInOut(duration: 0.15), value: currentItem.imageSource)
                         .onTapGesture {
                             showingImagePicker = true
                         }
@@ -70,32 +176,34 @@ struct ItemDetailView: View {
                     Spacer()
                 }
             }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
             
             Section("Basic Details") {
-                DetailRow(label: "Name", value: item.title)
-                if let creator = item.creator {
-                    DetailRow(label: item.type.isLiterature ? "Author" : "Manufacturer", 
+                DetailRow(label: "Name", value: currentItem.title)
+                if let creator = currentItem.creator {
+                    DetailRow(label: currentItem.type.isLiterature ? "Author" : "Manufacturer", 
                              value: creator)
                 }
-                DetailRow(label: "Type", value: item.type.name)
-                DetailRow(label: "Condition", value: item.condition.rawValue)
+                DetailRow(label: "Type", value: currentItem.type.name)
+                DetailRow(label: "Condition", value: currentItem.condition.rawValue)
                 
-                if let date = item.originalPublishDate {
+                if let date = currentItem.originalPublishDate {
                     DetailRow(label: "Original Publish Date", 
                             value: date.formatted(date: .long, time: .omitted))
                 }
             }
             
             Section("Purchase Information") {
-                if let price = item.price {
+                if let price = currentItem.price {
                     DetailRow(label: "Price", 
                             value: price.formatted(.currency(code: "USD")))
                 }
-                if let purchaseDate = item.purchaseDate {
+                if let purchaseDate = currentItem.purchaseDate {
                     DetailRow(label: "Purchase Date", 
                             value: purchaseDate.formatted(date: .long, time: .omitted))
                 }
-                if let locationId = item.locationId {
+                if let locationId = currentItem.locationId {
                     DetailRow(
                         label: "Location", 
                         value: locationManager.breadcrumbPath(for: locationId)
@@ -103,7 +211,7 @@ struct ItemDetailView: View {
                 }
             }
             
-            if let synopsis = item.synopsis {
+            if let synopsis = currentItem.synopsis {
                 Section("Details") {
                     Text(synopsis)
                         .font(.body)
@@ -111,18 +219,55 @@ struct ItemDetailView: View {
             }
             
             // Keep literature-specific section for additional details
-            if item.type.isLiterature {
+            if currentItem.type.isLiterature {
                 Section("Additional Details") {
-                    if let publisher = item.publisher {
+                    if let publisher = currentItem.publisher {
                         DetailRow(label: "Publisher", value: publisher)
                     }
-                    if let isbn = item.isbn {
+                    if let isbn = currentItem.isbn {
                         DetailRow(label: "ISBN", value: isbn)
                     }
                 }
             }
         }
-        .navigationTitle(item.title)
+        .navigationTitle(currentItem.title)
+        .gesture(
+            DragGesture()
+                .onChanged { gesture in
+                    guard !isTransitioning else { return }
+                    // Make drag follow finger more closely
+                    withAnimation(.interactiveSpring()) {
+                        dragOffset = gesture.translation
+                    }
+                }
+                .onEnded { gesture in
+                    guard !isTransitioning else { return }
+                    let threshold: CGFloat = 50
+                    let dragX = gesture.translation.width
+                    let velocity = gesture.predictedEndTranslation.width - gesture.translation.width
+                    
+                    // Make swipe more responsive to quick flicks
+                    let shouldTrigger = abs(dragX) > threshold || abs(velocity) > 200
+                    
+                    if dragX > 0 && hasPreviousItem && shouldTrigger {
+                        if let index = currentIndex {
+                            let previousItem = filteredItems[index - 1]
+                            switchToItem(previousItem)
+                        }
+                    } else if dragX < 0 && hasNextItem && shouldTrigger {
+                        if let index = currentIndex {
+                            let nextItem = filteredItems[index + 1]
+                            switchToItem(nextItem)
+                        }
+                    } else {
+                        // Snappier reset animation
+                        withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
+                            dragOffset = .zero
+                        }
+                    }
+                }
+        )
+        .offset(x: dragOffset.width)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
@@ -139,7 +284,7 @@ struct ItemDetailView: View {
         }
         .sheet(isPresented: $showingEditSheet) {
             NavigationStack {
-                EditItemView(item: item)
+                EditItemView(item: currentItem)
                     .environmentObject(inventoryViewModel)
                     .environmentObject(locationManager)
             }
@@ -158,15 +303,18 @@ struct ItemDetailView: View {
     }
     
     private func loadThumbnail() {
-        if let existingURL = item.thumbnailURL {
-            print("Using existing thumbnail URL: \(existingURL)")  // Debug
+        if let existingURL = currentItem.thumbnailURL {
+            print("DEBUG: Loading thumbnail URL: \(existingURL)")
             thumbnailURL = existingURL
+        } else {
+            print("DEBUG: No thumbnail URL available for current item")
+            thumbnailURL = nil
         }
     }
     
     private func deleteItem() {
         do {
-            try inventoryViewModel.deleteItem(item)
+            try inventoryViewModel.deleteItem(currentItem)
         } catch {
             errorMessage = error.localizedDescription
             showError = true

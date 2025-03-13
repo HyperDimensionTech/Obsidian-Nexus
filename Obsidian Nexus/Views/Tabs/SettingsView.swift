@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct SettingsView: View {
     @EnvironmentObject private var locationManager: LocationManager
@@ -56,6 +57,17 @@ struct SettingsView: View {
                 Section(header: Text("DATA")) {
                     NavigationLink("Import/Export", destination: Text("Import/Export"))
                     NavigationLink("Backup", destination: Text("Backup Settings"))
+                }
+                
+                Section(header: Text("ADVANCED")) {
+                    NavigationLink(destination: ISBNMappingsView()) {
+                        HStack {
+                            Image(systemName: "barcode")
+                                .foregroundColor(.accentColor)
+                                .frame(width: 24)
+                            Text("ISBN Mappings")
+                        }
+                    }
                 }
             }
             .navigationTitle("Settings")

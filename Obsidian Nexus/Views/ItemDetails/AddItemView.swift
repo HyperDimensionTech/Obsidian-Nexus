@@ -68,6 +68,7 @@ struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
+    @StateObject private var isbnMappingService = ISBNMappingService()
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -104,6 +105,9 @@ struct AddItemView: View {
     @State private var hapticEngine: CHHapticEngine?
     @State private var selectedSortOption: BookSortOption = .relevance
     @State private var showingSortOptions = false
+    @State private var showingISBNLinking = false
+    @State private var currentFailedISBN = ""
+    @State private var showingLinkPrompt = false
     
     var sortedResults: [GoogleBook] {
         // First apply the existing volume sorting logic
@@ -166,6 +170,18 @@ struct AddItemView: View {
         } message: {
             Text(errorMessage)
         }
+        .alert("ISBN Not Found", isPresented: $showingLinkPrompt) {
+            Button("Link Now", role: .none) {
+                showingISBNLinking = true
+                showingLinkPrompt = false
+            }
+            Button("Skip", role: .cancel) {
+                // Just continue scanning
+                refocusSearchField()
+            }
+        } message: {
+            Text("Would you like to link this ISBN to a book in Google Books?")
+        }
         .accessibilityAction(.escape) {
             // Provide an escape action for accessibility users
             dismiss()
@@ -206,6 +222,27 @@ struct AddItemView: View {
                     showingResults = false
                 }
             )
+        }
+        .sheet(isPresented: $showingISBNLinking) {
+            ISBNLinkingView(
+                isbn: currentFailedISBN,
+                onBookSelected: { book in
+                    // Process the selected book
+                    self.processFoundBook(book, currentFailedISBN)
+                    
+                    // Announce success for VoiceOver users
+                    UIAccessibility.post(
+                        notification: .announcement,
+                        argument: "ISBN \(currentFailedISBN) linked to \(book.volumeInfo.title)"
+                    )
+                }
+            )
+            .onDisappear {
+                // Re-focus the search field when the linking view is dismissed
+                if continuousEntryMode {
+                    refocusSearchField()
+                }
+            }
         }
         .confirmationDialog("Sort Options", isPresented: $showingSortOptions) {
             ForEach(BookSortOption.allCases) { option in
@@ -274,7 +311,7 @@ struct AddItemView: View {
                     if continuousEntryMode {
                         handleContinuousSearch()
                     } else {
-                        performSearch()
+                performSearch()
                     }
                 }
                 .accessibilityLabel("Search field")
@@ -755,7 +792,7 @@ struct AddItemView: View {
         
         return nil
     }
-    
+        
     private func extractSeriesName(from title: String, lowercasedTitle: String) -> String? {
         // Try different volume separators
         let separators = [" vol", " volume", " v", "#"]
@@ -766,9 +803,9 @@ struct AddItemView: View {
         }
         
         // If no series name found, try splitting by comma or hyphen
-        if let commaRange = title.range(of: ",") {
+            if let commaRange = title.range(of: ",") {
             return String(title[..<commaRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-        } else if let hyphenRange = title.range(of: " - ") {
+            } else if let hyphenRange = title.range(of: " - ") {
             return String(title[..<hyphenRange.lowerBound]).trimmingCharacters(in: .whitespaces)
         }
         
@@ -842,8 +879,27 @@ struct AddItemView: View {
     private func handleISBNSearch(_ isbnQuery: String) {
         isSearching = true
         
-        // Search for the ISBN
-        googleBooksService.fetchBooks(query: "isbn:\(isbnQuery)") { result in
+        // First check user-defined mappings
+        if let mapping = isbnMappingService.getMappingForISBN(isbnQuery) {
+            // Use the Google Books ID from user mapping
+            googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
+                DispatchQueue.main.async {
+                    self.isSearching = false
+                    
+                    switch result {
+                    case .success(let book):
+                        self.processFoundBook(book, isbnQuery)
+                    case .failure(_):
+                        // If direct fetch fails, try a title search as fallback
+                        self.searchByTitle(mapping.title, originalIsbn: isbnQuery)
+                    }
+                }
+            }
+            return
+        }
+        
+        // If no mapping found, perform a regular ISBN search
+        googleBooksService.fetchBooksByISBN(isbnQuery) { result in
             DispatchQueue.main.async {
                 self.isSearching = false
                 
@@ -852,10 +908,55 @@ struct AddItemView: View {
                     if let book = books.first {
                         self.processFoundBook(book, isbnQuery)
                     } else {
-                        self.handleFailedScan(isbnQuery, reason: "No book found")
+                        self.handleNoBookFound(isbnQuery)
                     }
                 case .failure(let error):
-                    self.handleFailedScan(isbnQuery, reason: error.localizedDescription)
+                    self.errorMessage = "Error searching for ISBN: \(error.localizedDescription)"
+                    self.showingError = true
+                    self.refocusSearchField()
+                }
+            }
+        }
+    }
+    
+    // New method to handle when no book is found for an ISBN
+    private func handleNoBookFound(_ isbnQuery: String, error: String? = nil) {
+        let reason = error ?? "No book found"
+        
+        // Store the failed ISBN for later use
+        currentFailedISBN = isbnQuery
+        
+        // Add to failed scans
+        failedScans.append((code: isbnQuery, reason: reason))
+        
+        // Clear search field
+        searchQuery = ""
+        
+        // Show link prompt if in continuous mode
+        if continuousEntryMode {
+            showingLinkPrompt = true
+        } else {
+            // Show the ISBN linking view directly if not in continuous mode
+            showingISBNLinking = true
+        }
+        
+        // Announce the failure for VoiceOver users
+        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+    }
+    
+    // Method to search by title as a fallback
+    private func searchByTitle(_ title: String, originalIsbn: String) {
+        googleBooksService.fetchBooks(query: title) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let books):
+                    if let book = books.first {
+                        self.processFoundBook(book, originalIsbn)
+                    } else {
+                        self.handleNoBookFound(originalIsbn, error: "No book found for mapped title")
+                    }
+                case .failure(_):
+                    self.handleNoBookFound(originalIsbn, error: "Failed to search by title")
                 }
             }
         }
@@ -902,6 +1003,9 @@ struct AddItemView: View {
         
         // Announce the failure for VoiceOver users
         UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+        
+        // Refocus the search field for the next scan
+        refocusSearchField()
     }
     
     private func animateLastAddedItem() {

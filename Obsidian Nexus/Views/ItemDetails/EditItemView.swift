@@ -81,6 +81,33 @@ struct EditItemView: View {
                     }
                 }
                 
+                // Add Author Toggle and TextField
+                if selectedType.isLiterature {
+                    Toggle("Update Author", isOn: Binding(
+                        get: { fieldsToUpdate.contains("author") },
+                        set: { newValue in
+                            if newValue {
+                                fieldsToUpdate.insert("author")
+                            } else {
+                                fieldsToUpdate.remove("author")
+                            }
+                        }
+                    ))
+                    
+                    if fieldsToUpdate.contains("author") {
+                        TextField("Author", text: Binding(
+                            get: { editedItem.author ?? "" },
+                            set: { editedItem.author = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textContentType(.name)
+                        .autocapitalization(.words)
+                        
+                        Text("For multiple authors, separate with commas")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
                 Toggle("Update Location", isOn: Binding(
                     get: { fieldsToUpdate.contains("location") },
                     set: { newValue in
@@ -215,6 +242,9 @@ struct EditItemView: View {
                     print("Image source: \(editedItem.imageSource)")
                     updatedItem.customImageData = editedItem.customImageData
                     updatedItem.imageSource = editedItem.customImageData != nil ? .custom : .none
+                }
+                if fieldsToUpdate.contains("author") {
+                    updatedItem.author = editedItem.author
                 }
                 try inventoryViewModel.updateItem(updatedItem)
             }
