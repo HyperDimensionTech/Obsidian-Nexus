@@ -11,6 +11,13 @@ class InventoryViewModel: ObservableObject {
     private let storage: StorageManager
     private let locationManager: LocationManager
     
+    // Update the price-related properties
+    @Published private(set) var totalValue: Price = Price(amount: 0)
+    @Published private(set) var averagePrice: Price = Price(amount: 0)
+    @Published private(set) var highestPrice: Price = Price(amount: 0)
+    @Published private(set) var lowestPrice: Price = Price(amount: 0)
+    @Published private(set) var medianPrice: Price = Price(amount: 0)
+    
     init(storage: StorageManager = .shared, locationManager: LocationManager) {
         self.storage = storage
         self.locationManager = locationManager
@@ -199,7 +206,7 @@ class InventoryViewModel: ObservableObject {
             originalPublishDate: nil,
             publisher: "Viz Media",
             isbn: "9781569319017",
-            price: Decimal(14.99),
+            price: Price(amount: Decimal(14.99)),
             purchaseDate: nil,
             synopsis: nil
         )
@@ -221,7 +228,7 @@ class InventoryViewModel: ObservableObject {
             originalPublishDate: nil,
             publisher: "Viz Media",
             isbn: "9781569319000",
-            price: Decimal(9.99),
+            price: Price(amount: Decimal(9.99)),
             purchaseDate: nil,
             synopsis: nil
         )
@@ -243,7 +250,7 @@ class InventoryViewModel: ObservableObject {
             manufacturer: nil,
             originalPublishDate: nil,
             publisher: "Marvel Comics",
-            price: Decimal(29.99),
+            price: Price(amount: Decimal(29.99)),
             purchaseDate: nil,
             synopsis: nil
         )
@@ -266,7 +273,7 @@ class InventoryViewModel: ObservableObject {
             originalPublishDate: Calendar.current.date(from: DateComponents(year: 1997)),
             publisher: nil,
             isbn: nil,
-            price: Decimal(59.99),
+            price: Price(amount: Decimal(59.99)),
             purchaseDate: nil,
             synopsis: nil
         )
@@ -289,7 +296,7 @@ class InventoryViewModel: ObservableObject {
             originalPublishDate: nil,
             publisher: "Ace Books",
             isbn: "9780441172719",
-            price: Decimal(18.99),
+            price: Price(amount: Decimal(18.99)),
             purchaseDate: nil,
             synopsis: "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the spice melange."
         )
@@ -372,46 +379,52 @@ class InventoryViewModel: ObservableObject {
     }
     
     // Collection value calculations
-    func totalValue(for type: CollectionType? = nil) -> Decimal {
+    func totalValue(for type: CollectionType? = nil) -> Price {
         let filteredItems = type == nil ? items : items.filter { $0.type == type }
-        return filteredItems.reduce(0) { $0 + ($1.price ?? 0) }
+        let total = filteredItems.compactMap { $0.price?.amount }.reduce(0, +)
+        return Price(amount: total)
     }
     
-    func seriesValue(series: String) -> Decimal {
-        items.filter { $0.series == series }
-            .reduce(0) { $0 + ($1.price ?? 0) }
+    func seriesValue(series: String) -> Price {
+        let total = items.filter { $0.series == series }
+            .compactMap { $0.price?.amount }
+            .reduce(0, +)
+        return Price(amount: total)
     }
     
     // Total value of all items
-    var totalCollectionValue: Decimal {
-        items.reduce(0) { $0 + ($1.price ?? 0) }
+    var totalCollectionValue: Price {
+        let total = items.compactMap { $0.price?.amount }.reduce(0, +)
+        return Price(amount: total)
     }
     
     // Value by collection type
-    func collectionValue(for type: CollectionType) -> Decimal {
-        items.filter { $0.type == type }
-            .reduce(0) { $0 + ($1.price ?? 0) }
+    func collectionValue(for type: CollectionType) -> Price {
+        let total = items.filter { $0.type == type }
+            .compactMap { $0.price?.amount }
+            .reduce(0, +)
+        return Price(amount: total)
     }
     
     // Value and completion for a specific series
-    func seriesStats(name: String) -> (value: Decimal, count: Int, total: Int?) {
+    func seriesStats(name: String) -> (value: Price, count: Int, total: Int?) {
         let seriesItems = items.filter { $0.series == name }
-        let value = seriesItems.reduce(0) { $0 + ($1.price ?? 0) }
+        let value = seriesItems.compactMap { $0.price?.amount }.reduce(0, +)
         let count = seriesItems.count
         
         // Try to determine total volumes if available
         let total: Int? = nil // This could be enhanced with a series database
         
-        return (value, count, total)
+        return (Price(amount: value), count, total)
     }
     
     // Collection statistics
-    var collectionStats: [(type: CollectionType, count: Int, value: Decimal)] {
+    var collectionStats: [(type: CollectionType, count: Int, value: Price)] {
         CollectionType.allCases.map { type in
             let typeItems = items.filter { $0.type == type }
             let count = typeItems.count
-            let value = typeItems.reduce(0) { $0 + ($1.price ?? 0) }
-            return (type, count, value)
+            let value = typeItems.compactMap { $0.price?.amount }.reduce(0, +)
+            return (type, count, Price(amount: value))
         }
     }
     
@@ -617,10 +630,10 @@ class InventoryViewModel: ObservableObject {
         try storage.save(self.items)
     }
     
-    func authorStats(name: String) -> (value: Decimal, count: Int) {
+    func authorStats(name: String) -> (value: Price, count: Int) {
         let authorBooks = items.filter { $0.creator == name }
-        let totalValue = authorBooks.compactMap { $0.price }.reduce(0, +)
-        return (value: totalValue, count: authorBooks.count)
+        let totalValue = authorBooks.compactMap { $0.price?.amount }.reduce(0, +)
+        return (Price(amount: totalValue), authorBooks.count)
     }
     
     func itemsByAuthor(_ author: String) -> [InventoryItem] {
@@ -783,5 +796,127 @@ class InventoryViewModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.date(from: dateString)
+    }
+    
+    // Update the price calculation methods
+    private func calculatePriceStats() {
+        let prices = items.compactMap { $0.price?.amount }
+        guard !prices.isEmpty else {
+            totalValue = Price(amount: 0)
+            averagePrice = Price(amount: 0)
+            highestPrice = Price(amount: 0)
+            lowestPrice = Price(amount: 0)
+            medianPrice = Price(amount: 0)
+            return
+        }
+        
+        let sum = prices.reduce(0, +)
+        let avg = sum / Decimal(prices.count)
+        let max = prices.max() ?? 0
+        let min = prices.min() ?? 0
+        let sorted = prices.sorted()
+        let median = sorted[sorted.count / 2]
+        
+        totalValue = Price(amount: sum)
+        averagePrice = Price(amount: avg)
+        highestPrice = Price(amount: max)
+        lowestPrice = Price(amount: min)
+        medianPrice = Price(amount: median)
+    }
+    
+    // Update the price filtering methods
+    func itemsWithPriceGreaterThan(_ price: Price) -> [InventoryItem] {
+        items.filter { item in
+            guard let itemPrice = item.price else { return false }
+            return itemPrice.amount > price.amount
+        }
+    }
+    
+    func itemsWithPriceLessThan(_ price: Price) -> [InventoryItem] {
+        items.filter { item in
+            guard let itemPrice = item.price else { return false }
+            return itemPrice.amount < price.amount
+        }
+    }
+    
+    func itemsWithPriceBetween(_ min: Price, and max: Price) -> [InventoryItem] {
+        items.filter { item in
+            guard let itemPrice = item.price else { return false }
+            return itemPrice.amount >= min.amount && itemPrice.amount <= max.amount
+        }
+    }
+    
+    func itemsWithPriceEqualTo(_ price: Price) -> [InventoryItem] {
+        items.filter { item in
+            guard let itemPrice = item.price else { return false }
+            return itemPrice.amount == price.amount
+        }
+    }
+    
+    // Update the price comparison methods
+    func itemsWithPriceAboveAverage() -> [InventoryItem] {
+        items.filter { item in
+            guard let itemPrice = item.price else { return false }
+            return itemPrice.amount > averagePrice.amount
+        }
+    }
+    
+    // Update the price sorting methods
+    func sortByPrice(ascending: Bool = true) {
+        items.sort { item1, item2 in
+            let price1 = item1.price?.amount ?? 0
+            let price2 = item2.price?.amount ?? 0
+            return ascending ? price1 < price2 : price1 > price2
+        }
+    }
+    
+    // Update the price range calculation
+    func priceRange() -> (min: Price, max: Price)? {
+        let prices = items.compactMap { $0.price?.amount }
+        guard let min = prices.min(), let max = prices.max() else { return nil }
+        return (Price(amount: min), Price(amount: max))
+    }
+    
+    // Update the price percentile calculation
+    func pricePercentile(_ percentile: Double) -> Price? {
+        let prices = items.compactMap { $0.price?.amount }.sorted()
+        guard !prices.isEmpty else { return nil }
+        
+        let index = Int(Double(prices.count - 1) * percentile)
+        return Price(amount: prices[index])
+    }
+    
+    // Update the price statistics calculation
+    func priceStatistics() -> (mean: Price, median: Price, mode: Price?)? {
+        let prices = items.compactMap { $0.price?.amount }
+        guard !prices.isEmpty else { return nil }
+        
+        let mean = prices.reduce(0, +) / Decimal(prices.count)
+        let sorted = prices.sorted()
+        let median = sorted[sorted.count / 2]
+        
+        // Calculate mode
+        var frequency: [Decimal: Int] = [:]
+        for price in prices {
+            frequency[price, default: 0] += 1
+        }
+        let mode = frequency.max(by: { $0.value < $1.value })?.key
+        
+        return (
+            mean: Price(amount: mean),
+            median: Price(amount: median),
+            mode: mode.map { Price(amount: $0) }
+        )
+    }
+    
+    // Add a refreshItems method to force UI updates
+    func refreshItems() {
+        do {
+            // Reload from storage and explicitly update the @Published property
+            // to ensure all views are notified of the change
+            items = try storage.loadItems()
+        } catch {
+            print("Error refreshing items: \(error.localizedDescription)")
+        }
     }
 } 

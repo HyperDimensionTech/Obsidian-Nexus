@@ -1,0 +1,42 @@
+"/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/DerivedSources/GeneratedAssetSymbols.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/GeneratedAssetSymbols.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/GeneratedAssetSymbols.d"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/SettingsView.swift":
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SettingsView.swiftdeps"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SettingsView.o"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SettingsView.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SettingsView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SettingsView.d"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ContentView.swift":
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ContentView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ContentView.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ContentView.swiftdeps"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ContentView.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ContentView.o"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Obsidian_NexusApp.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Obsidian_NexusApp.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Obsidian_NexusApp.swiftconstvalues"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Obsidian_NexusApp.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Obsidian_NexusApp.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Obsidian_NexusApp.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/SearchTabView.swift":
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchTabView.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchTabView.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchTabView.swiftconstvalues"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchTabView.o"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchTabView.dia"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/HomeView.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/HomeView.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/HomeView.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/HomeView.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/HomeView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/HomeView.d"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/MainTabView.swift":
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MainTabView.swiftdeps"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MainTabView.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MainTabView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MainTabView.d"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MainTabView.o"

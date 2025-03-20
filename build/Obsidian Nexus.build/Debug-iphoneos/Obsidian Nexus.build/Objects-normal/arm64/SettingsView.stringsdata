@@ -1,0 +1,224 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Settings",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Location",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "APPEARANCE",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "CURRENCY",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "ITEM DISPLAY",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "DATA",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "ADVANCED",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Theme",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Default Currency",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "(%@)",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Example:",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld selected",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Item Information",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Backup & Restore",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Import/Export",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN Mappings",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete '%@' and all its contents?",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trash",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Empty Trash?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "No items in trash",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Restore",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Empty Trash",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "Empty",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "This action cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 243
+        }
+      }
+    ]
+  },
+  "version": 1
+}

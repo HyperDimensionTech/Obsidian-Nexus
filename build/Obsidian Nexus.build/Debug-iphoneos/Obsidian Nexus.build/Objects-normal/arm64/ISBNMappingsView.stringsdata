@@ -1,0 +1,224 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/ISBNMappingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "ISBN Mappings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Mapping?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "About ISBN Mappings",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your ISBN Mappings",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN mappings help the app recognize books that have different ISBN numbers than what's in the Google Books database.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 13
+        }
+      },
+      {
+        "comment": "",
+        "key": "This is common with reprinted manga volumes that receive new ISBN numbers.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "No ISBN Mappings",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add mappings manually or they will be created when you link failed ISBN scans to books.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN: %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Added: %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reprint",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete this mapping?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete the mapping for \"%@\"? This ISBN will no longer be recognized.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add ISBN Mapping",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search Results",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 177
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN to Map",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search for Book",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN Mapping Details",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter the ISBN you want to map and search for the correct book in Google Books.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN: %@",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 214
+        }
+      }
+    ]
+  },
+  "version": 1
+}

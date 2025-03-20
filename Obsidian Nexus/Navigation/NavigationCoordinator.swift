@@ -58,8 +58,90 @@ class NavigationCoordinator: ObservableObject {
     @Published var path = NavigationPath()
     @Published var presentedSheet: NavigationDestination?
     
+    // Add tab-specific paths
+    @Published var homePath = NavigationPath()
+    @Published var searchPath = NavigationPath()
+    @Published var collectionsPath = NavigationPath()
+    @Published var settingsPath = NavigationPath()
+    
+    func pathForTab(_ tab: String) -> NavigationPath {
+        switch tab {
+        case "Home":
+            return homePath
+        case "Browse & Search":
+            return searchPath
+        case "Collections":
+            return collectionsPath
+        case "Settings":
+            return settingsPath
+        default:
+            return path
+        }
+    }
+    
+    func bindingForTab(_ tab: String) -> Binding<NavigationPath> {
+        switch tab {
+        case "Home":
+            return Binding(
+                get: { self.homePath },
+                set: { self.homePath = $0 }
+            )
+        case "Browse & Search":
+            return Binding(
+                get: { self.searchPath },
+                set: { self.searchPath = $0 }
+            )
+        case "Collections":
+            return Binding(
+                get: { self.collectionsPath },
+                set: { self.collectionsPath = $0 }
+            )
+        case "Settings":
+            return Binding(
+                get: { self.settingsPath },
+                set: { self.settingsPath = $0 }
+            )
+        default:
+            return Binding(
+                get: { self.path },
+                set: { self.path = $0 }
+            )
+        }
+    }
+    
+    func clearPathForTab(_ tab: String) {
+        switch tab {
+        case "Home":
+            homePath.removeLast(homePath.count)
+        case "Browse & Search":
+            searchPath.removeLast(searchPath.count)
+        case "Collections":
+            collectionsPath.removeLast(collectionsPath.count)
+        case "Settings":
+            settingsPath.removeLast(settingsPath.count)
+        default:
+            path.removeLast(path.count)
+        }
+    }
+    
     func navigate(to destination: NavigationDestination) {
-        path.append(destination)
+        // Determine which path to use based on the current context
+        if let tab = currentTab() {
+            switch tab {
+            case "Home":
+                homePath.append(destination)
+            case "Browse & Search":
+                searchPath.append(destination)
+            case "Collections":
+                collectionsPath.append(destination)
+            case "Settings":
+                settingsPath.append(destination)
+            default:
+                path.append(destination)
+            }
+        } else {
+            path.append(destination)
+        }
     }
     
     func navigateBack() {
@@ -68,6 +150,10 @@ class NavigationCoordinator: ObservableObject {
     
     func navigateToRoot() {
         path.removeLast(path.count)
+        homePath.removeLast(homePath.count)
+        searchPath.removeLast(searchPath.count)
+        collectionsPath.removeLast(collectionsPath.count)
+        settingsPath.removeLast(settingsPath.count)
     }
     
     func presentSheet(_ destination: NavigationDestination) {
@@ -78,5 +164,17 @@ class NavigationCoordinator: ObservableObject {
     
     func dismissSheet() {
         presentedSheet = nil
+        // Clear any navigation state that might have been built up in sheets
+        navigateToRoot()
+    }
+    
+    private func currentTab() -> String? {
+        // This is a simple implementation. You might want to make this more robust
+        // by actually tracking the current tab in your app's state
+        if homePath.count > 0 { return "Home" }
+        if searchPath.count > 0 { return "Browse & Search" }
+        if collectionsPath.count > 0 { return "Collections" }
+        if settingsPath.count > 0 { return "Settings" }
+        return nil
     }
 } 

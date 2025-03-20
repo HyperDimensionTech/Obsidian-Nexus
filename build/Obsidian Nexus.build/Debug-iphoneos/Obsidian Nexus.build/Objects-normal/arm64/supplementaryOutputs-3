@@ -1,0 +1,48 @@
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Navigation/NavigationCoordinator.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/NavigationCoordinator.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/NavigationCoordinator.d"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/NavigationCoordinator.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/NavigationCoordinator.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/NavigationCoordinator.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/StorageLocation.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/StorageLocation.o"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/StorageLocation.dia"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/StorageLocation.d"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/StorageLocation.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/StorageLocation.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/UserPreferences.swift":
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/UserPreferences.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/UserPreferences.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/UserPreferences.swiftconstvalues"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/UserPreferences.o"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/UserPreferences.dia"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/SearchOptions.swift":
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchOptions.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchOptions.swiftconstvalues"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchOptions.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchOptions.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchOptions.d"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/Series.swift":
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Series.swiftdeps"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Series.d"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Series.o"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Series.swiftconstvalues"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Series.dia"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/Price.swift":
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Price.swiftconstvalues"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Price.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Price.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Price.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/Price.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/LocationType.swift":
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationType.d"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationType.dia"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationType.swiftdeps"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationType.o"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationType.swiftconstvalues"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/PublisherConfig.swift":
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/PublisherConfig.swiftconstvalues"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/PublisherConfig.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/PublisherConfig.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/PublisherConfig.swiftdeps"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/PublisherConfig.d"

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject var locationManager: LocationManager
+    @State private var refreshTrigger = UUID()
     
     var body: some View {
         NavigationStack {
@@ -18,8 +20,7 @@ struct DashboardView: View {
                             HStack {
                                 Text("\(inventoryViewModel.totalItems) Items")
                                 Text("•")
-                                Text(inventoryViewModel.totalCollectionValue
-                                    .formatted(.currency(code: "USD")))
+                                Text(inventoryViewModel.totalCollectionValue.convertedToDefaultCurrency().formatted())
                             }
                             .font(.subheadline)
                             .foregroundColor(.secondary)
@@ -28,7 +29,7 @@ struct DashboardView: View {
                     }
                 }
                 
-                // Collections Section (existing)
+                // Collections Section
                 Section("Collections") {
                     ForEach(CollectionType.literatureTypes, id: \.self) { type in
                         NavigationLink {
@@ -48,7 +49,7 @@ struct DashboardView: View {
                     }
                 }
                 
-                // Recent Items Section (existing)
+                // Recent Items Section
                 if !inventoryViewModel.recentItems.isEmpty {
                     Section("Recent Items") {
                         ForEach(inventoryViewModel.recentItems) { item in
@@ -62,6 +63,18 @@ struct DashboardView: View {
                 }
             }
             .navigationTitle("Dashboard")
+            .id(refreshTrigger) // Force view refresh when this changes
+            .onAppear {
+                // Add notification observer when view appears
+                NotificationCenter.default.addObserver(
+                    forName: Notification.Name("DefaultCurrencyChanged"),
+                    object: nil,
+                    queue: .main
+                ) { _ in
+                    // Force view to refresh by changing the ID
+                    refreshTrigger = UUID()
+                }
+            }
         }
     }
 }

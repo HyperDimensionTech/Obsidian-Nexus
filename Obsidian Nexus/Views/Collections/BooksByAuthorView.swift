@@ -16,7 +16,7 @@ struct BooksByAuthorView: View {
         inventoryViewModel.itemsByAuthor(author)
     }
     
-    var stats: (value: Decimal, count: Int) {
+    var authorStats: (value: Price, count: Int) {
         inventoryViewModel.authorStats(name: author)
     }
     
@@ -24,33 +24,29 @@ struct BooksByAuthorView: View {
         List(selection: $selectedItems) {
             Section {
                 HStack {
-                    Text("Author Value")
-                        .font(.headline)
+                    Text("Total Value")
                     Spacer()
-                    Text(stats.value.formatted(.currency(code: "USD")))
-                        .bold()
+                    Text(authorStats.value.convertedToDefaultCurrency().formatted())
+                        .foregroundColor(.secondary)
                 }
                 
                 HStack {
-                    Text("Books")
-                        .font(.headline)
+                    Text("Number of Books")
                     Spacer()
-                    Text("\(stats.count)")
-                        .bold()
+                    Text("\(authorStats.count)")
+                        .foregroundColor(.secondary)
                 }
             }
             
             Section("Books") {
                 ForEach(authorItems) { item in
-                    NavigationLink {
-                        ItemDetailView(item: item)
-                    } label: {
-                        HStack {
+                    NavigationLink(destination: ItemDetailView(item: item)) {
+                        VStack(alignment: .leading) {
                             Text(item.title)
-                            Spacer()
-                            if let locationId = item.locationId {
-                                Text(locationManager.breadcrumbPath(for: locationId))
-                                    .font(.caption)
+                                .font(.headline)
+                            if let price = item.price {
+                                Text(price.convertedToDefaultCurrency().formatted())
+                                    .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
                         }

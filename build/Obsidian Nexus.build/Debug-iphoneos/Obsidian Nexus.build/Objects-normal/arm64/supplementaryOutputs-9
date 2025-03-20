@@ -1,0 +1,48 @@
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/LocationPickerView.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationPickerView.dia"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationPickerView.d"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationPickerView.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationPickerView.swiftdeps"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationPickerView.o"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/BookSearchRow.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchRow.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchRow.swiftdeps"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchRow.d"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchRow.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchRow.swiftconstvalues"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchBar.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchBar.o"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchBar.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchBar.swiftdeps"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchBar.dia"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchBar.d"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchEmptyState.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchEmptyState.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchEmptyState.d"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchEmptyState.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchEmptyState.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/SearchEmptyState.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Scanning/ScanResultsView.swift":
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ScanResultsView.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ScanResultsView.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ScanResultsView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ScanResultsView.d"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ScanResultsView.dia"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/BookSearchResultView.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchResultView.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchResultView.o"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchResultView.d"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchResultView.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BookSearchResultView.swiftdeps"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ManualEntryView.swift":
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ManualEntryView.swiftconstvalues"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ManualEntryView.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ManualEntryView.swiftdeps"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ManualEntryView.dia"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/ManualEntryView.d"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Scanning/BatchMappingView.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BatchMappingView.dia"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BatchMappingView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BatchMappingView.d"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BatchMappingView.swiftdeps"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/BatchMappingView.o"

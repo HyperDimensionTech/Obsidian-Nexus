@@ -1,0 +1,72 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Browse & Search",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort By",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld results",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort: %@",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collections",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "No results found for \"%@\"",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try adjusting your search terms",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 218
+        }
+      }
+    ]
+  },
+  "version": 1
+}

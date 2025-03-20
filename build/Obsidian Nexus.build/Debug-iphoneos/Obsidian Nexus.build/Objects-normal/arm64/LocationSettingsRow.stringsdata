@@ -1,0 +1,96 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationSettingsRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Rename Location",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Items",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rename",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rename",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter a new name for %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 74
+        }
+      }
+    ]
+  },
+  "version": 1
+}

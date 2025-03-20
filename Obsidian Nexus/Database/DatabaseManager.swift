@@ -360,10 +360,18 @@ class DatabaseManager {
         return Int(result)
     }
     
-    deinit {
+    func closeConnection() {
         if connection != nil {
             sqlite3_close(connection)
             connection = nil
         }
+    }
+    
+    func reopenConnection() {
+        setupDatabase()
+    }
+    
+    deinit {
+        closeConnection()
     }
 } 

@@ -1,0 +1,224 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ManualEntryView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Manual Entry",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Image",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Purchase Information",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Additional Details",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Type",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Author",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Publisher",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Series",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume Number",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Condition",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select Date",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear Date",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Title",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scan barcode",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Original Publish Date",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Purchase Date",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Price",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Currency",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Synopsis",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fetching book details...",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Item added to collection!",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 170
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -101,7 +101,7 @@ class SQLiteItemRepository: ItemRepository {
                 (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 14),
                 (item.publisher, 15),
                 (item.isbn, 16),
-                ((item.price as NSDecimalNumber?)?.doubleValue, 17),
+                (item.price?.databaseValue, 17),
                 (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 18),
                 (item.synopsis, 19),
                 (timestamp, 20),
@@ -195,7 +195,7 @@ class SQLiteItemRepository: ItemRepository {
             (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 12),
             (item.publisher, 13),
             (item.isbn, 14),
-            ((item.price as NSDecimalNumber?)?.doubleValue, 15),
+            (item.price?.databaseValue, 15),
             (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 16),
             (item.synopsis, 17),
             (timestamp, 18),
@@ -384,7 +384,7 @@ class SQLiteItemRepository: ItemRepository {
         let publisher = sqlite3_column_text(statement, 14).map { String(cString: $0) }
         let isbn = sqlite3_column_text(statement, 15).map { String(cString: $0) }
         let price = sqlite3_column_double(statement, 16) > 0 
-            ? Decimal(sqlite3_column_double(statement, 16))
+            ? Price.fromDatabase(sqlite3_column_double(statement, 16))
             : nil
         let purchaseDate = sqlite3_column_int64(statement, 17) > 0
             ? Date(timeIntervalSince1970: TimeInterval(sqlite3_column_int64(statement, 17)))

@@ -5,7 +5,7 @@ struct HomeView: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     
     var body: some View {
-        NavigationStack(path: $navigationCoordinator.path) {
+        NavigationStack(path: navigationCoordinator.bindingForTab("Home")) {
             DashboardView()
         }
         .onAppear {
@@ -20,7 +20,7 @@ struct HomeView: View {
                     // Reset navigation when Home tab is double-tapped
                     // Use DispatchQueue.main to ensure we're on the main thread
                     DispatchQueue.main.async {
-                        navigationCoordinator.navigateToRoot()
+                        navigationCoordinator.clearPathForTab("Home")
                     }
                 }
             }

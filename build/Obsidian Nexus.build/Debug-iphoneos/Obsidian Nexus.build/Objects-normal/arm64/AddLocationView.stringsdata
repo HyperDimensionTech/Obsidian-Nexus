@@ -1,0 +1,88 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/AddLocationView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Add Location",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 68
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location Details",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "Type Details",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Category",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Icon",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 69
+        }
+      }
+    ]
+  },
+  "version": 1
+}

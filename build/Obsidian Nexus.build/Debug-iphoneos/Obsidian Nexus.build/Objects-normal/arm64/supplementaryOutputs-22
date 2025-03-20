@@ -1,0 +1,18 @@
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/MoveLocationView.swift":
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MoveLocationView.dia"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MoveLocationView.o"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MoveLocationView.swiftdeps"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MoveLocationView.d"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/MoveLocationView.swiftconstvalues"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationSettingsView.swift":
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationSettingsView.swiftconstvalues"
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationSettingsView.swiftdeps"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationSettingsView.dia"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationSettingsView.d"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationSettingsView.o"
+"/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationsView.swift":
+  swift-dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationsView.swiftdeps"
+  const-values: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationsView.swiftconstvalues"
+  dependencies: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationsView.d"
+  object: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationsView.o"
+  diagnostics: "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Debug-iphoneos/Obsidian Nexus.build/Objects-normal/arm64/LocationsView.dia"

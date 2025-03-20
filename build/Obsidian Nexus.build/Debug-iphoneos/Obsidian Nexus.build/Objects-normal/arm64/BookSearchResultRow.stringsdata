@@ -1,0 +1,24 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Components/BookSearchResultRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@, by %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap to select this book",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 55
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,64 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/AddItemsToLocationView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Add Items",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "No items available to add",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confirm",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld items moved to %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 68
+        }
+      }
+    ]
+  },
+  "version": 1
+}

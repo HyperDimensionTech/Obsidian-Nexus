@@ -6,6 +6,7 @@ struct BarcodeScannerView: View {
     @EnvironmentObject private var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
     @StateObject private var isbnMappingService = ISBNMappingService()
+    @EnvironmentObject private var scanManager: ScanResultManager
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -21,12 +22,7 @@ struct BarcodeScannerView: View {
     ]
     
     @State private var continuousScanEnabled = false
-    @State private var scannedCount = 0
-    @State private var failedScans: [(code: String, reason: String)] = []
     @State private var showingResults = false
-    @State private var lastAddedTitle: String?
-    @State private var showingAddConfirmation = false
-    @State private var successfulScans: [(title: String, isbn: String?)] = []
     @State private var currentFailedISBN = ""
     @State private var showingLinkPrompt = false
     @State private var showingISBNLinking = false
@@ -146,7 +142,7 @@ struct BarcodeScannerView: View {
                         if continuousScanEnabled {
                             HStack(spacing: 16) {
                                 VStack(alignment: .center) {
-                                    Text("\(scannedCount)")
+                                    Text("\(scanManager.totalScannedCount)")
                                         .font(.system(size: 28, weight: .bold))
                                         .foregroundColor(.white)
                                     Text("Scanned")
@@ -154,7 +150,7 @@ struct BarcodeScannerView: View {
                                         .foregroundColor(.white.opacity(0.8))
                                 }
                                 
-                                if let title = lastAddedTitle {
+                                if let title = scanManager.lastAddedTitle {
                                     VStack(alignment: .leading) {
                                         Text("Last Added:")
                                             .font(.caption)
@@ -172,7 +168,7 @@ struct BarcodeScannerView: View {
                             .padding(.horizontal)
                             
                             // Review button - More prominent with SF Symbol
-                            if scannedCount > 0 {
+                            if scanManager.totalScannedCount > 0 {
                                 Button(action: {
                                     showingResults = true
                                 }) {
@@ -250,9 +246,7 @@ struct BarcodeScannerView: View {
         }
         .sheet(isPresented: $showingResults) {
             ScanResultsView(
-                scannedCount: scannedCount, 
-                successfulScans: successfulScans,
-                failedScans: failedScans,
+                scanManager: scanManager,
                 onContinue: {
                     showingResults = false
                 },
@@ -293,10 +287,10 @@ struct BarcodeScannerView: View {
         .toolbar {
             if continuousScanEnabled {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Review (\(scannedCount))") {
+                    Button("Review (\(scanManager.totalScannedCount))") {
                         showingResults = true
                     }
-                    .disabled(scannedCount == 0)
+                    .disabled(scanManager.totalScannedCount == 0)
                 }
             }
         }
@@ -345,89 +339,6 @@ struct BarcodeScannerView: View {
         }
     }
     
-    private func processFoundBook(_ book: GoogleBook, _ isbnQuery: String) {
-        do {
-            // Check if item already exists
-            let existingItem = inventoryViewModel.items.first { item in
-                item.isbn == isbnQuery || 
-                (item.type == .manga && item.title == book.volumeInfo.title)
-            }
-            
-            if existingItem != nil {
-                isDuplicate = true
-                successMessage = "\(book.volumeInfo.title) already in collection"
-                withAnimation {
-                    showingSuccessMessage = true
-                }
-                return
-            }
-            
-            // Create the item with proper classification
-            let newItem = inventoryViewModel.createItemFromGoogleBook(book)
-            
-            // Ensure the item type is correctly set based on publisher
-            if let publisher = book.volumeInfo.publisher?.lowercased(), 
-               BarcodeScannerView.mangaPublishers.contains(where: { publisher.contains($0) }) {
-                // This is a manga - make sure it's classified as such
-                var updatedItem = newItem
-                updatedItem.type = .manga
-                try inventoryViewModel.addItem(updatedItem)
-            } else {
-                // Regular book or already classified correctly
-                try inventoryViewModel.addItem(newItem)
-            }
-            
-            scannedCount += 1
-            lastAddedTitle = book.volumeInfo.title
-            successfulScans.append((
-                title: book.volumeInfo.title,
-                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
-            ))
-            
-            // Show success message
-            isDuplicate = false
-            successMessage = "Added \(book.volumeInfo.title)"
-            withAnimation {
-                showingSuccessMessage = true
-            }
-            
-            // Provide feedback
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            
-            // Announce for VoiceOver users
-            UIAccessibility.post(notification: .announcement, argument: "Added \(book.volumeInfo.title). Ready for next scan.")
-            
-        } catch {
-            handleFailedScan(isbnQuery, reason: error.localizedDescription)
-        }
-    }
-    
-    private func handleNoBookFound(_ isbnQuery: String, error: String? = nil) {
-        let reason = error ?? "No book found"
-        
-        // Store the failed ISBN for later use
-        currentFailedISBN = isbnQuery
-        
-        // Add to failed scans
-        failedScans.append((code: isbnQuery, reason: reason))
-        
-        // Show link prompt
-        showingLinkPrompt = true
-        
-        // Announce the failure for VoiceOver users
-        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
-    }
-    
-    private func handleFailedScan(_ code: String, reason: String) {
-        failedScans.append((code, reason))
-        
-        // Announce the failure for VoiceOver users
-        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
-        
-        // Provide haptic feedback
-        UINotificationFeedbackGenerator().notificationOccurred(.error)
-    }
-    
     private func searchByTitle(_ title: String, originalIsbn: String) {
         googleBooksService.fetchBooks(query: title) { result in
             DispatchQueue.main.async {
@@ -436,79 +347,91 @@ struct BarcodeScannerView: View {
                     if let book = books.first {
                         self.processFoundBook(book, originalIsbn)
                     } else {
-                        self.handleNoBookFound(originalIsbn, error: "No book found for mapped title")
-                    }
-                case .failure(_):
-                    self.handleNoBookFound(originalIsbn, error: "Failed to search by title")
+                        self.handleNoBookFound(originalIsbn)
+            }
+                case .failure(let error):
+                    self.handleFailedScan(originalIsbn, reason: error.localizedDescription)
                 }
                 
-                // Resume scanning after processing
+                // Resume scanning
                 self.viewModel.startScanning()
             }
         }
     }
-}
-
-struct ScanResultsView: View {
-    @Environment(\.dismiss) private var dismiss
-    let scannedCount: Int
-    let successfulScans: [(title: String, isbn: String?)]
-    let failedScans: [(code: String, reason: String)]
-    let onContinue: () -> Void
-    let onFinish: () -> Void
     
-    var body: some View {
-        NavigationView {
-            List {
-                Section("Summary") {
-                    Text("Successfully scanned: \(scannedCount)")
-                    Text("Failed scans: \(failedScans.count)")
-                }
-                
-                if !successfulScans.isEmpty {
-                    Section("Successfully Scanned") {
-                        ForEach(successfulScans, id: \.title) { scan in
-                            VStack(alignment: .leading) {
-                                Text(scan.title)
-                                    .font(.headline)
-                                if let isbn = scan.isbn {
-                                    Text("ISBN: \(isbn)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                if !failedScans.isEmpty {
-                    Section("Failed Scans") {
-                        ForEach(failedScans, id: \.code) { scan in
-                            VStack(alignment: .leading) {
-                                Text("ISBN: \(scan.code)")
-                                    .font(.subheadline)
-                                Text("Error: \(scan.reason)")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    }
-                }
+    private func processFoundBook(_ book: GoogleBook, _ originalIsbn: String) {
+        do {
+            // Create a new item from the Google Book
+            let newItem = inventoryViewModel.createItemFromGoogleBook(book)
+            
+            // Add it to the inventory
+                try inventoryViewModel.addItem(newItem)
+            
+            // Update scan count and display
+            scanManager.addSuccessfulScan(
+                title: book.volumeInfo.title,
+                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+            )
+            
+            // Show success toast
+            successMessage = "Added: \(book.volumeInfo.title)"
+            isDuplicate = false
+            withAnimation {
+                showingSuccessMessage = true
             }
-            .navigationTitle("Scan Results")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Continue Scanning") {
-                        onContinue()
-                    }
+            
+            // Vibrate
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+            
+        } catch let error as InventoryViewModel.ValidationError {
+            // Handle duplicate items more gracefully
+            if case .duplicateISBN = error {
+                successMessage = "Already in collection: \(book.volumeInfo.title)"
+                isDuplicate = true
+                withAnimation {
+                    showingSuccessMessage = true
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Finish") {
-                        onFinish()
-                    }
-                }
+                // Still count it as "processed" for user awareness
+                scanManager.addSuccessfulScan(
+                    title: book.volumeInfo.title + " (duplicate)",
+                    isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+                )
+                
+                // Vibrate differently for duplicates
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.warning)
+            } else {
+                handleFailedScan(originalIsbn, reason: error.localizedDescription)
             }
+        } catch {
+            handleFailedScan(originalIsbn, reason: error.localizedDescription)
         }
     }
-} 
+    
+    private func handleNoBookFound(_ isbn: String) {
+        // Store the ISBN for mapping
+        currentFailedISBN = isbn
+        
+        // Add to failed scans
+        scanManager.addFailedScan(code: isbn, reason: "No book found")
+        
+        // Show mapping prompt
+        showingLinkPrompt = true
+    }
+    
+    private func handleFailedScan(_ code: String, reason: String) {
+        // Add to failed scans
+        scanManager.addFailedScan(code: code, reason: reason)
+        
+        // Announce failure
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        
+        // Clear scanner for next code
+        viewModel.clearScannedCode()
+    }
+}
+
+// ScanResultsView implementation removed - now using the shared component 

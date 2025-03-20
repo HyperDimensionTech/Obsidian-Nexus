@@ -69,6 +69,7 @@ struct AddItemView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
     @StateObject private var isbnMappingService = ISBNMappingService()
+    @EnvironmentObject private var scanManager: ScanResultManager
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -92,13 +93,8 @@ struct AddItemView: View {
     @State private var showingManualEntry = false
     @State private var showingScanner = false
     @State private var continuousEntryMode = false
-    @State private var addedCount = 0
-    @State private var failedScans: [(code: String, reason: String)] = []
     @State private var showingResults = false
-    @State private var lastAddedTitle: String?
-    @State private var showingAddConfirmation = false
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var successfulScans: [(title: String, isbn: String?)] = []
     @State private var addedItemScale: CGFloat = 1.0
     @State private var showToast = false
     @State private var toastMessage = ""
@@ -130,38 +126,54 @@ struct AddItemView: View {
     }
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 16) {
-                // Smaller, centered title
-                Text("Add Item")
-                    .font(.headline)
-                    .padding(.top, 8)
-                    .accessibilityAddTraits(.isHeader)
-                
-                searchBarView
-                actionButtonsView
-                continuousModeToggleView
-                
-                // Continuous Mode Status (only shown when active)
-                if continuousEntryMode {
-                    continuousModeStatusView
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Clean, modern title
+                    Text("Add Item")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        .accessibilityAddTraits(.isHeader)
+                    
+                    searchBarView
+                    actionButtonsView
+                    continuousModeToggleView
+                    
+                    // Continuous Mode Status (only shown when active)
+                    if continuousEntryMode {
+                        continuousModeStatusView
+                    }
+                    
+                    // Add sort options UI
+                    if !searchResults.isEmpty {
+                        sortOptionsView
+                    }
+                    
+                    resultsView
                 }
-                
-                // Add sort options UI
-                if !searchResults.isEmpty {
-                    sortOptionsView
-                }
-                
-                resultsView
+                // Add extra padding at bottom to make room for the fixed manual entry button
+                .padding(.bottom, 80)
             }
             
-            // Toast notification
-            if showToast {
-                toastView
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Item added")
-                    .accessibilityValue(toastMessage)
-                    .accessibilityAddTraits(.updatesFrequently)
+            // Fixed Manual Entry button at bottom of screen
+            VStack {
+                manualEntryButton
+            }
+            .padding(.bottom, 10) // Position above tab bar
+            .background(Color(.systemBackground))
+            
+            .overlay {
+                // Toast notification
+                if showToast {
+                    toastView
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Item added")
+                        .accessibilityValue(toastMessage)
+                        .accessibilityAddTraits(.updatesFrequently)
+                }
             }
         }
         .navigationBarHidden(true) // Hide the default navigation bar title
@@ -208,9 +220,7 @@ struct AddItemView: View {
         }
         .sheet(isPresented: $showingResults) {
             ScanResultsView(
-                scannedCount: addedCount,
-                successfulScans: successfulScans,
-                failedScans: failedScans,
+                scanManager: scanManager,
                 onContinue: {
                     showingResults = false
                     // Optionally re-focus the search field
@@ -299,30 +309,44 @@ struct AddItemView: View {
     
     private var searchBarView: some View {
         HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+            
             TextField("Search by title, author, or ISBN...", text: $searchQuery)
-                .font(.system(size: 16))
-                .padding(12)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
+                .submitLabel(.search)
                 .focused($isSearchFieldFocused)
                 .onSubmit {
-                    if continuousEntryMode {
-                        handleContinuousSearch()
-                    } else {
-                performSearch()
+                    if !searchQuery.isEmpty {
+                        if continuousEntryMode {
+                            handleContinuousSearch()
+                        } else {
+                            performSearch()
+                        }
                     }
                 }
-                .accessibilityLabel("Search field")
-                .accessibilityHint("Enter a book title, author name, or ISBN to search")
+            
+            if !searchQuery.isEmpty {
+                Button(action: {
+                    searchQuery = ""
+                    searchResults = []
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.trailing, 4)
+            }
         }
+        .padding(12)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
+        .accessibilityLabel("Search field")
+        .accessibilityHint("Enter a book title, author name, or ISBN to search")
     }
     
     private var actionButtonsView: some View {
         HStack(spacing: 12) {
-            // Search button with magnifying glass icon (now gray)
             Button(action: performSearch) {
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -339,7 +363,6 @@ struct AddItemView: View {
             .accessibilityLabel("Search")
             .accessibilityHint("Search for books with the entered query")
             
-            // Scan button
             Button(action: { showingScanner = true }) {
                 HStack {
                     Image(systemName: "barcode.viewfinder")
@@ -360,16 +383,30 @@ struct AddItemView: View {
     }
     
     private var continuousModeToggleView: some View {
-        Toggle(isOn: $continuousEntryMode) {
-            HStack {
-                Image(systemName: "repeat")
-                    .imageScale(.small)
-                Text("Continuous Entry Mode")
-                    .font(.subheadline)
+        VStack {
+            Toggle(isOn: $continuousEntryMode) {
+                HStack {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 16))
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Continuous Entry Mode")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        Text("Add multiple items in sequence")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
+            .toggleStyle(.switch)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
         }
-        .toggleStyle(.button)
-        .tint(continuousEntryMode ? .green : .gray)
         .padding(.horizontal)
         .onChange(of: continuousEntryMode) { _, newValue in
             if newValue {
@@ -380,9 +417,9 @@ struct AddItemView: View {
                 
                 // Announce mode change for VoiceOver users
                 UIAccessibility.post(notification: .announcement, argument: "Continuous entry mode enabled")
-            } else if addedCount > 0 {
+            } else if scanManager.totalScannedCount > 0 {
                 // Announce summary when disabling with items added
-                UIAccessibility.post(notification: .announcement, argument: "Continuous mode disabled. Added \(addedCount) items.")
+                UIAccessibility.post(notification: .announcement, argument: "Continuous mode disabled. Added \(scanManager.totalScannedCount) items.")
             }
         }
         .accessibilityLabel("Continuous Entry Mode")
@@ -391,46 +428,49 @@ struct AddItemView: View {
     }
     
     private var continuousModeStatusView: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text("Added: \(addedCount)")
-                    .font(.headline)
-                
-                if let title = lastAddedTitle {
-                    Text("Last added: \(title)")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                        .lineLimit(1)
-                        .scaleEffect(addedItemScale)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: addedItemScale)
+        VStack {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Added: \(scanManager.totalScannedCount)")
+                        .font(.headline)
+                    
+                    if let title = scanManager.lastAddedTitle {
+                        Text("Last added: \(title)")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                            .lineLimit(1)
+                            .scaleEffect(addedItemScale)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: addedItemScale)
+                    }
                 }
+                
+                Spacer()
+                
+                Button(action: { showingResults = true }) {
+                    Text("Review")
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                .disabled(scanManager.totalScannedCount == 0)
+                .opacity(scanManager.totalScannedCount == 0 ? 0.5 : 1)
+                .accessibilityLabel("Review added items")
+                .accessibilityHint("View the list of successfully added items")
+                .accessibilityAddTraits(scanManager.totalScannedCount == 0 ? [] : [.isButton])
             }
-            
-            Spacer()
-            
-            Button(action: { showingResults = true }) {
-                Text("Review")
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            .disabled(addedCount == 0)
-            .opacity(addedCount == 0 ? 0.5 : 1)
-            .accessibilityLabel("Review added items")
-            .accessibilityHint("View the list of successfully added items")
-            .accessibilityAddTraits(addedCount == 0 ? [] : [.isButton])
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color(.systemGray6).opacity(0.5))
-        .cornerRadius(8)
         .padding(.horizontal)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Continuous mode status")
-        .accessibilityValue("\(addedCount) items added\(lastAddedTitle != nil ? ", last added: \(lastAddedTitle!)" : "")")
+        .accessibilityValue("\(scanManager.totalScannedCount) items added\(scanManager.lastAddedTitle != nil ? ", last added: \(scanManager.lastAddedTitle!)" : "")")
     }
     
     private var sortOptionsView: some View {
@@ -477,31 +517,33 @@ struct AddItemView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
+        VStack {
             Spacer()
             
-            // Modified Empty State
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 50))
-                .foregroundColor(.gray)
-                .accessibilityHidden(true)
-            
-            Text("Search for books to add")
-                .font(.headline)
-                .foregroundColor(.gray)
-            
-            Text("Enter a title, author, or ISBN in the search field above")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
+            VStack(spacing: 24) {
+                Image(systemName: "magnifyingglass.circle")
+                    .font(.system(size: 70))
+                    .foregroundStyle(.tertiary)
+                    .symbolRenderingMode(.hierarchical)
+                    .accessibilityHidden(true)
+                
+                VStack(spacing: 8) {
+                    Text("Add to Your Collection")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Search, scan, or manually add items")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 250)
+                }
+            }
+            .padding(.bottom, 40)
             
             Spacer()
-            
-            // Repositioned Manual Entry Button
-            manualEntryButton
         }
-        .frame(maxHeight: .infinity)
+        .frame(maxHeight: 500)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("No search results")
         .accessibilityHint("Enter a search term or use manual entry to add an item")
@@ -511,24 +553,17 @@ struct AddItemView: View {
         VStack {
             // Results list
             ScrollView {
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: 12) {
                     ForEach(sortedResults, id: \.id) { book in
-                        EnhancedBookSearchResultView(book: book) { selectedBook in
+                        BookResultCard(book: book) { selectedBook in
                             addToCollection(selectedBook)
                         }
                         .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        
-                        Divider()
-                            .padding(.horizontal)
-                            .accessibilityHidden(true)
                     }
                 }
+                .padding(.top, 8)
                 .accessibilityLabel("Search results")
             }
-            
-            // Keep Manual Entry button visible even with results
-            manualEntryButton
         }
     }
     
@@ -559,7 +594,7 @@ struct AddItemView: View {
             
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
+                    .font(.system(size: 22))
                     .foregroundColor(.white)
                     .accessibilityHidden(true)
                 
@@ -577,9 +612,9 @@ struct AddItemView: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.green)
-                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.15), radius: 5, x: 0, y: 2)
                     .accessibilityHidden(true)
             )
             .padding(.horizontal, 20)
@@ -920,28 +955,21 @@ struct AddItemView: View {
     }
     
     // New method to handle when no book is found for an ISBN
-    private func handleNoBookFound(_ isbnQuery: String, error: String? = nil) {
-        let reason = error ?? "No book found"
-        
+    private func handleNoBookFound(_ isbnQuery: String) {
         // Store the failed ISBN for later use
         currentFailedISBN = isbnQuery
         
         // Add to failed scans
-        failedScans.append((code: isbnQuery, reason: reason))
+        scanManager.addFailedScan(code: isbnQuery, reason: "No book found")
         
         // Clear search field
         searchQuery = ""
         
-        // Show link prompt if in continuous mode
-        if continuousEntryMode {
-            showingLinkPrompt = true
-        } else {
-            // Show the ISBN linking view directly if not in continuous mode
-            showingISBNLinking = true
-        }
+        // Show link prompt
+        showingLinkPrompt = true
         
         // Announce the failure for VoiceOver users
-        UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
+        UIAccessibility.post(notification: .announcement, argument: "Scan failed: No book found")
     }
     
     // Method to search by title as a fallback
@@ -953,34 +981,35 @@ struct AddItemView: View {
                     if let book = books.first {
                         self.processFoundBook(book, originalIsbn)
                     } else {
-                        self.handleNoBookFound(originalIsbn, error: "No book found for mapped title")
+                        self.handleNoBookFound(originalIsbn)
                     }
                 case .failure(_):
-                    self.handleNoBookFound(originalIsbn, error: "Failed to search by title")
+                    self.handleNoBookFound(originalIsbn)
                 }
             }
         }
     }
     
-    private func processFoundBook(_ book: GoogleBook, _ isbnQuery: String) {
+    private func processFoundBook(_ book: GoogleBook, _ originalIsbn: String) {
         do {
-            let newItem = self.inventoryViewModel.createItemFromGoogleBook(book)
-            try self.inventoryViewModel.addItem(newItem)
+            // Create a new item from the Google Book
+            let newItem = inventoryViewModel.createItemFromGoogleBook(book)
             
-            // Update UI state
-            self.addedCount += 1
-            self.lastAddedTitle = book.volumeInfo.title
-            self.successfulScans.append((
+            // Add it to the inventory
+            try inventoryViewModel.addItem(newItem)
+            
+            // Update scan count and display
+            scanManager.addSuccessfulScan(
                 title: book.volumeInfo.title,
                 isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
-            ))
+            )
             
             // Clear search field for next entry
-            self.searchQuery = ""
+            searchQuery = ""
             
             // Provide feedback
-            self.triggerSuccessHaptic()
-            self.showSuccessToast(title: book.volumeInfo.title)
+            triggerSuccessHaptic()
+            showSuccessToast(title: book.volumeInfo.title)
             
             // Announce for VoiceOver in continuous mode
             if continuousEntryMode {
@@ -988,23 +1017,53 @@ struct AddItemView: View {
             }
             
             // Animate the last added item
-            self.animateLastAddedItem()
+            animateLastAddedItem()
             
             // Re-focus the search field for the next scan
-            self.refocusSearchField()
+            refocusSearchField()
+            
+        } catch let error as InventoryViewModel.ValidationError {
+            // Handle duplicate items more gracefully
+            if case .duplicateISBN = error {
+                // Still show a success message but indicate it's a duplicate
+                showSuccessToast(title: "\(book.volumeInfo.title) (already in collection)")
+                
+                // Still count it as "processed" for user awareness
+                scanManager.addSuccessfulScan(
+                    title: book.volumeInfo.title + " (duplicate)",
+                    isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+                )
+                
+                // Clear search field and refocus
+                searchQuery = ""
+                refocusSearchField()
+                
+                // Provide different feedback for duplicates
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.warning)
+            } else {
+                handleFailedScan(originalIsbn, reason: error.localizedDescription)
+            }
         } catch {
-            self.handleFailedScan(isbnQuery, reason: error.localizedDescription)
+            handleFailedScan(originalIsbn, reason: error.localizedDescription)
         }
     }
     
     private func handleFailedScan(_ code: String, reason: String) {
-        failedScans.append((code, reason))
+        // Add to failed scans
+        scanManager.addFailedScan(code: code, reason: reason)
+        
+        // Clear search field
         searchQuery = ""
         
         // Announce the failure for VoiceOver users
         UIAccessibility.post(notification: .announcement, argument: "Scan failed: \(reason)")
         
-        // Refocus the search field for the next scan
+        // Provide haptic feedback
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        
+        // Re-focus the search field for the next scan
         refocusSearchField()
     }
     
@@ -1022,109 +1081,131 @@ struct AddItemView: View {
     }
 }
 
-// Enhanced Book Search Result View with improved thumbnail display
-struct EnhancedBookSearchResultView: View {
+// New component for better-looking book results
+struct BookResultCard: View {
     let book: GoogleBook
     let onSelect: (GoogleBook) -> Void
+    
+    // Track when item is added
     @State private var isAdded = false
+    @State private var buttonScale = 1.0
     
     var body: some View {
         Button(action: {
-            withAnimation {
+            // Show checkmark animation when pressed
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 isAdded = true
+                buttonScale = 1.2
             }
+            
+            // Call the onSelect handler
             onSelect(book)
             
-            // Reset after delay
+            // Reset after a delay (for continuous entry mode)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation {
                     isAdded = false
+                    buttonScale = 1.0
                 }
             }
         }) {
-            HStack(spacing: 12) {
-                // Improved Thumbnail
-                if let thumbnail = book.volumeInfo.imageLinks?.thumbnail,
-                   let url = URL(string: thumbnail.replacingOccurrences(of: "http://", with: "https://")) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            ProgressView()
-                                .frame(width: 60, height: 90)
-                                .accessibilityHidden(true)
-                        case .success(let image):
+            HStack(alignment: .top, spacing: 12) {
+                // Book cover thumbnail
+                if let thumbnailURLString = book.volumeInfo.imageLinks?.thumbnail,
+                   let thumbnailURL = URL(string: thumbnailURLString.replacingOccurrences(of: "http://", with: "https://")) {
+                    AsyncImage(url: thumbnailURL) { phase in
+                        if let image = phase.image {
                             image
                                 .resizable()
-                                .aspectRatio(contentMode: .fit)
+                                .aspectRatio(contentMode: .fill)
                                 .frame(width: 60, height: 90)
-                                .cornerRadius(4)
-                                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
-                                .accessibilityHidden(true)
-                        case .failure:
-                            Image(systemName: "book.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                        } else if phase.error != nil {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color(.systemGray4))
                                 .frame(width: 60, height: 90)
-                                .foregroundColor(.gray)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(4)
-                                .accessibilityHidden(true)
-                        @unknown default:
-                            Image(systemName: "book")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .foregroundStyle(.secondary)
+                                )
+                        } else {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color(.systemGray5))
                                 .frame(width: 60, height: 90)
-                                .foregroundColor(.gray)
-                                .accessibilityHidden(true)
+                                .overlay(
+                                    ProgressView()
+                                )
                         }
                     }
                 } else {
-                    Image(systemName: "book.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(.systemGray5))
                         .frame(width: 60, height: 90)
-                        .foregroundColor(.gray)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(4)
-                        .accessibilityHidden(true)
+                        .overlay(
+                            Image(systemName: "book.closed")
+                                .foregroundStyle(.secondary)
+                        )
                 }
                 
+                // Book details
                 VStack(alignment: .leading, spacing: 4) {
                     Text(book.volumeInfo.title)
                         .font(.headline)
                         .lineLimit(2)
                     
-                    if let authors = book.volumeInfo.authors {
-                        Text(authors.joined(separator: ", "))
+                    if let author = book.volumeInfo.authors?.first {
+                        Text(author)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                     
-                    if let publisher = book.volumeInfo.publisher {
-                        Text(publisher)
+                    HStack(spacing: 8) {
+                        if let publisher = book.volumeInfo.publisher {
+                            Text(publisher)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                        
+                        if let year = book.volumeInfo.publishedDate?.prefix(4) {
+                            Text(String(year))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    if let isbn = book.volumeInfo.industryIdentifiers?.first(where: { $0.type.contains("ISBN") })?.identifier {
+                        Text("ISBN: \(isbn)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.tertiary)
                     }
                 }
+                .padding(.vertical, 4)
                 
                 Spacer()
                 
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle")
+                // Animated add button/checkmark
+                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                    .font(.system(size: 22))
                     .foregroundColor(isAdded ? .green : .accentColor)
-                    .imageScale(.large)
-                    .scaleEffect(isAdded ? 1.2 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isAdded)
-                    .accessibilityHidden(true)
+                    .scaleEffect(buttonScale)
+                    .padding([.top, .trailing], 6)
+                    .contentTransition(.symbolEffect(.replace))
             }
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.systemGray5), lineWidth: 1)
+                    )
+            )
         }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(book.volumeInfo.title)")
-        .accessibilityHint("Tap to add to your collection\(book.volumeInfo.authors?.isEmpty == false ? ". By \(book.volumeInfo.authors!.joined(separator: ", "))" : "")\(book.volumeInfo.publisher != nil ? ". Published by \(book.volumeInfo.publisher!)" : "")")
-        .accessibilityAddTraits(.isButton)
+        .buttonStyle(.plain)
     }
 }
 

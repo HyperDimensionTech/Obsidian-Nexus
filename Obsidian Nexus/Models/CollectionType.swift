@@ -25,13 +25,13 @@ enum CollectionType: String, CaseIterable, Identifiable, Codable {
     
     var iconName: String {
         switch self {
-        case .books: return "book"
-        case .manga: return "book.closed"
-        case .comics: return "magazine"
-        case .games: return "gamecontroller"
-        case .collectibles: return "star"
-        case .electronics: return "laptopcomputer"
-        case .tools: return "wrench.and.screwdriver"
+        case .books: return "books.vertical.fill"
+        case .manga: return "text.book.closed.fill"
+        case .comics: return "magazine.fill"
+        case .games: return "gamecontroller.fill"
+        case .collectibles: return "sparkles.square.fill.on.square"
+        case .electronics: return "desktopcomputer"
+        case .tools: return "hammer.fill"
         }
     }
     
@@ -49,12 +49,12 @@ enum CollectionType: String, CaseIterable, Identifiable, Codable {
     
     var color: Color {
         switch self {
-        case .manga: return .blue
-        case .books: return .green
-        case .comics: return .red
+        case .manga: return .indigo
+        case .books: return .mint
+        case .comics: return .pink
         case .games: return .purple
-        case .collectibles: return .yellow
-        case .electronics: return .orange
+        case .collectibles: return .orange
+        case .electronics: return .teal
         case .tools: return .gray
         }
     }

@@ -5,6 +5,7 @@ struct SettingsView: View {
     @EnvironmentObject private var locationManager: LocationManager
     @EnvironmentObject private var inventoryViewModel: InventoryViewModel
     @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject private var userPreferences: UserPreferences
     
     @State private var editingLocation: StorageLocation?
     @State private var showingDeleteAlert = false
@@ -14,49 +15,96 @@ struct SettingsView: View {
     @State private var expandedLocations: Set<UUID> = []
     
     var body: some View {
-        NavigationStack(path: $navigationCoordinator.path) {
+        NavigationStack(path: navigationCoordinator.bindingForTab("Settings")) {
             List {
-                Section(header: Text("GENERAL")) {
-                    NavigationLink("Account", destination: Text("Account Settings"))
-                    NavigationLink("Notifications", destination: Text("Notification Settings"))
-                    NavigationLink("Appearance", destination: Text("Appearance Settings"))
+                Section(header: Text("APPEARANCE")) {
+                    HStack {
+                        Text("Theme")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    
+                    HStack(spacing: 8) {
+                        ThemeButton(
+                            title: "System",
+                            systemImage: "circle.lefthalf.filled",
+                            isSelected: userPreferences.theme == .system,
+                            action: { userPreferences.theme = .system }
+                        )
+                        
+                        ThemeButton(
+                            title: "Light",
+                            systemImage: "sun.max.fill",
+                            isSelected: userPreferences.theme == .light,
+                            action: { userPreferences.theme = .light }
+                        )
+                        
+                        ThemeButton(
+                            title: "Dark",
+                            systemImage: "moon.fill",
+                            isSelected: userPreferences.theme == .dark,
+                            action: { userPreferences.theme = .dark }
+                        )
+                    }
+                    .padding(.vertical, 4)
                 }
                 
-                Section(header: 
-                    HStack {
-                        Text("LOCATIONS")
-                        Spacer()
-                        Button {
-                            selectedLocation = nil
-                            showingAddLocation = true
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.accentColor)
+                Section(header: Text("CURRENCY")) {
+                    Picker("Default Currency", selection: $userPreferences.defaultCurrency) {
+                        ForEach(Price.Currency.allCases, id: \.self) { currency in
+                            HStack {
+                                Text(currency.symbol)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.accentColor)
+                                    .frame(width: 24)
+                                Text(currency.name)
+                                Text("(\(currency.code))")
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                            }
+                            .tag(currency)
                         }
                     }
-                ) {
-                    LocationTreeView(
-                        expandedLocations: $expandedLocations,
-                        onLocationSelected: { location in
-                            selectedLocation = location
-                            showingAddItems = true
-                        },
-                        onEdit: { location in
-                            editingLocation = location
-                        },
-                        onDelete: { location in
-                            selectedLocation = location
-                            showingDeleteAlert = true
-                        }
-                    )
+                    .pickerStyle(.navigationLink)
+                    
+                    // Display information about current currency
+                    let examplePrice = Price(amount: 100)
+                    HStack {
+                        Text("Example:")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(examplePrice.convertedTo(userPreferences.defaultCurrency).formatted())
+                            .foregroundColor(.primary)
+                            .fontWeight(.medium)
+                    }
                 }
                 
-                // Temporarily hide DATA MANAGEMENT section
-                // Section(header: Text("DATA MANAGEMENT")) { ... }
+                Section(header: Text("ITEM DISPLAY")) {
+                    NavigationLink {
+                        ItemDisplaySettingsView()
+                    } label: {
+                        HStack {
+                            Label("Item Information", systemImage: "list.bullet.indent")
+                            Spacer()
+                            Text("\(userPreferences.itemInfoDisplayOptions.count) selected")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                }
                 
                 Section(header: Text("DATA")) {
-                    NavigationLink("Import/Export", destination: Text("Import/Export"))
-                    NavigationLink("Backup", destination: Text("Backup Settings"))
+                    NavigationLink {
+                        BackupSettingsView()
+                    } label: {
+                        Label("Backup & Restore", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    
+                    NavigationLink {
+                        ImportExportView()
+                    } label: {
+                        Label("Import/Export", systemImage: "square.and.arrow.up.on.square")
+                    }
                 }
                 
                 Section(header: Text("ADVANCED")) {
@@ -107,22 +155,45 @@ struct SettingsView: View {
             }
         }
         .onAppear {
-            // Add notification observer when view appears
             NotificationCenter.default.addObserver(
                 forName: Notification.Name("TabDoubleTapped"),
                 object: nil,
                 queue: .main
             ) { notification in
-                // Only respond to settings tab double-taps
                 if let tab = notification.object as? String, tab == "Settings" {
-                    // Reset navigation when Settings tab is double-tapped
-                    // Use DispatchQueue.main to ensure we're on the main thread
                     DispatchQueue.main.async {
                         navigationCoordinator.navigateToRoot()
                     }
                 }
             }
         }
+        .preferredColorScheme(userPreferences.theme.colorScheme)
+    }
+}
+
+struct ThemeButton: View {
+    let title: String
+    let systemImage: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .white : .primary)
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(isSelected ? .white : .primary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.2))
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
 }
 
@@ -131,6 +202,7 @@ struct SettingsView: View {
         .environmentObject(LocationManager())
         .environmentObject(InventoryViewModel(locationManager: LocationManager()))
         .environmentObject(NavigationCoordinator())
+        .environmentObject(UserPreferences())
 }
 
 private struct TrashSection: View {

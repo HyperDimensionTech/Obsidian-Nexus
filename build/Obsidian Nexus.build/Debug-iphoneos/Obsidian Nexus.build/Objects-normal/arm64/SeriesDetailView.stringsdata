@@ -1,0 +1,168 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/SeriesDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Confirm Deletion",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volumes",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Total Value",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volumes Owned",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Total Volumes",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Completion",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%%",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Selected (%lld)",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select All",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Selected",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete %lld items? This action cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 118
+        }
+      }
+    ]
+  },
+  "version": 1
+}

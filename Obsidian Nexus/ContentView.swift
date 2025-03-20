@@ -8,19 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var locationManager: LocationManager
-    @StateObject private var inventoryViewModel: InventoryViewModel
-    @StateObject private var navigationCoordinator = NavigationCoordinator()
     @State private var selectedTab = 0
     @State private var previousTab = 0
-    
-    init() {
-        let storage = StorageManager.shared
-        let locationManager = LocationManager(storage: storage)
-        _locationManager = StateObject(wrappedValue: locationManager)
-        _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(storage: storage, locationManager: locationManager))
-    }
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,17 +26,24 @@ struct ContentView: View {
                 }
                 .tag(1)
             
+            // Locations tab
+            LocationsView()
+                .tabItem {
+                    Label("Locations", systemImage: "folder")
+                }
+                .tag(2)
+            
             AddItemTabView()
                 .tabItem {
                     Label("Add", systemImage: "plus.circle.fill")
                 }
-                .tag(2)
+                .tag(3)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(3)
+                .tag(4)
         }
         .onChange(of: selectedTab) { oldTab, newTab in
             // If tapping the same tab again
@@ -66,9 +62,6 @@ struct ContentView: View {
             // Update previous tab
             previousTab = newTab
         }
-        .environmentObject(locationManager)
-        .environmentObject(inventoryViewModel)
-        .environmentObject(navigationCoordinator)
     }
     
     // Helper function to get tab name from index
@@ -76,10 +69,40 @@ struct ContentView: View {
         switch tabIndex {
         case 0: return "Home"
         case 1: return "Browse & Search"
-        case 2: return "Add"
-        case 3: return "Settings"
+        case 2: return "Locations"
+        case 3: return "Add"
+        case 4: return "Settings"
         default: return ""
         }
+    }
+}
+
+struct MainView: View {
+    @StateObject private var locationManager: LocationManager
+    @StateObject private var inventoryViewModel: InventoryViewModel
+    @StateObject private var navigationCoordinator = NavigationCoordinator()
+    @StateObject private var userPreferences = UserPreferences()
+    @StateObject private var scanResultManager = ScanResultManager()
+    
+    init() {
+        let storage = StorageManager.shared
+        let locationManager = LocationManager(storage: storage)
+        _locationManager = StateObject(wrappedValue: locationManager)
+        _inventoryViewModel = StateObject(wrappedValue: 
+            InventoryViewModel(storage: storage, locationManager: locationManager))
+        
+        // Initialize the CurrencyManager singleton to ensure it's ready to handle currency changes
+        _ = CurrencyManager.shared
+    }
+    
+    var body: some View {
+        ContentView()
+            .environmentObject(locationManager)
+            .environmentObject(inventoryViewModel)
+            .environmentObject(navigationCoordinator)
+            .environmentObject(userPreferences)
+            .environmentObject(scanResultManager)
+            .preferredColorScheme(userPreferences.theme.colorScheme)
     }
 }
 
@@ -242,7 +265,5 @@ private struct EmptySearchView: View {
 }
 
 #Preview {
-    ContentView()
-        .environmentObject(PreviewData.shared.locationManager)
-        .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
+    MainView()
 }

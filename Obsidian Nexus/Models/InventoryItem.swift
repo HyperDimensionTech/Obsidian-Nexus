@@ -19,7 +19,7 @@ struct InventoryItem: Identifiable, Codable {
     var originalPublishDate: Date?
     var publisher: String?
     var isbn: String?
-    var price: Decimal?
+    var price: Price?
     var purchaseDate: Date?
     var synopsis: String?
     
@@ -67,7 +67,7 @@ struct InventoryItem: Identifiable, Codable {
         originalPublishDate: Date? = nil,
         publisher: String? = nil,
         isbn: String? = nil,
-        price: Decimal? = nil,
+        price: Price? = nil,
         purchaseDate: Date? = nil,
         synopsis: String? = nil,
         customImageData: Data? = nil,

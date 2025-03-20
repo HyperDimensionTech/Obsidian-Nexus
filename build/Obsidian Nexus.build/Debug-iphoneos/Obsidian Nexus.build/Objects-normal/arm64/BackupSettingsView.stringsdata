@@ -1,0 +1,136 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/BackupSettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Backup & Restore",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Restore Backup",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Create Backup",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save to Cloud",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Restore from Cloud",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Backup",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Create a backup of your database. This will save all your items and locations.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Available Backups",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap a backup to restore it. Swipe left to delete.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Restore",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "This will replace your current data with the backup. This action cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 161
+        }
+      }
+    ]
+  },
+  "version": 1
+}

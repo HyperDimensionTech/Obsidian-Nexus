@@ -196,8 +196,7 @@ struct ItemDetailView: View {
             
             Section("Purchase Information") {
                 if let price = currentItem.price {
-                    DetailRow(label: "Price", 
-                            value: price.formatted(.currency(code: "USD")))
+                    DetailRow(label: "Price", value: price.convertedToDefaultCurrency().formatted())
                 }
                 if let purchaseDate = currentItem.purchaseDate {
                     DetailRow(label: "Purchase Date", 
@@ -282,7 +281,12 @@ struct ItemDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
+        .sheet(isPresented: $showingEditSheet, onDismiss: {
+            // When the edit sheet is dismissed, refresh the current item with the latest data
+            if let updatedItem = inventoryViewModel.items.first(where: { $0.id == currentItem.id }) {
+                currentItem = updatedItem
+            }
+        }) {
             NavigationStack {
                 EditItemView(item: currentItem)
                     .environmentObject(inventoryViewModel)

@@ -16,7 +16,7 @@ struct SeriesDetailView: View {
         inventoryViewModel.itemsInSeries(series)
     }
     
-    var stats: (value: Decimal, count: Int, total: Int?) {
+    var seriesStats: (value: Price, count: Int, total: Int?) {
         inventoryViewModel.seriesStats(name: series)
     }
     
@@ -24,19 +24,33 @@ struct SeriesDetailView: View {
         List(selection: $selectedItems) {
             Section {
                 HStack {
-                    Text("Series Value")
-                        .font(.headline)
+                    Text("Total Value")
                     Spacer()
-                    Text(stats.value.formatted(.currency(code: "USD")))
-                        .bold()
+                    Text(seriesStats.value.convertedToDefaultCurrency().formatted())
+                        .foregroundColor(.secondary)
                 }
                 
                 HStack {
-                    Text("Volumes")
-                        .font(.headline)
+                    Text("Volumes Owned")
                     Spacer()
-                    Text("\(stats.count)")
-                        .bold()
+                    Text("\(seriesStats.count)")
+                        .foregroundColor(.secondary)
+                }
+                
+                if let total = seriesStats.total {
+                    HStack {
+                        Text("Total Volumes")
+                        Spacer()
+                        Text("\(total)")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Text("Completion")
+                        Spacer()
+                        Text("\(Int((Double(seriesStats.count) / Double(total)) * 100))%")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
             
@@ -45,16 +59,12 @@ struct SeriesDetailView: View {
                     NavigationLink {
                         ItemDetailView(item: item)
                     } label: {
-                        HStack {
-                            Text("Volume \(item.volume ?? 0)")
-                            Spacer()
-                            if let locationId = item.locationId {
-                                Text(locationManager.breadcrumbPath(for: locationId))
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("No Location")
-                                    .font(.caption)
+                        VStack(alignment: .leading) {
+                            Text(item.title)
+                                .font(.headline)
+                            if let price = item.price {
+                                Text(price.convertedToDefaultCurrency().formatted())
+                                    .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
                         }

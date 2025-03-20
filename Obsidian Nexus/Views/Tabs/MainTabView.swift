@@ -70,6 +70,24 @@ struct MainTabView: View {
     }
     
     private func handleTabSelection(oldTab: Tab, newTab: Tab) {
+        // Clear navigation path of the old tab when switching
+        switch oldTab {
+        case .home:
+            navigationCoordinator.clearPathForTab("Home")
+        case .search:
+            navigationCoordinator.clearPathForTab("Browse & Search")
+        case .settings:
+            navigationCoordinator.clearPathForTab("Settings")
+        case .add:
+            // Clear any navigation state from add view
+            navigationCoordinator.navigateToRoot()
+        }
+        
+        // Also clear the Collections path if we were in it
+        if navigationCoordinator.pathForTab("Collections").count > 0 {
+            navigationCoordinator.clearPathForTab("Collections")
+        }
+        
         // If tapping the same tab again
         if newTab == previousTab {
             // Post a notification that can be observed by any view to reset its state

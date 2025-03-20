@@ -1,0 +1,232 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/AddItemView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Continuous Entry Mode",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "Added: %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last added: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Item",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN Not Found",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 462
+        }
+      },
+      {
+        "comment": "",
+        "key": "Item Type",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search by title, author, or ISBN...",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Books",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 238
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manga",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "Comics",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Games",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Searching...",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort:",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld results",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search for Books, Comics, or Games",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter a title, author, or ISBN to find items",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scan Barcode",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Manual Entry",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continuous Entry Mode",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 367
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add multiple items quickly",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "Review",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 422
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 460
+        }
+      },
+      {
+        "comment": "",
+        "key": "Link Now",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 463
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 467
+        }
+      },
+      {
+        "comment": "",
+        "key": "Would you like to link this ISBN to a book in Google Books?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 472
+        }
+      },
+      {
+        "comment": "",
+        "key": "ISBN: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 604
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Item Screen",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 637
+        }
+      }
+    ]
+  },
+  "version": 1
+}

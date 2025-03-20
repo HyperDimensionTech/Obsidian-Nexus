@@ -1,0 +1,88 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ItemDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Delete Item",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Details",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 182
+        }
+      },
+      {
+        "comment": "",
+        "key": "Purchase Information",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Details",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": "Additional Details",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 273
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 276
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 297
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete this item? This action cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 302
+        }
+      }
+    ]
+  },
+  "version": 1
+}
