@@ -3,7 +3,7 @@ import SwiftUI
 struct ISBNLinkingView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var googleBooksService = GoogleBooksService()
-    @StateObject private var isbnMappingService = ISBNMappingService()
+    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
     
     let isbn: String
     let onBookSelected: (GoogleBook) -> Void

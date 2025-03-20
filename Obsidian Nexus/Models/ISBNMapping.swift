@@ -15,4 +15,12 @@ struct ISBNMapping: Codable, Identifiable {
         self.isReprint = isReprint
         self.dateAdded = Date()
     }
+    
+    init(incorrectISBN: String, correctGoogleBooksID: String, title: String, isReprint: Bool = false, dateAdded: Date) {
+        self.incorrectISBN = incorrectISBN
+        self.correctGoogleBooksID = correctGoogleBooksID
+        self.title = title
+        self.isReprint = isReprint
+        self.dateAdded = dateAdded
+    }
 } 

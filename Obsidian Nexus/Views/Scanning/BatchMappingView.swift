@@ -4,7 +4,7 @@ struct BatchMappingView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var scanManager: ScanResultManager
     @StateObject private var googleBooksService = GoogleBooksService()
-    @StateObject private var isbnMappingService = ISBNMappingService()
+    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
     
     @State private var selectedISBN: String?
     @State private var searchQuery = ""

@@ -5,7 +5,7 @@ struct BarcodeScannerView: View {
     @StateObject private var viewModel = BarcodeScannerViewModel()
     @EnvironmentObject private var inventoryViewModel: InventoryViewModel
     @StateObject private var googleBooksService = GoogleBooksService()
-    @StateObject private var isbnMappingService = ISBNMappingService()
+    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
     @EnvironmentObject private var scanManager: ScanResultManager
     
     // Move mangaPublishers here as a static property

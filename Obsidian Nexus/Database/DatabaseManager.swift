@@ -3,7 +3,7 @@ import SQLite3
 
 class DatabaseManager {
     static let shared = DatabaseManager()
-    private let currentVersion = 1
+    private let currentVersion = 2
     
     private(set) var connection: OpaquePointer?
     
@@ -272,20 +272,49 @@ class DatabaseManager {
     }
     
     private func migrateIfNeeded() {
-        let version = getDatabaseVersion()
-        if version < currentVersion {
-            // Add migration for image columns
-            let migrations = [
-                "ALTER TABLE items ADD COLUMN custom_image_data BLOB;",
-                "ALTER TABLE items ADD COLUMN image_source TEXT;"
-            ]
+        let currentDBVersion = getDatabaseVersion()
+        
+        if currentDBVersion < currentVersion {
+            print("Migrating database from v\(currentDBVersion) to v\(currentVersion)")
             
-            for migration in migrations {
-                executeStatement(migration)
+            // Perform incremental migrations
+            if currentDBVersion < 1 {
+                migrateToV1()
+            }
+
+            // Add migration for isbn_mappings table
+            if currentDBVersion < 2 {
+                migrateToV2()
             }
             
+            // Set the new version
             setDatabaseVersion(currentVersion)
         }
+    }
+    
+    private func migrateToV1() {
+        // v1 migration is handled by initial setup
+    }
+    
+    private func migrateToV2() {
+        // Create isbn_mappings table
+        let createISBNMappingsTable = """
+            CREATE TABLE IF NOT EXISTS isbn_mappings (
+                incorrect_isbn TEXT PRIMARY KEY,
+                google_books_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                is_reprint INTEGER NOT NULL DEFAULT 1,
+                date_added INTEGER NOT NULL
+            );
+        """
+        executeStatement(createISBNMappingsTable)
+        
+        // Create index for performance
+        let createISBNIndex = """
+            CREATE INDEX IF NOT EXISTS idx_isbn_mappings_isbn
+            ON isbn_mappings (incorrect_isbn);
+        """
+        executeStatement(createISBNIndex)
     }
     
     func executeStatement(_ sql: String, parameters: [Any] = []) {

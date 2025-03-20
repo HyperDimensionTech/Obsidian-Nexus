@@ -6,9 +6,26 @@ class ISBNMappingService: ObservableObject {
     
     private let userDefaults = UserDefaults.standard
     private let mappingsKey = "isbnMappings"
+    private let repository: ISBNMappingRepository
+    private let migratedKey = "isbnMappingsMigrated"
     
-    init() {
-        loadMappings()
+    init(storage: StorageManager = .shared) {
+        self.repository = storage.getISBNMappingRepository()
+        
+        // Check if we need to migrate from UserDefaults
+        if !UserDefaults.standard.bool(forKey: migratedKey) {
+            // First load data from UserDefaults
+            loadMappingsFromUserDefaults()
+            
+            // Then migrate to database
+            migrateToDatabase()
+            
+            // Mark as migrated
+            UserDefaults.standard.set(true, forKey: migratedKey)
+        } else {
+            // Load from database
+            loadMappingsFromDatabase()
+        }
     }
     
     // MARK: - Public Methods
@@ -53,17 +70,54 @@ class ISBNMappingService: ObservableObject {
     // MARK: - Private Methods
     
     private func saveMappings() {
-        if let encoded = try? JSONEncoder().encode(mappings) {
-            userDefaults.set(encoded, forKey: mappingsKey)
+        do {
+            // First save to database
+            for mapping in mappings {
+                try repository.save(mapping)
+            }
+            
+            // Also keep UserDefaults in sync until fully migrated everywhere
+            if let encoded = try? JSONEncoder().encode(mappings) {
+                userDefaults.set(encoded, forKey: mappingsKey)
+            }
+            
+            objectWillChange.send()
+        } catch {
+            print("Error saving ISBN mappings: \(error.localizedDescription)")
         }
-        objectWillChange.send()
     }
     
-    private func loadMappings() {
+    private func loadMappingsFromDatabase() {
+        do {
+            mappings = try repository.fetchAll()
+        } catch {
+            print("Error loading ISBN mappings from database: \(error.localizedDescription)")
+            // Fallback to UserDefaults if database read fails
+            loadMappingsFromUserDefaults()
+        }
+    }
+    
+    private func loadMappingsFromUserDefaults() {
         if let savedMappings = userDefaults.data(forKey: mappingsKey) {
             if let decodedMappings = try? JSONDecoder().decode([ISBNMapping].self, from: savedMappings) {
                 mappings = decodedMappings
             }
+        }
+    }
+    
+    private func migrateToDatabase() {
+        do {
+            // Clear existing database records first
+            try repository.deleteAll()
+            
+            // Save all mappings from UserDefaults to database
+            for mapping in mappings {
+                try repository.save(mapping)
+            }
+            
+            print("Successfully migrated \(mappings.count) ISBN mappings to database")
+        } catch {
+            print("Error migrating ISBN mappings to database: \(error.localizedDescription)")
         }
     }
 } 

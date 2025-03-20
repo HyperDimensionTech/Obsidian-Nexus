@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ISBNMappingsView: View {
-    @StateObject private var isbnMappingService = ISBNMappingService()
+    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
     @State private var showingDeleteAlert = false
     @State private var mappingToDelete: ISBNMapping?
     @State private var showingAddMapping = false

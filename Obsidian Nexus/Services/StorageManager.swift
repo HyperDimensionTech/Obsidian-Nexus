@@ -4,11 +4,20 @@ class StorageManager {
     static let shared = StorageManager()
     let itemRepository: ItemRepository
     let locationRepository: LocationRepository
+    private let isbnMappingRepository: ISBNMappingRepository
     
     init(itemRepository: ItemRepository = SQLiteItemRepository(),
-         locationRepository: LocationRepository = SQLiteLocationRepository()) {
+         locationRepository: LocationRepository = SQLiteLocationRepository(),
+         isbnMappingRepository: ISBNMappingRepository = SQLiteISBNMappingRepository()) {
         self.itemRepository = itemRepository
         self.locationRepository = locationRepository
+        self.isbnMappingRepository = isbnMappingRepository
+    }
+    
+    // MARK: - ISBN Mapping Operations
+    
+    func getISBNMappingRepository() -> ISBNMappingRepository {
+        return isbnMappingRepository
     }
     
     // MARK: - Item Operations
