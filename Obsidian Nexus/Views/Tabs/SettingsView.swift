@@ -116,6 +116,10 @@ struct SettingsView: View {
                             Text("ISBN Mappings")
                         }
                     }
+                    
+                    #if DEBUG
+                    // Debug tools removed - no longer needed
+                    #endif
                 }
             }
             .navigationTitle("Settings")

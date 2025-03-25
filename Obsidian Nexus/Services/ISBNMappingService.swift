@@ -4,28 +4,27 @@ import SwiftUI
 class ISBNMappingService: ObservableObject {
     @Published var mappings: [ISBNMapping] = []
     
-    private let userDefaults = UserDefaults.standard
-    private let mappingsKey = "isbnMappings"
     private let repository: ISBNMappingRepository
-    private let migratedKey = "isbnMappingsMigrated"
     
     init(storage: StorageManager = .shared) {
         self.repository = storage.getISBNMappingRepository()
+        loadMappingsFromDatabase()
         
-        // Check if we need to migrate from UserDefaults
-        if !UserDefaults.standard.bool(forKey: migratedKey) {
-            // First load data from UserDefaults
-            loadMappingsFromUserDefaults()
-            
-            // Then migrate to database
-            migrateToDatabase()
-            
-            // Mark as migrated
-            UserDefaults.standard.set(true, forKey: migratedKey)
-        } else {
-            // Load from database
-            loadMappingsFromDatabase()
-        }
+        // Listen for data import notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDataImport),
+            name: .dataImportCompleted,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func handleDataImport() {
+        loadMappingsFromDatabase()
     }
     
     // MARK: - Public Methods
@@ -35,7 +34,7 @@ class ISBNMappingService: ObservableObject {
         return mappings.first { $0.incorrectISBN == isbn }
     }
     
-    /// Add a new mapping - supports both property name formats
+    /// Add a new mapping
     func addMapping(incorrectISBN: String, googleBooksId: String, title: String, isReprint: Bool = true) {
         let newMapping = ISBNMapping(
             incorrectISBN: incorrectISBN,
@@ -46,21 +45,57 @@ class ISBNMappingService: ObservableObject {
         
         // Check if mapping already exists
         if !mappings.contains(where: { $0.incorrectISBN == incorrectISBN }) {
-            mappings.append(newMapping)
-            saveMappings()
+            do {
+                try repository.save(newMapping)
+                mappings.append(newMapping)
+                objectWillChange.send()
+            } catch {
+                print("Error saving mapping: \(error.localizedDescription)")
+            }
         }
     }
     
     /// Remove a mapping
     func removeMapping(for isbn: String) {
-        mappings.removeAll(where: { $0.incorrectISBN == isbn })
-        saveMappings()
+        do {
+            try repository.delete(isbn)
+            mappings.removeAll(where: { $0.incorrectISBN == isbn })
+            objectWillChange.send()
+        } catch {
+            print("Error removing mapping: \(error.localizedDescription)")
+        }
     }
     
     /// Clear all mappings
     func clearAllMappings() {
-        mappings.removeAll()
-        saveMappings()
+        do {
+            try repository.deleteAll()
+            mappings.removeAll()
+            objectWillChange.send()
+        } catch {
+            print("Error clearing all mappings: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Remove a mapping by title substring (for maintenance)
+    func removeMapping(titleContaining substring: String) {
+        print("Removing ISBN mappings containing: \(substring)")
+        
+        // Find all mappings with titles containing the substring
+        let matchingMappings = mappings.filter { 
+            $0.title.lowercased().contains(substring.lowercased()) 
+        }
+        
+        if matchingMappings.isEmpty {
+            print("No mappings found with title containing: \(substring)")
+            return
+        }
+        
+        // Remove each matching mapping
+        for mapping in matchingMappings {
+            print("Removing mapping: \(mapping.incorrectISBN) -> \(mapping.title)")
+            removeMapping(for: mapping.incorrectISBN)
+        }
     }
     
     func getGoogleBooksId(for isbn: String) -> String? {
@@ -69,55 +104,14 @@ class ISBNMappingService: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func saveMappings() {
-        do {
-            // First save to database
-            for mapping in mappings {
-                try repository.save(mapping)
-            }
-            
-            // Also keep UserDefaults in sync until fully migrated everywhere
-            if let encoded = try? JSONEncoder().encode(mappings) {
-                userDefaults.set(encoded, forKey: mappingsKey)
-            }
-            
-            objectWillChange.send()
-        } catch {
-            print("Error saving ISBN mappings: \(error.localizedDescription)")
-        }
-    }
-    
     private func loadMappingsFromDatabase() {
         do {
             mappings = try repository.fetchAll()
+            print("Successfully loaded \(mappings.count) ISBN mappings from database")
+            objectWillChange.send()
         } catch {
             print("Error loading ISBN mappings from database: \(error.localizedDescription)")
-            // Fallback to UserDefaults if database read fails
-            loadMappingsFromUserDefaults()
-        }
-    }
-    
-    private func loadMappingsFromUserDefaults() {
-        if let savedMappings = userDefaults.data(forKey: mappingsKey) {
-            if let decodedMappings = try? JSONDecoder().decode([ISBNMapping].self, from: savedMappings) {
-                mappings = decodedMappings
-            }
-        }
-    }
-    
-    private func migrateToDatabase() {
-        do {
-            // Clear existing database records first
-            try repository.deleteAll()
-            
-            // Save all mappings from UserDefaults to database
-            for mapping in mappings {
-                try repository.save(mapping)
-            }
-            
-            print("Successfully migrated \(mappings.count) ISBN mappings to database")
-        } catch {
-            print("Error migrating ISBN mappings to database: \(error.localizedDescription)")
+            mappings = []
         }
     }
 } 

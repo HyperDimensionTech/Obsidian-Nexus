@@ -26,47 +26,75 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeView()
+                .environmentObject(locationManager)
+                .environmentObject(inventoryViewModel)
+                .environmentObject(navigationCoordinator)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
                 .tag(Tab.home)
             
-            SearchView()
+            SearchTabView()
+                .environmentObject(locationManager)
+                .environmentObject(inventoryViewModel)
+                .environmentObject(navigationCoordinator)
                 .tabItem {
                     Label("Browse & Search", systemImage: "magnifyingglass")
                 }
                 .tag(Tab.search)
             
-            Button {
-                showingAddItem = true
-            } label: {
-                Label("Add", systemImage: "plus")
-            }
-            .tabItem {
-                Label("Add", systemImage: "plus")
-            }
-            .tag(Tab.add)
+            Text("")
+                .tabItem {
+                    Label("Add", systemImage: "plus.circle.fill")
+                }
+                .tag(Tab.add)
             
             SettingsView()
+                .environmentObject(locationManager)
+                .environmentObject(inventoryViewModel)
+                .environmentObject(navigationCoordinator)
                 .tabItem {
-                    Label("Settings", systemImage: "gear")
+                    Label("Settings", systemImage: "gearshape")
                 }
                 .tag(Tab.settings)
         }
         .onChange(of: selectedTab) { oldTab, newTab in
-            handleTabSelection(oldTab: oldTab, newTab: newTab)
+            if newTab == .add {
+                DispatchQueue.main.async {
+                    selectedTab = oldTab
+                    showingAddItem = true
+                }
+            } else {
+                // Handle tab changes for navigation
+                handleTabSelection(oldTab: oldTab, newTab: newTab)
+            }
         }
         .sheet(isPresented: $showingAddItem) {
             NavigationView {
                 AddItemView()
-                    .navigationBarTitleDisplayMode(.inline)
-                    .interactiveDismissDisabled()
+                    .environmentObject(locationManager)
+                    .environmentObject(inventoryViewModel)
             }
-            .presentationDragIndicator(.visible)
         }
-        .environmentObject(locationManager)
-        .environmentObject(inventoryViewModel)
-        .environmentObject(navigationCoordinator)
+        .onAppear {
+            // Setup deep link handler
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("LocationDeepLink"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let userInfo = notification.userInfo,
+                   let locationId = userInfo["locationId"] as? UUID,
+                   let location = locationManager.getLocation(by: locationId) {
+                    // Switch to search tab for location viewing
+                    selectedTab = .search
+                    // Navigate to location items view
+                    DispatchQueue.main.async {
+                        navigationCoordinator.navigate(to: .scannedLocation(location))
+                    }
+                }
+            }
+        }
     }
     
     private func handleTabSelection(oldTab: Tab, newTab: Tab) {
@@ -93,7 +121,7 @@ struct MainTabView: View {
             // Post a notification that can be observed by any view to reset its state
             NotificationCenter.default.post(
                 name: Notification.Name("TabDoubleTapped"),
-                object: newTab
+                object: getTabStringName(newTab)
             )
             
             // Trigger haptic feedback for double tap
@@ -103,6 +131,15 @@ struct MainTabView: View {
         
         // Update previous tab
         previousTab = newTab
+    }
+    
+    private func getTabStringName(_ tab: Tab) -> String {
+        switch tab {
+        case .home: return "Home"
+        case .search: return "Browse & Search"
+        case .settings: return "Settings"
+        case .add: return "Add"
+        }
     }
 }
 

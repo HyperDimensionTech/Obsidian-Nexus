@@ -1,0 +1,5 @@
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>To save QR codes of locations to your photo library for printing and tagging physical locations.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>To save QR codes of locations to your photo library for printing and tagging physical locations.</string> 

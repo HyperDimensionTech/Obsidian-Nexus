@@ -5,6 +5,8 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
     case locationSettings
     case addItems(UUID)  // locationId
     case itemDetail(InventoryItem)
+    case locationQRCode(StorageLocation) // QR code display
+    case scannedLocation(StorageLocation) // This is specifically for when locations are scanned
     
     // Add id property for Identifiable conformance
     var id: String {
@@ -17,6 +19,10 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
             return "addItems-\(locationId)"
         case .itemDetail(let item):
             return "itemDetail-\(item.id)"
+        case .locationQRCode(let location):
+            return "locationQRCode-\(location.id)"
+        case .scannedLocation(let location):
+            return "scannedLocation-\(location.id)"
         }
     }
     
@@ -30,6 +36,10 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
         case (.addItems(let l), .addItems(let r)):
             return l == r
         case (.itemDetail(let l), .itemDetail(let r)):
+            return l.id == r.id
+        case (.locationQRCode(let l), .locationQRCode(let r)):
+            return l.id == r.id
+        case (.scannedLocation(let l), .scannedLocation(let r)):
             return l.id == r.id
         default:
             return false
@@ -49,6 +59,12 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
         case .itemDetail(let item):
             hasher.combine("itemDetail")
             hasher.combine(item.id)
+        case .locationQRCode(let location):
+            hasher.combine("locationQRCode")
+            hasher.combine(location.id)
+        case .scannedLocation(let location):
+            hasher.combine("scannedLocation")
+            hasher.combine(location.id)
         }
     }
 }

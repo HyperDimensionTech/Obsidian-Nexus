@@ -6,8 +6,16 @@ class BarcodeScannerService: NSObject, ObservableObject, AVCaptureMetadataOutput
     @Published var isAuthorized = false
     @Published var error: String?
     @Published private(set) var isTorchOn = false
+    @Published var detectedLocationId: UUID?
     
     private(set) var captureSession: AVCaptureSession?
+    private let qrCodeService = QRCodeService.shared
+    
+    // Add a handler for location QR codes
+    var onLocationDetected: ((UUID) -> Void)?
+    
+    // Add a flag to determine if we're scanning specifically for locations
+    var isScanningForLocations = false
     
     override init() {
         super.init()
@@ -82,18 +90,18 @@ class BarcodeScannerService: NSObject, ObservableObject, AVCaptureMetadataOutput
     func toggleTorch() {
         guard let device = AVCaptureDevice.default(for: .video) else { return }
         
-        do {
-            try device.lockForConfiguration()
+        if device.hasTorch && device.isTorchAvailable {
+            try? device.lockForConfiguration()
             
-            if device.hasTorch {
-                let newMode: AVCaptureDevice.TorchMode = device.torchMode == .on ? .off : .on
-                device.torchMode = newMode
-                isTorchOn = device.torchMode == .on
+            if device.torchMode == .on {
+                device.torchMode = .off
+                isTorchOn = false
+            } else {
+                try? device.setTorchModeOn(level: AVCaptureDevice.maxAvailableTorchLevel)
+                isTorchOn = true
             }
             
             device.unlockForConfiguration()
-        } catch {
-            print("Torch could not be used")
         }
     }
     
@@ -105,12 +113,22 @@ class BarcodeScannerService: NSObject, ObservableObject, AVCaptureMetadataOutput
     
     // MARK: - AVCaptureMetadataOutputObjectsDelegate
     
-    func metadataOutput(_ output: AVCaptureMetadataOutput,
-                       didOutput metadataObjects: [AVMetadataObject],
-                       from connection: AVCaptureConnection) {
-        if let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-           let stringValue = metadataObject.stringValue {
-            scannedCode = stringValue
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        guard let metadataObject = metadataObjects.first,
+              let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
+              let stringValue = readableObject.stringValue else {
+            return
+        }
+        
+        // Handle the scanned code
+        self.scannedCode = stringValue
+        
+        // If we're scanning for a location QR code, check if it's valid
+        if isScanningForLocations {
+            if let locationId = qrCodeService.parseLocationQRCode(from: stringValue) {
+                self.detectedLocationId = locationId
+                onLocationDetected?(locationId)
+            }
         }
     }
 } 

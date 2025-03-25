@@ -59,15 +59,7 @@ struct SeriesDetailView: View {
                     NavigationLink {
                         ItemDetailView(item: item)
                     } label: {
-                        VStack(alignment: .leading) {
-                            Text(item.title)
-                                .font(.headline)
-                            if let price = item.price {
-                                Text(price.convertedToDefaultCurrency().formatted())
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
+                        ItemRow(item: item)
                     }
                 }
             }

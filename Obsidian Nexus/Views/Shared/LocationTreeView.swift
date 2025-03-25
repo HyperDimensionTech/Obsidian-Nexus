@@ -6,6 +6,7 @@ struct LocationTreeView: View {
     let onLocationSelected: (StorageLocation) -> Void
     let onEdit: (StorageLocation) -> Void
     let onDelete: (StorageLocation) -> Void
+    let onShowQRCode: (StorageLocation) -> Void
     
     var body: some View {
         ForEach(locationManager.rootLocations()) { location in
@@ -14,7 +15,8 @@ struct LocationTreeView: View {
                 expandedLocations: $expandedLocations,
                 onLocationSelected: onLocationSelected,
                 onEdit: onEdit,
-                onDelete: onDelete
+                onDelete: onDelete,
+                onShowQRCode: onShowQRCode
             )
         }
     }
@@ -27,6 +29,7 @@ struct LocationNode: View {
     let onLocationSelected: (StorageLocation) -> Void
     let onEdit: (StorageLocation) -> Void
     let onDelete: (StorageLocation) -> Void
+    let onShowQRCode: (StorageLocation) -> Void
     
     private var isExpanded: Bool {
         expandedLocations.contains(location.id)
@@ -55,7 +58,8 @@ struct LocationNode: View {
                     expandedLocations: $expandedLocations,
                     onLocationSelected: onLocationSelected,
                     onEdit: onEdit,
-                    onDelete: onDelete
+                    onDelete: onDelete,
+                    onShowQRCode: onShowQRCode
                 )
                 .padding(.leading)
             }
@@ -72,6 +76,11 @@ struct LocationNode: View {
                         } label: {
                             Label("Add Item", systemImage: "plus")
                         }
+                    }
+                    Button {
+                        onShowQRCode(location)
+                    } label: {
+                        Label("Show QR Code", systemImage: "qrcode")
                     }
                     Button {
                         onEdit(location)
@@ -102,7 +111,8 @@ struct LocationNode: View {
             expandedLocations: .constant([]),
             onLocationSelected: { _ in },
             onEdit: { _ in },
-            onDelete: { _ in }
+            onDelete: { _ in },
+            onShowQRCode: { _ in }
         )
         .environmentObject(PreviewData.shared.locationManager)
     }

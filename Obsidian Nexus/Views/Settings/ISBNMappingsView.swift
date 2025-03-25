@@ -136,6 +136,7 @@ struct AddISBNMappingView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var isbnMappingService: ISBNMappingService
     @StateObject private var googleBooksService = GoogleBooksService()
+    @StateObject private var barcodeScannerViewModel = BarcodeScannerViewModel()
     
     @State private var isbn = ""
     @State private var searchQuery = ""
@@ -143,14 +144,22 @@ struct AddISBNMappingView: View {
     @State private var searchResults: [GoogleBook] = []
     @State private var errorMessage: String?
     @State private var showingError = false
+    @State private var showingScanner = false
     
     var body: some View {
         List {
             Section {
-                TextField("ISBN to Map", text: $isbn)
-                    .keyboardType(.numberPad)
-                    .textContentType(.none)
-                    .autocorrectionDisabled()
+                HStack {
+                    TextField("ISBN to Map", text: $isbn)
+                        .keyboardType(.numberPad)
+                        .textContentType(.none)
+                        .autocorrectionDisabled()
+                    
+                    Button(action: { showingScanner = true }) {
+                        Image(systemName: "barcode.viewfinder")
+                            .foregroundColor(.blue)
+                    }
+                }
                 
                 TextField("Search for Book", text: $searchQuery)
                     .textContentType(.none)
@@ -161,7 +170,7 @@ struct AddISBNMappingView: View {
             } header: {
                 Text("ISBN Mapping Details")
             } footer: {
-                Text("Enter the ISBN you want to map and search for the correct book in Google Books.")
+                Text("Enter the ISBN you want to map and search for the correct book in Google Books. Use the camera button to scan an ISBN barcode.")
             }
             
             if isSearching {
@@ -215,6 +224,12 @@ struct AddISBNMappingView: View {
         } message: {
             Text(errorMessage ?? "An unknown error occurred")
         }
+        .sheet(isPresented: $showingScanner) {
+            ScannerSheet(onScan: { scannedCode in
+                isbn = scannedCode
+                showingScanner = false
+            })
+        }
     }
     
     private func searchBooks() {
@@ -258,6 +273,63 @@ struct AddISBNMappingView: View {
         
         // Dismiss the sheet
         dismiss()
+    }
+}
+
+// Simple scanner sheet just for capturing ISBN barcodes
+struct ScannerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = BarcodeScannerViewModel()
+    let onScan: (String) -> Void
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                if let session = viewModel.captureSession {
+                    CameraPreview(session: session)
+                        .ignoresSafeArea()
+                }
+                
+                VStack {
+                    Spacer()
+                    
+                    // Scan Frame
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.white.opacity(0.8), lineWidth: 3)
+                        .frame(width: 250, height: 150)
+                        .background(Color.black.opacity(0.1))
+                    
+                    Spacer()
+                    
+                    Text("Position barcode within frame")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
+                }
+            }
+            .onAppear {
+                viewModel.startScanning()
+            }
+            .onDisappear {
+                viewModel.stopScanning()
+            }
+            .onChange(of: viewModel.scannedCode) { _, code in
+                if let code = code {
+                    onScan(code)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .navigationTitle("Scan ISBN")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 

@@ -8,6 +8,7 @@ protocol LocationRepository {
     func fetchAll() throws -> [StorageLocation]
     func fetchChildren(of parentId: UUID) throws -> [StorageLocation]
     func fetchById(_ id: UUID) throws -> StorageLocation?
+    func fetchByName(_ name: String) throws -> StorageLocation?
     func updateParent(_ locationId: UUID, newParentId: UUID?) throws
     func updateName(_ locationId: UUID, newName: String) throws
     func verifyDatabaseState()
@@ -127,8 +128,19 @@ class SQLiteLocationRepository: LocationRepository {
             SELECT * FROM locations 
             WHERE id = ? AND deleted_at IS NULL;
         """
-        let locations = try fetchLocations(sql, parameters: [id.uuidString])
-        return locations.first
+        
+        let results = try fetchLocations(sql, parameters: [id.uuidString])
+        return results.first
+    }
+    
+    func fetchByName(_ name: String) throws -> StorageLocation? {
+        let sql = """
+            SELECT * FROM locations 
+            WHERE name = ? AND deleted_at IS NULL;
+        """
+        
+        let results = try fetchLocations(sql, parameters: [name])
+        return results.first
     }
     
     func updateParent(_ locationId: UUID, newParentId: UUID?) throws {

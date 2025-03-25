@@ -163,9 +163,10 @@ class DataManagementService: NSObject {
     
     func exportData() async throws -> URL {
         let items = try storage.loadItems()
-        let locations = try storage.locationRepository.fetchAll()
+        let locations = try storage.loadLocations()
+        let isbnMappings = try storage.getISBNMappingRepository().fetchAll()
         
-        // Create CSV content
+        // Create CSV content for items
         var csvContent = "Title,Type,Series,Author,Publisher,ISBN,Price,Currency,PurchaseDate,Condition,Location,Synopsis\n"
         
         // Create ISO 8601 date formatter
@@ -212,6 +213,35 @@ class DataManagementService: NSObject {
             csvContent += row + "\n"
         }
         
+        // Add ISBN mappings section if there are any mappings
+        if !isbnMappings.isEmpty {
+            // Add section delimiter
+            csvContent += "\n#ISBN_MAPPINGS#\n"
+            csvContent += "IncorrectISBN,GoogleBooksID,Title,IsReprint,DateAdded\n"
+            
+            for mapping in isbnMappings {
+                let dateString = dateFormatter.string(from: mapping.dateAdded)
+                let isReprintString = mapping.isReprint ? "true" : "false"
+                
+                let rowComponents = [
+                    mapping.incorrectISBN,
+                    mapping.correctGoogleBooksID,
+                    mapping.title,
+                    isReprintString,
+                    dateString
+                ]
+                
+                // Format each component
+                let formattedComponents = rowComponents.map { component in
+                    "\"\(component.replacingOccurrences(of: "\"", with: "\"\""))\""
+                }
+                
+                // Join components with commas
+                let row = formattedComponents.joined(separator: ",")
+                csvContent += row + "\n"
+            }
+        }
+        
         // Create export directory if it doesn't exist
         let exportDir = try getExportDirectory()
         
@@ -229,15 +259,23 @@ class DataManagementService: NSObject {
     
     func importData(from fileURL: URL) async throws {
         let content = try String(contentsOf: fileURL, encoding: .utf8)
-        let rows = content.components(separatedBy: .newlines)
+        let contentSections = content.components(separatedBy: "\n#ISBN_MAPPINGS#\n")
+        
+        // Process items section (always the first section)
+        let itemsContent = contentSections[0]
+        let itemRows = itemsContent.components(separatedBy: .newlines)
         
         // Skip header row
-        guard rows.count > 1 else { return }
+        guard itemRows.count > 1 else { return }
         
         // Create ISO 8601 date formatter
         let dateFormatter = ISO8601DateFormatter()
         
-        for row in rows.dropFirst() {
+        // Begin a transaction for better performance and data integrity
+        try storage.beginTransaction()
+        
+        // Import inventory items
+        for row in itemRows.dropFirst() {
             guard !row.isEmpty else { continue }
             
             let columns = parseCSVRow(row)
@@ -259,36 +297,25 @@ class DataManagementService: NSObject {
                 title: columns[0],
                 type: CollectionType(rawValue: columns[1]) ?? .books,
                 series: columns[2].isEmpty ? nil : columns[2],
-                volume: nil,
-                condition: ItemCondition(rawValue: columns[9]) ?? .new,
-                locationId: nil, // Will be set after location is created/found
+                volume: Int(columns[3]),
+                condition: ItemCondition(rawValue: columns[9]) ?? .good,
                 notes: nil,
-                id: UUID(),
-                dateAdded: Date(),
-                barcode: nil,
-                thumbnailURL: nil,
                 author: columns[3].isEmpty ? nil : columns[3],
-                manufacturer: nil,
                 originalPublishDate: nil,
                 publisher: columns[4].isEmpty ? nil : columns[4],
                 isbn: columns[5].isEmpty ? nil : columns[5],
                 price: price,
                 purchaseDate: purchaseDate,
-                synopsis: columns[11].isEmpty ? nil : columns[11],
-                customImageData: nil,
-                imageSource: .none
+                synopsis: columns[11].isEmpty ? nil : columns[11]
             )
             
-            // Handle location
+            // Check for location
             if !columns[10].isEmpty {
-                // Find existing location with matching name
-                let locations = try storage.locationRepository.fetchAll()
-                if let existingLocation = locations.first(where: { $0.name == columns[10] }) {
+                if let location = try storage.locationRepository.fetchByName(columns[10]) {
                     var updatedItem = item
-                    updatedItem.locationId = existingLocation.id
+                    updatedItem.locationId = location.id
                     try storage.save(updatedItem)
                 } else {
-                    // Create new location
                     let newLocation = StorageLocation(
                         name: columns[10],
                         type: .shelf,
@@ -304,6 +331,44 @@ class DataManagementService: NSObject {
                 try storage.save(item)
             }
         }
+        
+        // Process ISBN mappings section if it exists
+        if contentSections.count > 1 {
+            let mappingsContent = contentSections[1]
+            let mappingRows = mappingsContent.components(separatedBy: .newlines)
+            
+            // Skip header row and process mappings
+            let mappingRepository = storage.getISBNMappingRepository()
+            
+            for row in mappingRows.dropFirst() {
+                guard !row.isEmpty else { continue }
+                
+                let columns = parseCSVRow(row)
+                guard columns.count >= 5 else { continue }
+                
+                let incorrectISBN = columns[0]
+                let googleBooksID = columns[1]
+                let title = columns[2]
+                let isReprint = columns[3].lowercased() == "true"
+                let dateAdded = dateFormatter.date(from: columns[4]) ?? Date()
+                
+                let mapping = ISBNMapping(
+                    incorrectISBN: incorrectISBN,
+                    correctGoogleBooksID: googleBooksID,
+                    title: title,
+                    isReprint: isReprint,
+                    dateAdded: dateAdded
+                )
+                
+                try mappingRepository.save(mapping)
+            }
+        }
+        
+        // Commit the transaction
+        try storage.commitTransaction()
+        
+        // Notify services of data import
+        NotificationCenter.default.post(name: .dataImportCompleted, object: nil)
     }
     
     func getExportedFiles() async throws -> [URL] {
@@ -404,6 +469,7 @@ extension Notification.Name {
     static let backupSavedToCloud = Notification.Name("backupSavedToCloud")
     static let backupRestoredFromCloud = Notification.Name("backupRestoredFromCloud")
     static let backupError = Notification.Name("backupError")
+    static let dataImportCompleted = Notification.Name("dataImportCompleted")
 }
 
 // MARK: - Date Formatter

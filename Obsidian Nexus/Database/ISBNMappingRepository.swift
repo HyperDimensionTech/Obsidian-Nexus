@@ -101,14 +101,33 @@ class SQLiteISBNMappingRepository: ISBNMappingRepository {
         db.executeStatement(sql)
     }
     
+    // MARK: - Public Methods
+    
+    /// Execute a direct SQL delete statement for emergency fixes
+    func executeDirectDelete(isbn: String) {
+        let sql = "DELETE FROM isbn_mappings WHERE incorrect_isbn = ?;"
+        db.executeStatement(sql, parameters: [isbn])
+        print("Executed direct SQL delete for ISBN: \(isbn)")
+    }
+    
     // MARK: - Private Methods
     
     private func parseMapping(from statement: OpaquePointer?) -> ISBNMapping? {
         guard let statement = statement else { return nil }
         
+        // First check if we have valid column data before trying to access it
+        guard sqlite3_column_type(statement, 0) != SQLITE_NULL,
+              sqlite3_column_type(statement, 1) != SQLITE_NULL,
+              sqlite3_column_type(statement, 2) != SQLITE_NULL else {
+            print("Null column data found when parsing ISBN mapping")
+            return nil
+        }
+        
+        // Now safely extract the text values
         guard let isbnCString = sqlite3_column_text(statement, 0),
               let googleBookIdCString = sqlite3_column_text(statement, 1),
               let titleCString = sqlite3_column_text(statement, 2) else {
+            print("Failed to extract column text data from ISBN mapping")
             return nil
         }
         

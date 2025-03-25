@@ -209,11 +209,8 @@ struct AddItemView: View {
             BarcodeScannerView { code in
                 searchQuery = "isbn:" + code  // Add the isbn: prefix
                 showingScanner = false
-                if continuousEntryMode {
-                    handleContinuousSearch()
-                } else {
-                    performSearch()
-                }
+                // Always perform a regular search instead of direct continuous mode handling
+                performSearch()
             }
             .accessibilityLabel("Barcode Scanner")
             .accessibilityHint("Point camera at a barcode to scan")
@@ -318,11 +315,8 @@ struct AddItemView: View {
                 .focused($isSearchFieldFocused)
                 .onSubmit {
                     if !searchQuery.isEmpty {
-                        if continuousEntryMode {
-                            handleContinuousSearch()
-                        } else {
-                            performSearch()
-                        }
+                        // Always just perform search, don't handle continuous search separately here
+                        performSearch()
                     }
                 }
             
@@ -390,11 +384,11 @@ struct AddItemView: View {
                         .font(.system(size: 16))
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Continuous Entry Mode")
+                        Text("Continuous Add Mode")
                             .font(.subheadline)
                             .fontWeight(.medium)
                         
-                        Text("Add multiple items in sequence")
+                        Text("Add selected items directly to collection")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -416,14 +410,14 @@ struct AddItemView: View {
                 }
                 
                 // Announce mode change for VoiceOver users
-                UIAccessibility.post(notification: .announcement, argument: "Continuous entry mode enabled")
+                UIAccessibility.post(notification: .announcement, argument: "Continuous add mode enabled")
             } else if scanManager.totalScannedCount > 0 {
                 // Announce summary when disabling with items added
                 UIAccessibility.post(notification: .announcement, argument: "Continuous mode disabled. Added \(scanManager.totalScannedCount) items.")
             }
         }
-        .accessibilityLabel("Continuous Entry Mode")
-        .accessibilityHint("When enabled, allows you to scan multiple items in sequence")
+        .accessibilityLabel("Continuous Add Mode")
+        .accessibilityHint("When enabled, automatically adds items to your collection without stopping")
         .accessibilityValue(continuousEntryMode ? "Enabled" : "Disabled")
     }
     
@@ -555,10 +549,8 @@ struct AddItemView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(sortedResults, id: \.id) { book in
-                        BookResultCard(book: book) { selectedBook in
-                            addToCollection(selectedBook)
-                        }
-                        .padding(.horizontal)
+                        BookResultCard(book: book, onSelect: addToCollection, continuousMode: $continuousEntryMode)
+                            .padding(.horizontal)
                     }
                 }
                 .padding(.top, 8)
@@ -685,16 +677,73 @@ struct AddItemView: View {
         guard !searchQuery.isEmpty else { return }
         isSearching = true
         
-        // Simple, direct search
+        // Check if it's an ISBN search
+        let query = searchQuery.trimmingCharacters(in: .whitespaces)
+        if query.hasPrefix("isbn:") {
+            // Extract the ISBN from the query
+            let isbnQuery = query.replacingOccurrences(of: "isbn:", with: "")
+                .replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
+            
+            if isbnQuery.count == 10 || isbnQuery.count == 13 {
+                // It's a valid ISBN, search for it
+                performISBNSearch(isbnQuery)
+                return
+            }
+        }
+        
+        // Regular search
         googleBooksService.fetchBooks(query: searchQuery) { result in
-            isSearching = false
-            switch result {
-            case .success(let books):
-                print("Found \(books.count) results") // Debug print
-                searchResults = books
-            case .failure(let error):
-                errorMessage = error.localizedDescription
-                showingError = true
+            DispatchQueue.main.async {
+                self.isSearching = false
+                switch result {
+                case .success(let books):
+                    print("Found \(books.count) results") // Debug print
+                    self.searchResults = books
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                    self.showingError = true
+                }
+            }
+        }
+    }
+    
+    private func performISBNSearch(_ isbnQuery: String) {
+        // First check user-defined mappings
+        if let mapping = isbnMappingService.getMappingForISBN(isbnQuery) {
+            // Use the Google Books ID from user mapping
+            googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
+                DispatchQueue.main.async {
+                    self.isSearching = false
+                    
+                    switch result {
+                    case .success(let book):
+                        // Show the result
+                        self.searchResults = [book]
+                    case .failure(_):
+                        // If direct fetch fails, try a title search as fallback
+                        self.searchByTitle(mapping.title, originalIsbn: isbnQuery)
+                    }
+                }
+            }
+            return
+        }
+        
+        // If no mapping found, perform a regular ISBN search
+        googleBooksService.fetchBooksByISBN(isbnQuery) { result in
+            DispatchQueue.main.async {
+                self.isSearching = false
+                
+                switch result {
+                case .success(let books):
+                    if !books.isEmpty {
+                        self.searchResults = books
+                    } else {
+                        self.handleNoBookFound(isbnQuery)
+                    }
+                case .failure(let error):
+                    self.errorMessage = "Error searching for ISBN: \(error.localizedDescription)"
+                    self.showingError = true
+                }
             }
         }
     }
@@ -710,10 +759,26 @@ struct AddItemView: View {
             triggerSuccessHaptic()
             showSuccessToast(title: book.volumeInfo.title)
             
+            // Update scan manager
+            scanManager.addSuccessfulScan(
+                title: book.volumeInfo.title,
+                isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+            )
+            
+            // If not in continuous mode, dismiss the view after adding
             if !continuousEntryMode {
                 withAnimation {
                     dismiss()
                 }
+            } else {
+                // If in continuous mode, just keep showing the search results
+                // But provide appropriate feedback through the toast notification
+                
+                // Announce for VoiceOver in continuous mode
+                UIAccessibility.post(notification: .announcement, argument: "Added \(book.volumeInfo.title). Continue adding items or tap finish when done.")
+                
+                // Animate the last added item
+                animateLastAddedItem()
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -896,61 +961,16 @@ struct AddItemView: View {
     
     // MARK: - Continuous Mode Methods
     
-    private func handleContinuousSearch() {
-        guard !searchQuery.isEmpty else { return }
-        
-        // Check if it's an ISBN
-        let query = searchQuery.trimmingCharacters(in: .whitespaces)
-        let isbnQuery = query.replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
-        
-        if isbnQuery.count == 10 || isbnQuery.count == 13 {
-            handleISBNSearch(isbnQuery)
-        } else {
-            // Not an ISBN, perform regular search
-            performSearch()
+    private func animateLastAddedItem() {
+        addedItemScale = 1.2
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.addedItemScale = 1.0
         }
     }
     
-    private func handleISBNSearch(_ isbnQuery: String) {
-        isSearching = true
-        
-        // First check user-defined mappings
-        if let mapping = isbnMappingService.getMappingForISBN(isbnQuery) {
-            // Use the Google Books ID from user mapping
-            googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
-                DispatchQueue.main.async {
-                    self.isSearching = false
-                    
-                    switch result {
-                    case .success(let book):
-                        self.processFoundBook(book, isbnQuery)
-                    case .failure(_):
-                        // If direct fetch fails, try a title search as fallback
-                        self.searchByTitle(mapping.title, originalIsbn: isbnQuery)
-                    }
-                }
-            }
-            return
-        }
-        
-        // If no mapping found, perform a regular ISBN search
-        googleBooksService.fetchBooksByISBN(isbnQuery) { result in
-            DispatchQueue.main.async {
-                self.isSearching = false
-                
-                switch result {
-                case .success(let books):
-                    if let book = books.first {
-                        self.processFoundBook(book, isbnQuery)
-                    } else {
-                        self.handleNoBookFound(isbnQuery)
-                    }
-                case .failure(let error):
-                    self.errorMessage = "Error searching for ISBN: \(error.localizedDescription)"
-                    self.showingError = true
-                    self.refocusSearchField()
-                }
-            }
+    private func refocusSearchField() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.isSearchFieldFocused = true
         }
     }
     
@@ -1066,25 +1086,16 @@ struct AddItemView: View {
         // Re-focus the search field for the next scan
         refocusSearchField()
     }
-    
-    private func animateLastAddedItem() {
-        addedItemScale = 1.2
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.addedItemScale = 1.0
-        }
-    }
-    
-    private func refocusSearchField() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.isSearchFieldFocused = true
-        }
-    }
 }
 
 // New component for better-looking book results
 struct BookResultCard: View {
     let book: GoogleBook
     let onSelect: (GoogleBook) -> Void
+    @EnvironmentObject private var scanManager: ScanResultManager
+    
+    // Access the continuous mode state
+    @Binding var continuousMode: Bool
     
     // Track when item is added
     @State private var isAdded = false
@@ -1098,14 +1109,22 @@ struct BookResultCard: View {
                 buttonScale = 1.2
             }
             
-            // Call the onSelect handler
-            onSelect(book)
-            
-            // Reset after a delay (for continuous entry mode)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                withAnimation {
-                    isAdded = false
-                    buttonScale = 1.0
+            // Slight delay for animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // Call the onSelect handler
+                onSelect(book)
+                
+                // If not in continuous mode, keep the checkmark visible
+                if !continuousMode {
+                    isAdded = true
+                } else {
+                    // In continuous mode, reset after a brief delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        withAnimation {
+                            isAdded = false
+                            buttonScale = 1.0
+                        }
+                    }
                 }
             }
         }) {

@@ -61,138 +61,203 @@ enum SortOption: String, CaseIterable, Identifiable {
     }
 }
 
+// Create a search result type to handle different result types
+enum SearchResultItem: Identifiable {
+    case item(InventoryItem)
+    case location(StorageLocation)
+    
+    var id: String {
+        switch self {
+        case .item(let item):
+            return "item-\(item.id)"
+        case .location(let location):
+            return "location-\(location.id)"
+        }
+    }
+}
+
 struct SearchView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
-    @State private var searchText = ""
-    @State private var selectedFilter: SearchFilter = .all
-    @State private var showingSearchResults = false
-    @State private var selectedSortOption: SortOption = .titleAsc
-    @State private var showingSortOptions = false
+    @EnvironmentObject var locationManager: LocationManager
     
-    var filteredItems: [InventoryItem] {
-        let searchResults = inventoryViewModel.searchItems(query: searchText)
-        let filtered = selectedFilter == .all ? 
-            searchResults : 
-            searchResults.filter { $0.type == selectedFilter.collectionType }
-        
-        // Apply sorting
-        return selectedSortOption.sortItems(filtered)
-    }
+    @State private var searchText = ""
+    @State private var showingScanner = false
+    @State private var showingFilter = false
+    @State private var isLoading = false
+    @State private var searchResults: [SearchResultItem] = []
     
     var body: some View {
-        NavigationStack(path: $navigationCoordinator.path) {
-            VStack(spacing: 0) {
-                // Search bar at the top
-                SearchBar(text: $searchText)
-                    .padding()
-                    .onChange(of: searchText) { _, newValue in
-                        showingSearchResults = !newValue.isEmpty
+        VStack {
+            HStack {
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    
+                    TextField("Search items...", text: $searchText)
+                        .onChange(of: searchText) { _, newValue in
+                            // Only search when at least 2 characters
+                            if newValue.count >= 2 {
+                                performSearch()
+                            } else if newValue.isEmpty {
+                                // Clear results when search is cleared
+                                searchResults = []
+                            }
+                        }
+                    
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                            searchResults = []
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
                     }
+                }
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
                 
-                // Filter bar below search
-                SearchFilterBar(selectedFilter: $selectedFilter)
-                
-                // Main content area
-                if showingSearchResults {
-                    // Show search results
-                    if filteredItems.isEmpty {
-                        EmptySearchView(query: searchText)
+                Button(action: {
+                    showingScanner = true
+                }) {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.system(size: 20))
+                        .padding(8)
+                        .background(Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 10)
+            
+            if isLoading {
+                ProgressView()
+                    .padding()
+                Spacer()
+            } else if searchResults.isEmpty {
+                VStack(spacing: 24) {
+                    Spacer()
+                    
+                    if !searchText.isEmpty {
+                        Text("No items found")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        Text("Try a different search term")
+                            .foregroundColor(.gray)
                     } else {
-                        VStack(spacing: 0) {
-                            // Sort options bar
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                        
+                        Text("Search for items or scan a code")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        // QR code scan button
+                        Button(action: {
+                            showingScanner = true
+                        }) {
                             HStack {
-                                Text("\(filteredItems.count) results")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    showingSortOptions = true
-                                }) {
+                                Image(systemName: "qrcode.viewfinder")
+                                Text("Scan QR Code")
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                List {
+                    // Show locations first
+                    let locationResults = searchResults.compactMap { result -> StorageLocation? in
+                        if case .location(let location) = result {
+                            return location
+                        }
+                        return nil
+                    }
+                    
+                    if !locationResults.isEmpty {
+                        Section(header: Text("Locations")) {
+                            ForEach(locationResults) { location in
+                                NavigationLink {
+                                    LocationItemsView(location: location)
+                                        .environmentObject(locationManager)
+                                        .environmentObject(inventoryViewModel)
+                                        .environmentObject(navigationCoordinator)
+                                } label: {
                                     HStack {
-                                        Text("Sort: \(selectedSortOption.rawValue)")
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.arrow.down")
+                                        Image(systemName: location.type.icon)
+                                            .foregroundColor(.accentColor)
+                                        Text(location.name)
+                                            .foregroundColor(.primary)
                                     }
                                 }
-                                .foregroundColor(.primary)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
                             }
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-                            
-                            // Results list
-                            List {
-                                ForEach(filteredItems) { item in
+                        }
+                    }
+                    
+                    // Then show items
+                    let itemResults = searchResults.compactMap { result -> InventoryItem? in
+                        if case .item(let item) = result {
+                            return item
+                        }
+                        return nil
+                    }
+                    
+                    if !itemResults.isEmpty {
+                        Section(header: Text("Items")) {
+                            ForEach(itemResults) { item in
+                                NavigationLink {
+                                    ItemDetailView(item: item)
+                                        .environmentObject(locationManager)
+                                        .environmentObject(inventoryViewModel)
+                                        .environmentObject(navigationCoordinator)
+                                } label: {
                                     ItemRow(item: item)
                                 }
                             }
-                            .listStyle(.plain)
-                        }
-                        .confirmationDialog("Sort By", isPresented: $showingSortOptions, titleVisibility: .visible) {
-                            ForEach(SortOption.allCases) { option in
-                                Button(option.rawValue) {
-                                    selectedSortOption = option
-                                }
-                            }
-                            Button("Cancel", role: .cancel) {}
-                        }
-                    }
-                } else {
-                    // Show collections grid when not searching
-                    ScrollView {
-                        VStack(alignment: .leading) {
-                            Text("Collections")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-                                .padding(.top)
-                            
-                            LazyVGrid(columns: [
-                                GridItem(.flexible(), spacing: 16),
-                                GridItem(.flexible(), spacing: 16)
-                            ], spacing: 16) {
-                                ForEach(CollectionType.literatureTypes, id: \.self) { type in
-                                    NavigationLink(value: type) {
-                                        CollectionCard(type: type)
-                                            .frame(maxWidth: .infinity)
-                                    }
-                                }
-                            }
-                            .padding()
                         }
                     }
                 }
-            }
-            .navigationTitle("Browse & Search")
-            .navigationDestination(for: CollectionType.self) { type in
-                CollectionDetailView(type: type)
+                .listStyle(InsetGroupedListStyle())
             }
         }
-        .onAppear {
-            // Add notification observer when view appears
-            NotificationCenter.default.addObserver(
-                forName: Notification.Name("TabDoubleTapped"),
-                object: nil,
-                queue: .main
-            ) { notification in
-                // Only respond to search tab double-taps
-                if let tab = notification.object as? String, tab == "Browse & Search" {
-                    // Clear search when Search tab is double-tapped
-                    searchText = ""
-                    selectedFilter = .all
-                    showingSearchResults = false
-                    
-                    // Reset navigation
-                    DispatchQueue.main.async {
-                        navigationCoordinator.navigateToRoot()
-                    }
-                }
+        .navigationTitle("Browse & Search")
+        .sheet(isPresented: $showingScanner) {
+            NavigationView {
+                LocationQRScannerView()
+            }
+        }
+    }
+    
+    private func performSearch() {
+        isLoading = true
+        
+        // Use a background thread for search to prevent UI lag
+        DispatchQueue.global(qos: .userInitiated).async {
+            var results: [SearchResultItem] = []
+            
+            // Search for items
+            let itemResults = inventoryViewModel.searchItems(query: searchText)
+            results.append(contentsOf: itemResults.map { SearchResultItem.item($0) })
+            
+            // Search for locations
+            let locationResults = locationManager.searchLocations(query: searchText)
+            results.append(contentsOf: locationResults.map { SearchResultItem.location($0) })
+            
+            DispatchQueue.main.async {
+                searchResults = results
+                isLoading = false
             }
         }
     }

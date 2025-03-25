@@ -638,6 +638,52 @@ class LocationManager: ObservableObject {
             throw LocationError.invalidOperation("Failed to update location: \(error.localizedDescription)")
         }
     }
+    
+    // Add a method to find a location by ID (from QR code)
+    func getLocation(by id: UUID) -> StorageLocation? {
+        return locations[id]
+    }
+    
+    // Get all items in a location, including items in nested locations
+    func getAllItemsInLocation(locationId: UUID, inventoryViewModel: InventoryViewModel) -> [InventoryItem] {
+        var allItems: [InventoryItem] = []
+        
+        // Get direct items in this location
+        let directItems = inventoryViewModel.items.filter { $0.locationId == locationId }
+        allItems.append(contentsOf: directItems)
+        
+        // Get items from child locations recursively
+        if let location = locations[locationId] {
+            for childId in location.childIds {
+                let childItems = getAllItemsInLocation(locationId: childId, inventoryViewModel: inventoryViewModel)
+                allItems.append(contentsOf: childItems)
+            }
+        }
+        
+        return allItems
+    }
+    
+    // MARK: - Search Methods
+    
+    func searchLocations(query: String) -> [StorageLocation] {
+        guard !query.isEmpty else { 
+            return Array(locations.values) 
+        }
+        
+        let searchTerms = query.lowercased().split(separator: " ").map(String.init)
+        
+        let results = locations.values.filter { location in
+            // A location matches if any search term is found in its name
+            let matches = searchTerms.contains { term in
+                let normalizedName = location.name.lowercased()
+                return normalizedName.contains(term)
+            }
+            return matches
+        }
+        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        
+        return results
+    }
 }
 
 // MARK: - Errors
