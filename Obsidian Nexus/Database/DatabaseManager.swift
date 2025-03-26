@@ -61,14 +61,26 @@ class DatabaseManager {
             .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             .appendingPathComponent("obsidian_nexus.sqlite")
         
-        print("Database path: \(fileURL.path)")
+        print("🔹 DATABASE 🔹 Path: \(fileURL.path)")
         
-        let needsSetup = !fileManager.fileExists(atPath: fileURL.path)
+        let fileExists = fileManager.fileExists(atPath: fileURL.path)
+        print("🔹 DATABASE 🔹 File exists: \(fileExists)")
+        
+        // Check if file is readable
+        if fileExists {
+            print("🔹 DATABASE 🔹 File size: \(try? fileManager.attributesOfItem(atPath: fileURL.path)[.size] ?? 0) bytes")
+            print("🔹 DATABASE 🔹 File permissions: \(try? fileManager.attributesOfItem(atPath: fileURL.path)[.posixPermissions] ?? 0)")
+        }
+        
+        let needsSetup = !fileExists
         
         if sqlite3_open(fileURL.path, &connection) != SQLITE_OK {
-            print("Error opening database: \(String(cString: sqlite3_errmsg(connection)))")
+            let errorMsg = String(cString: sqlite3_errmsg(connection))
+            print("🔹 DATABASE 🔹 Error opening database: \(errorMsg)")
             return
         }
+        
+        print("🔹 DATABASE 🔹 Successfully opened connection")
         
         // Enable foreign keys
         executeStatement("PRAGMA foreign_keys = ON;")
@@ -77,17 +89,26 @@ class DatabaseManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(connection, "PRAGMA journal_mode = WAL;", -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_ROW {
-                // WAL mode set successfully
+                let journalMode = sqlite3_column_text(statement, 0).map { String(cString: $0) } ?? "unknown"
+                print("🔹 DATABASE 🔹 Journal mode set to: \(journalMode)")
                 sqlite3_finalize(statement)
             }
         }
         
         if needsSetup {
-            print("Creating new database...")
+            print("🔹 DATABASE 🔹 Creating new database...")
             createTables()
         } else {
-            print("Using existing database")
+            print("🔹 DATABASE 🔹 Using existing database")
             migrateIfNeeded()
+            
+            // Verify database has tables
+            let tableCount = executeScalar("SELECT count(*) FROM sqlite_master WHERE type='table';")
+            print("🔹 DATABASE 🔹 Found \(tableCount) tables")
+            
+            // Count items
+            let itemCount = executeScalar("SELECT count(*) FROM items WHERE deleted_at IS NULL;")
+            print("🔹 DATABASE 🔹 Found \(itemCount) items")
         }
     }
     

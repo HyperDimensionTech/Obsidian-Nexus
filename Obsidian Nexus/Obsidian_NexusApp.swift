@@ -12,6 +12,21 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     func application(_ application: UIApplication, 
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        // Pre-initialize database
+        _ = DatabaseManager.shared
+        
+        // Log app launch with database info
+        print("🚀 APP LAUNCH: Obsidian Nexus started")
+        let fm = FileManager.default
+        let dbURL = try! fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            .appendingPathComponent("obsidian_nexus.sqlite")
+        
+        print("🚀 APP LAUNCH: Database path: \(dbURL.path)")
+        print("🚀 APP LAUNCH: Database exists: \(fm.fileExists(atPath: dbURL.path))")
+        
+        // Force StorageManager initialization
+        let storage = StorageManager.shared
+        
         return true
     }
     

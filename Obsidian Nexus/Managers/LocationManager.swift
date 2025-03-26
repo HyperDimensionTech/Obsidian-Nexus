@@ -1,16 +1,82 @@
 import Foundation
 
+/**
+ Manages the storage locations hierarchy and relationships.
+ 
+ LocationManager is responsible for:
+ - Loading and persisting location data
+ - Maintaining the hierarchical structure of locations
+ - Providing methods to query the location hierarchy
+ - Ensuring data integrity when modifying locations
+ 
+ It serves as the source of truth for all location-related operations and
+ maintains parent-child relationships between locations.
+ 
+ ## Usage
+ 
+ ```swift
+ // Access the location manager in a view
+ struct LocationListView: View {
+     @EnvironmentObject var locationManager: LocationManager
+     
+     var body: some View {
+         List {
+             ForEach(locationManager.rootLocations()) { location in
+                 LocationRow(location: location)
+             }
+         }
+     }
+ }
+ 
+ // Add a new location
+ let newShelf = StorageLocation(
+     name: "Living Room Bookshelf",
+     type: .bookshelf,
+     parentId: livingRoomId
+ )
+ try locationManager.addLocation(newShelf)
+ ```
+ 
+ ## Location Hierarchy Rules
+ 
+ The location hierarchy follows these rules:
+ - Rooms can only contain bookshelves, cabinets, or boxes
+ - Bookshelves can only contain boxes
+ - Cabinets can only contain boxes
+ - Boxes cannot contain other locations
+ - Circular references (a location containing one of its ancestors) are not allowed
+ */
 class LocationManager: ObservableObject {
+    /// Dictionary of all locations, keyed by their UUID
     @Published private(set) var locations: [UUID: StorageLocation] = [:]
+    
+    /// Reference to the inventory view model for coordination
     private weak var inventoryViewModel: InventoryViewModel?
+    
+    /// Storage manager for persistence
     private let storage: StorageManager
     
+    /**
+     Initializes the location manager.
+     
+     - Parameters:
+        - storage: The storage manager to use for persistence
+        - inventoryViewModel: Optional reference to the inventory view model for coordination
+     */
     init(storage: StorageManager = .shared, inventoryViewModel: InventoryViewModel? = nil) {
         self.storage = storage
         self.inventoryViewModel = inventoryViewModel
         loadLocations()
     }
     
+    /**
+     Loads all locations from persistent storage and builds the hierarchy.
+     
+     This method:
+     1. Loads locations from storage
+     2. Builds a dictionary of locations by ID
+     3. Establishes parent-child relationships
+     */
     private func loadLocations() {
         do {
             // Verify database state first
@@ -51,13 +117,27 @@ class LocationManager: ObservableObject {
         }
     }
     
-    // Add method to reload locations
+    /**
+     Reloads all locations from persistent storage.
+     
+     Use this method when you need to refresh the location data,
+     such as after a data import or when switching users.
+     */
     func reloadLocations() {
         loadLocations()
     }
     
     // MARK: - Location Management
     
+    /**
+     Adds a new location to the hierarchy.
+     
+     This method validates the location, saves it to persistent storage,
+     and updates the in-memory hierarchy.
+     
+     - Parameter location: The location to add
+     - Throws: LocationError if the location cannot be added
+     */
     func addLocation(_ location: StorageLocation) throws {
         try validateLocationAdd(location)
         
@@ -80,6 +160,17 @@ class LocationManager: ObservableObject {
         locations[location.id] = location
     }
     
+    /**
+     Adds a child location to a specific parent.
+     
+     This is a convenience method that sets the parent ID of the child
+     and then adds it to the hierarchy.
+     
+     - Parameters:
+        - child: The child location to add
+        - parentId: The ID of the parent location
+     - Throws: LocationError if the child cannot be added
+     */
     func addChildLocation(_ child: StorageLocation, to parentId: UUID) throws {
         guard let parent = locations[parentId] else {
             throw LocationError.parentNotFound
@@ -95,6 +186,15 @@ class LocationManager: ObservableObject {
         try addLocation(updatedChild)
     }
     
+    /**
+     Updates an existing location.
+     
+     This method validates the update, persists the changes,
+     and updates the in-memory hierarchy.
+     
+     - Parameter location: The updated location
+     - Throws: LocationError if the update is invalid or cannot be performed
+     */
     func updateLocation(_ location: StorageLocation) throws {
         try validateLocationUpdate(location)
         
@@ -131,6 +231,16 @@ class LocationManager: ObservableObject {
         }
     }
     
+    /**
+     Removes a location from the hierarchy.
+     
+     This method validates that the location can be removed
+     (has no items) and removes it from persistent storage
+     and the in-memory hierarchy.
+     
+     - Parameter locationId: The ID of the location to remove
+     - Throws: LocationError if the location cannot be removed
+     */
     func removeLocation(_ locationId: UUID) throws {
         guard let location = locations[locationId] else {
             throw LocationError.locationNotFound
@@ -168,11 +278,23 @@ class LocationManager: ObservableObject {
     
     // MARK: - Hierarchy Queries
     
+    /**
+     Returns the immediate children of a location.
+     
+     - Parameter locationId: The ID of the parent location
+     - Returns: An array of child locations, or an empty array if none
+     */
     func children(of locationId: UUID) -> [StorageLocation] {
         guard let location = locations[locationId] else { return [] }
         return location.childIds.compactMap { locations[$0] }
     }
     
+    /**
+     Returns all descendants of a location (children, grandchildren, etc.).
+     
+     - Parameter locationId: The ID of the location
+     - Returns: An array of all descendant locations
+     */
     func descendants(of locationId: UUID) -> [StorageLocation] {
         var result: [StorageLocation] = []
         let directChildren = children(of: locationId)
@@ -185,6 +307,12 @@ class LocationManager: ObservableObject {
         return result
     }
     
+    /**
+     Returns all ancestors of a location (parent, grandparent, etc.).
+     
+     - Parameter locationId: The ID of the location
+     - Returns: An array of all ancestor locations
+     */
     func ancestors(of locationId: UUID) -> [StorageLocation] {
         var result: [StorageLocation] = []
         var currentId = locationId
@@ -202,12 +330,30 @@ class LocationManager: ObservableObject {
         return result
     }
     
+    /**
+     Returns the full path to a location as a string.
+     
+     The path is formatted as "Parent > Child > Grandchild".
+     
+     - Parameter locationId: The ID of the location
+     - Returns: A string representation of the path
+     */
     func path(to locationId: UUID) -> String {
         let ancestors = ancestors(of: locationId).reversed()
         let locationName = locations[locationId]?.name ?? ""
         return (ancestors.map { $0.name } + [locationName]).joined(separator: " > ")
     }
     
+    /**
+     Returns a formatted string representation of a location and its descendants.
+     
+     This is useful for debugging and display purposes.
+     
+     - Parameters:
+        - locationId: The ID of the location
+        - indent: The indentation string to use (default: "")
+     - Returns: A hierarchical string representation
+     */
     func hierarchyString(for locationId: UUID, indent: String = "") -> String {
         guard let location = locations[locationId] else { return "" }
         
@@ -218,20 +364,76 @@ class LocationManager: ObservableObject {
         return result
     }
     
+    // MARK: - Location Search
+    
+    /**
+     Searches for locations matching the given query.
+     
+     This method searches location names case-insensitively.
+     
+     - Parameter query: The search query
+     - Returns: An array of matching locations
+     */
+    func searchLocations(query: String) -> [StorageLocation] {
+        guard !query.isEmpty else { return [] }
+        
+        return allLocations()
+            .filter { $0.name.localizedCaseInsensitiveContains(query) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+    
     // MARK: - Utility Methods
     
+    /**
+     Returns the breadcrumb path for a location.
+     
+     This is similar to `path(to:)` but intended for UI display.
+     
+     - Parameter locationId: The ID of the location
+     - Returns: A formatted breadcrumb path string
+     */
+    func breadcrumbPath(for locationId: UUID) -> String {
+        let ancestors = ancestors(of: locationId).reversed()
+        let locationName = location(withId: locationId)?.name ?? ""
+        return (ancestors.map { $0.name } + [locationName]).joined(separator: " > ")
+    }
+    
+    /**
+     Returns a location by its ID.
+     
+     - Parameter id: The ID of the location
+     - Returns: The location, or nil if not found
+     */
     func location(withId id: UUID) -> StorageLocation? {
         locations[id]
     }
     
+    /**
+     Returns all locations in the hierarchy.
+     
+     - Returns: An array of all locations
+     */
     func allLocations() -> [StorageLocation] {
         Array(locations.values)
     }
     
+    /**
+     Returns all locations of a specific type.
+     
+     - Parameter type: The location type to filter by
+     - Returns: An array of locations of the specified type
+     */
     func locations(ofType type: StorageLocation.LocationType) -> [StorageLocation] {
         allLocations().filter { $0.type == type }
     }
     
+    /**
+     Returns all top-level (root) locations.
+     
+     Root locations are those without a parent.
+     
+     - Returns: An array of root locations, sorted by name
+     */
     func rootLocations() -> [StorageLocation] {
         allLocations()
             .filter { $0.parentId == nil }
@@ -572,12 +774,6 @@ class LocationManager: ObservableObject {
         }
     }
     
-    func breadcrumbPath(for locationId: UUID) -> String {
-        let ancestors = ancestors(of: locationId).reversed()
-        let locationName = location(withId: locationId)?.name ?? ""
-        return (ancestors.map { $0.name } + [locationName]).joined(separator: " > ")
-    }
-    
     /// Moves a location and all its contents to a new parent location
     func migrateLocation(_ locationId: UUID, to newParentId: UUID) throws {
         // Validate locations exist
@@ -661,28 +857,6 @@ class LocationManager: ObservableObject {
         }
         
         return allItems
-    }
-    
-    // MARK: - Search Methods
-    
-    func searchLocations(query: String) -> [StorageLocation] {
-        guard !query.isEmpty else { 
-            return Array(locations.values) 
-        }
-        
-        let searchTerms = query.lowercased().split(separator: " ").map(String.init)
-        
-        let results = locations.values.filter { location in
-            // A location matches if any search term is found in its name
-            let matches = searchTerms.contains { term in
-                let normalizedName = location.name.lowercased()
-                return normalizedName.contains(term)
-            }
-            return matches
-        }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        
-        return results
     }
 }
 

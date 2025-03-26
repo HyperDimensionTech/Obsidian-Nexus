@@ -281,11 +281,32 @@ class SQLiteItemRepository: ItemRepository {
     }
     
     func fetchAll() throws -> [InventoryItem] {
+        print("SQLiteItemRepository: Fetching all items from database")
         let sql = """
             \(baseSelectSQL())
             ORDER BY title;
         """
-        return try fetchItems(sql)
+        do {
+            let items = try fetchItems(sql)
+            print("SQLiteItemRepository: Successfully fetched \(items.count) items")
+            
+            // Debug the first few items
+            if !items.isEmpty {
+                let sample = min(3, items.count)
+                for i in 0..<sample {
+                    let item = items[i]
+                    print("Sample item \(i+1): \(item.title) (ID: \(item.id), Type: \(item.type.rawValue))")
+                }
+            }
+            
+            return items
+        } catch let error as DatabaseManager.DatabaseError {
+            print("SQLiteItemRepository: Database error fetching items: \(error.localizedDescription)")
+            throw error
+        } catch {
+            print("SQLiteItemRepository: Unexpected error fetching items: \(error.localizedDescription)")
+            throw DatabaseManager.DatabaseError.invalidData
+        }
     }
     
     func fetchByType(_ type: CollectionType) throws -> [InventoryItem] {

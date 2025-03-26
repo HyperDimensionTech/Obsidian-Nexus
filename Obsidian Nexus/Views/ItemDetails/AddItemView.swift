@@ -70,6 +70,7 @@ struct AddItemView: View {
     @StateObject private var googleBooksService = GoogleBooksService()
     @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
     @EnvironmentObject private var scanManager: ScanResultManager
+    @EnvironmentObject private var locationManager: LocationManager
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -104,6 +105,7 @@ struct AddItemView: View {
     @State private var showingISBNLinking = false
     @State private var currentFailedISBN = ""
     @State private var showingLinkPrompt = false
+    @State private var isProcessingBook = false
     
     var sortedResults: [GoogleBook] {
         // First apply the existing volume sorting logic
@@ -235,7 +237,7 @@ struct AddItemView: View {
                 isbn: currentFailedISBN,
                 onBookSelected: { book in
                     // Process the selected book
-                    self.processFoundBook(book, currentFailedISBN)
+                    self.processFoundBook(book, originalIsbn: currentFailedISBN)
                     
                     // Announce success for VoiceOver users
                     UIAccessibility.post(
@@ -999,7 +1001,7 @@ struct AddItemView: View {
                 switch result {
                 case .success(let books):
                     if let book = books.first {
-                        self.processFoundBook(book, originalIsbn)
+                        self.processFoundBook(book, originalIsbn: originalIsbn)
                     } else {
                         self.handleNoBookFound(originalIsbn)
                     }
@@ -1010,13 +1012,15 @@ struct AddItemView: View {
         }
     }
     
-    private func processFoundBook(_ book: GoogleBook, _ originalIsbn: String) {
+    private func processFoundBook(_ book: GoogleBook, originalIsbn: String) {
         do {
             // Create a new item from the Google Book
             let newItem = inventoryViewModel.createItemFromGoogleBook(book)
+            print("Created item: \(newItem.title) with location: \(String(describing: newItem.locationId))")
             
-            // Add it to the inventory
+            // Add it to the inventory without location - locations are handled elsewhere
             try inventoryViewModel.addItem(newItem)
+            print("Successfully added item to inventory")
             
             // Update scan count and display
             scanManager.addSuccessfulScan(

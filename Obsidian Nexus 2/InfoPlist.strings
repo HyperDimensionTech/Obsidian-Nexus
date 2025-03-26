@@ -1,0 +1,3 @@
+/* Privacy permission usage descriptions */
+"NSPhotoLibraryUsageDescription" = "Save QR codes to your photo library.";
+"NSPhotoLibraryAddUsageDescription" = "Save QR codes to your photo library."; 

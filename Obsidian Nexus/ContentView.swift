@@ -85,11 +85,15 @@ struct MainView: View {
     @StateObject private var scanResultManager = ScanResultManager()
     
     init() {
+        print("🔄 MainView: Initializing with storage and location manager")
         let storage = StorageManager.shared
         let locationManager = LocationManager(storage: storage)
         _locationManager = StateObject(wrappedValue: locationManager)
-        _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(storage: storage, locationManager: locationManager))
+        
+        // Initialize inventory view model after location manager
+        let inventoryVM = InventoryViewModel(storage: storage, locationManager: locationManager)
+        print("🔄 MainView: Created inventory view model with \(inventoryVM.items.count) items")
+        _inventoryViewModel = StateObject(wrappedValue: inventoryVM)
         
         // Initialize the CurrencyManager singleton to ensure it's ready to handle currency changes
         _ = CurrencyManager.shared

@@ -59,7 +59,18 @@ class StorageManager {
     }
     
     func loadItems() throws -> [InventoryItem] {
-        try itemRepository.fetchAll()
+        print("StorageManager: Loading all items from database")
+        do {
+            let items = try itemRepository.fetchAll()
+            print("StorageManager: Successfully loaded \(items.count) items")
+            return items
+        } catch let error as DatabaseManager.DatabaseError {
+            print("StorageManager: Database error loading items: \(error.localizedDescription)")
+            throw error
+        } catch {
+            print("StorageManager: Unknown error loading items: \(error.localizedDescription)")
+            throw DatabaseManager.DatabaseError.invalidData
+        }
     }
     
     func loadItems(ofType type: CollectionType) throws -> [InventoryItem] {

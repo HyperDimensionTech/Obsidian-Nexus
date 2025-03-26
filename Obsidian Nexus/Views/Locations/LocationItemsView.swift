@@ -45,7 +45,7 @@ struct LocationItemsView: View {
             }
             .padding()
             
-            // Items list
+            // Items and locations content
             if isLoading {
                 Spacer()
                 ProgressView()
@@ -82,59 +82,59 @@ struct LocationItemsView: View {
                 .padding()
                 Spacer()
             } else {
-                List {
-                    // Show parent location if any
-                    if let parent = parentLocation {
-                        Section(header: Text("Parent Location")) {
-                            NavigationLink(destination: LocationItemsView(location: parent)
-                                .environmentObject(locationManager)
-                                .environmentObject(inventoryViewModel)
-                                .environmentObject(navigationCoordinator)
-                            ) {
-                                HStack {
-                                    Image(systemName: "arrow.up.circle")
-                                        .foregroundColor(.accentColor)
-                                    Text(parent.name)
+                VStack(spacing: 0) {
+                    // Parent/Child Locations List
+                    if parentLocation != nil || !childLocations.isEmpty {
+                        List {
+                            // Show parent location if any
+                            if let parent = parentLocation {
+                                Section(header: Text("Parent Location")) {
+                                    Button {
+                                        navigationCoordinator.navigate(to: .locationDetail(parent))
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "arrow.up.circle")
+                                                .foregroundColor(.accentColor)
+                                            Text(parent.name)
+                                                .foregroundColor(.primary)
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
-                    
-                    // Show items section only if there are items
-                    if !items.isEmpty {
-                        Section(header: Text("Items in this location")) {
-                            ForEach(items) { item in
-                                NavigationLink(destination: ItemDetailView(item: item)
-                                    .environmentObject(locationManager)
-                                    .environmentObject(inventoryViewModel)
-                                    .environmentObject(navigationCoordinator)
-                                ) {
-                                    ItemRow(item: item)
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Show child locations if any
-                    if !childLocations.isEmpty {
-                        Section(header: Text("Child Locations")) {
-                            ForEach(childLocations) { childLocation in
-                                NavigationLink(destination: LocationItemsView(location: childLocation)
-                                    .environmentObject(locationManager)
-                                    .environmentObject(inventoryViewModel)
-                                    .environmentObject(navigationCoordinator)
-                                ) {
-                                    HStack {
-                                        Image(systemName: childLocation.type.icon)
-                                            .foregroundColor(.accentColor)
-                                        Text(childLocation.name)
+                            
+                            // Show child locations if any
+                            if !childLocations.isEmpty {
+                                Section(header: Text("Child Locations")) {
+                                    ForEach(childLocations) { childLocation in
+                                        Button {
+                                            navigationCoordinator.navigate(to: .locationDetail(childLocation))
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: childLocation.type.icon)
+                                                    .foregroundColor(.accentColor)
+                                                Text(childLocation.name)
+                                                    .foregroundColor(.primary)
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
+                        .listStyle(InsetGroupedListStyle())
+                        .frame(height: (parentLocation != nil && !childLocations.isEmpty) ? 200 : 120)
+                    }
+                    
+                    // Items list using ItemListComponent
+                    if !items.isEmpty {
+                        ItemListComponent(
+                            items: items,
+                            sectionTitle: "Items in this location",
+                            groupingStyle: .none,
+                            sortStyle: .title,
+                            useCoordinator: true
+                        )
                     }
                 }
-                .listStyle(InsetGroupedListStyle())
             }
         }
         .navigationTitle("Location Items")

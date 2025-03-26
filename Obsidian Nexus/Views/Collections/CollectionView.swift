@@ -40,13 +40,7 @@ struct CollectionView: View {
                         NavigationLink {
                             SeriesDetailView(series: series)
                         } label: {
-                            VStack(alignment: .leading) {
-                                Text(series)
-                                    .font(.headline)
-                                Text("\(seriesItems.count) volumes")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
+                            SeriesGroupRow(series: series, itemCount: seriesItems.count)
                         }
                     }
                 } else if type == .books {
@@ -56,13 +50,7 @@ struct CollectionView: View {
                             NavigationLink {
                                 BooksByAuthorView(author: author)
                             } label: {
-                                VStack(alignment: .leading) {
-                                    Text(author)
-                                        .font(.headline)
-                                    Text("\(authorItems.count) books")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
+                                AuthorGroupRow(author: author, itemCount: authorItems.count)
                             }
                         }
                     } else {
@@ -136,7 +124,7 @@ struct CollectionView: View {
         }
         .sheet(isPresented: $showingBulkEditSheet) {
             NavigationStack {
-                EditItemView(items: items.filter { selectedItems.contains($0.id) })
+                EditItemView(items: inventoryViewModel.items.filter { selectedItems.contains($0.id) })
                     .environmentObject(inventoryViewModel)
                     .environmentObject(locationManager)
             }
@@ -146,9 +134,8 @@ struct CollectionView: View {
     private func deleteSelectedItems() {
         do {
             try inventoryViewModel.bulkDeleteItems(with: selectedItems)
-            // Reset selection state after successful deletion
-            isEditMode = .inactive
             selectedItems.removeAll()
+            isEditMode = .inactive
         } catch {
             deleteErrorMessage = error.localizedDescription
             showingDeleteError = true
@@ -156,10 +143,44 @@ struct CollectionView: View {
     }
 }
 
+// MARK: - Supporting Views
+
+/// Displays a series group with consistent styling
+struct SeriesGroupRow: View {
+    let series: String
+    let itemCount: Int
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(series)
+                .font(.headline)
+            Text("\(itemCount) volumes")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+/// Displays an author group with consistent styling
+struct AuthorGroupRow: View {
+    let author: String
+    let itemCount: Int
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(author)
+                .font(.headline)
+            Text("\(itemCount) books")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
 #Preview {
-    NavigationView {
-        CollectionView(type: .books)
-            .environmentObject(PreviewData.shared.inventoryViewModel)
-            .environmentObject(PreviewData.shared.locationManager)
+    NavigationStack {
+        CollectionView(type: .manga)
+            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+            .environmentObject(LocationManager())
     }
 } 

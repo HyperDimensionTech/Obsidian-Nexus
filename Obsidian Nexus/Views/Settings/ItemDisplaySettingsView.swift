@@ -173,64 +173,12 @@ struct PreviewItemRow: View {
     let displayOptions: [UserPreferences.ItemInfoDisplayOption]
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(item.title)
-                .font(.headline)
-            
-            HStack(spacing: 4) {
-                // Build secondary info based on display preferences
-                ForEach(displayOptions.indices, id: \.self) { index in
-                    let option = displayOptions[index]
-                    
-                    // Only add separator if there's a previous visible item
-                    if index > 0 && hasVisibleInfo(forOption: displayOptions[index - 1]) {
-                        if hasVisibleInfo(forOption: option) {
-                            Text("•")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                        }
-                    }
-                    
-                    // Display the requested info if available
-                    if hasVisibleInfo(forOption: option) {
-                        Text(infoText(for: option))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-        }
-    }
-    
-    // Check if the info for a specific option is available
-    private func hasVisibleInfo(forOption option: UserPreferences.ItemInfoDisplayOption) -> Bool {
-        switch option {
-        case .type:
-            return true // Type is always available
-        case .location:
-            return item.locationId != nil
-        case .price:
-            return item.price != nil
-        case .none:
-            return false
-        }
-    }
-    
-    // Get the text to display for a specific option
-    private func infoText(for option: UserPreferences.ItemInfoDisplayOption) -> String {
-        switch option {
-        case .type:
-            return item.type.name
-        case .location:
-            return item.locationId != nil ? "Sample Location" : ""
-        case .price:
-            if let price = item.price {
-                return price.formatted()
-            }
-            return ""
-        case .none:
-            return ""
-        }
+        ItemDisplayComponent(
+            item: item, 
+            displayStyle: .normal,
+            showFullLocationPath: false,
+            customDisplayOptions: displayOptions
+        )
     }
 }
 

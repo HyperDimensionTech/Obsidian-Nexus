@@ -3,6 +3,7 @@ import SwiftUI
 struct ItemDetailView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var thumbnailService = ThumbnailService()
     
     @State private var thumbnailURL: URL?
@@ -22,19 +23,12 @@ struct ItemDetailView: View {
         _currentItem = State(initialValue: item)
     }
     
-    private var location: StorageLocation? {
-        guard let id = currentItem.locationId else { return nil }
-        return locationManager.location(withId: id)
-    }
-    
     private var filteredItems: [InventoryItem] {
         // First filter by type
         let sameTypeItems = inventoryViewModel.items.filter { $0.type == currentItem.type }
         
         // If this is a volumed series (manga/comics), filter by series and sort by volume
         if let currentSeries = currentItem.series, currentItem.volume != nil {
-            print("DEBUG: Current item is part of series '\(currentSeries)' volume \(currentItem.volume ?? 0)")
-            
             let seriesItems = sameTypeItems.filter { $0.series == currentSeries }
             let sortedItems = seriesItems.sorted { (item1, item2) in
                 guard let vol1 = item1.volume, let vol2 = item2.volume else {
@@ -42,9 +36,6 @@ struct ItemDetailView: View {
                 }
                 return vol1 < vol2
             }
-            
-            print("DEBUG: Found \(seriesItems.count) items in series '\(currentSeries)'")
-            print("DEBUG: Volumes in order: \(sortedItems.map { $0.volume ?? 0 })")
             
             return sortedItems
         }
@@ -55,49 +46,33 @@ struct ItemDetailView: View {
     
     private var currentIndex: Int? {
         let index = filteredItems.firstIndex(where: { $0.id == currentItem.id })
-        print("DEBUG: Current item index: \(index ?? -1)")
         return index
     }
     
     private var hasNextItem: Bool {
         guard let index = currentIndex else { return false }
-        let hasNext = index < filteredItems.count - 1
-        
-        if let currentSeries = currentItem.series, let currentVolume = currentItem.volume {
-            let nextItem = hasNext ? filteredItems[index + 1] : nil
-            print("DEBUG: Next item check for series '\(currentSeries)' - Current: Vol \(currentVolume), Next: Vol \(nextItem?.volume ?? -1)")
-        }
-        
-        return hasNext
+        return index < filteredItems.count - 1
     }
     
     private var hasPreviousItem: Bool {
         guard let index = currentIndex else { return false }
-        let hasPrev = index > 0
-        
-        if let currentSeries = currentItem.series, let currentVolume = currentItem.volume {
-            let prevItem = hasPrev ? filteredItems[index - 1] : nil
-            print("DEBUG: Previous item check for series '\(currentSeries)' - Current: Vol \(currentVolume), Previous: Vol \(prevItem?.volume ?? -1)")
-        }
-        
-        return hasPrev
+        return index > 0
     }
     
-    private func switchToItem(_ newItem: InventoryItem) {
-        isTransitioning = true
-        thumbnailURL = nil // Clear the current thumbnail immediately
-        
-        // Use a quicker, more immediate animation
-        withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
-            currentItem = newItem
-            dragOffset = .zero
-        }
-        
-        // Load the new thumbnail with minimal delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            loadThumbnail()
-            isTransitioning = false
-        }
+    private var shouldShowMetadataSection: Bool {
+        return currentItem.creator != nil || 
+               currentItem.publisher != nil || 
+               currentItem.originalPublishDate != nil || 
+               currentItem.isbn != nil || 
+               currentItem.barcode != nil
+    }
+    
+    private var shouldShowLocationSection: Bool {
+        return currentItem.locationId != nil
+    }
+    
+    private var shouldShowSeriesSection: Bool {
+        return currentItem.series != nil
     }
     
     var body: some View {
@@ -121,115 +96,146 @@ struct ItemDetailView: View {
                                     switch phase {
                                     case .empty:
                                         ProgressView()
-                                            .frame(height: 200)
                                     case .success(let image):
                                         image
                                             .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(height: 200)
-                                            .transition(.asymmetric(
-                                                insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
-                                                removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
-                                            ))
-                                    case .failure(_):
-                                        Image(systemName: "book")
-                                            .font(.system(size: 100))
-                                            .foregroundColor(.gray)
-                                            .frame(height: 200)
+                                            .scaledToFit()
+                                    case .failure:
+                                        Image(systemName: "photo")
+                                            .imageScale(.large)
                                     @unknown default:
                                         EmptyView()
                                     }
                                 }
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
+                                    removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
+                                ))
+                                .frame(height: 200)
                             } else {
-                                Image(systemName: "book")
-                                    .font(.system(size: 100))
-                                    .foregroundColor(.gray)
+                                Image(systemName: "photo")
+                                    .imageScale(.large)
                                     .frame(height: 200)
-                                    .transition(.asymmetric(
-                                        insertion: .move(edge: dragOffset.width > 0 ? .trailing : .leading),
-                                        removal: .move(edge: dragOffset.width > 0 ? .leading : .trailing)
-                                    ))
                             }
                         }
-                        .animation(.easeInOut(duration: 0.15), value: thumbnailURL)
-                        .animation(.easeInOut(duration: 0.15), value: currentItem.imageSource)
-                        .onTapGesture {
-                            showingImagePicker = true
-                        }
+                        .frame(maxWidth: .infinity)
                         
                         Button {
-                            showingEditSheet = true
+                            showingImagePicker = true
                         } label: {
                             Image(systemName: "pencil.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.accentColor)
-                                .background(Color(UIColor.systemBackground))
-                                .clipShape(Circle())
-                                .shadow(radius: 1)
-                                .offset(x: 70, y: -5)
+                                .symbolRenderingMode(.multicolor)
+                                .font(.title)
+                                .padding(8)
                         }
-                        .zIndex(1)
                     }
-                    .frame(maxWidth: .infinity)
-                    .background(Color(UIColor.systemBackground))
-                    .cornerRadius(8)
                     Spacer()
                 }
-            }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-            
-            Section("Basic Details") {
-                DetailRow(label: "Name", value: currentItem.title)
-                if let creator = currentItem.creator {
-                    DetailRow(label: currentItem.type.isLiterature ? "Author" : "Manufacturer", 
-                             value: creator)
-                }
-                DetailRow(label: "Type", value: currentItem.type.name)
-                DetailRow(label: "Condition", value: currentItem.condition.rawValue)
+                .listRowInsets(EdgeInsets())
                 
-                if let date = currentItem.originalPublishDate {
-                    DetailRow(label: "Original Publish Date", 
-                            value: date.formatted(date: .long, time: .omitted))
+                // Navigation buttons to previous/next items in filtered list
+                if filteredItems.count > 1 {
+                    HStack {
+                        Button {
+                            navigateToPreviousItem()
+                        } label: {
+                            Label("Previous", systemImage: "chevron.left")
+                                .labelStyle(.iconOnly)
+                                .font(.title3)
+                        }
+                        .disabled(!hasPreviousItem)
+                        .opacity(hasPreviousItem ? 1.0 : 0.3)
+                        
+                        Spacer()
+                        
+                        if let index = currentIndex, filteredItems.count > 0 {
+                            Text("\(index + 1) of \(filteredItems.count)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            navigateToNextItem()
+                        } label: {
+                            Label("Next", systemImage: "chevron.right")
+                                .labelStyle(.iconOnly)
+                                .font(.title3)
+                        }
+                        .disabled(!hasNextItem)
+                        .opacity(hasNextItem ? 1.0 : 0.3)
+                    }
                 }
             }
             
-            Section("Purchase Information") {
-                if let price = currentItem.price {
-                    DetailRow(label: "Price", value: price.convertedToDefaultCurrency().formatted())
-                }
-                if let purchaseDate = currentItem.purchaseDate {
-                    DetailRow(label: "Purchase Date", 
-                            value: purchaseDate.formatted(date: .long, time: .omitted))
-                }
-                if let locationId = currentItem.locationId {
-                    DetailRow(
-                        label: "Location", 
-                        value: locationManager.breadcrumbPath(for: locationId)
+            // Use our ItemDetailComponent for consistent detail sections
+            Section("Basic Information") {
+                ItemDetailComponent(
+                    item: currentItem,
+                    sections: [.basic],
+                    enableNavigation: true
+                )
+            }
+            
+            if shouldShowMetadataSection {
+                Section("Metadata") {
+                    ItemDetailComponent(
+                        item: currentItem,
+                        sections: [.metadata],
+                        enableNavigation: true
                     )
                 }
             }
             
-            if let synopsis = currentItem.synopsis {
-                Section("Details") {
+            if shouldShowLocationSection {
+                Section("Location") {
+                    ItemDetailComponent(
+                        item: currentItem,
+                        sections: [.location],
+                        enableNavigation: true
+                    )
+                }
+            }
+            
+            if shouldShowSeriesSection {
+                Section("Series Information") {
+                    ItemDetailComponent(
+                        item: currentItem,
+                        sections: [.series],
+                        enableNavigation: true
+                    )
+                }
+            }
+            
+            if let synopsis = currentItem.synopsis, !synopsis.isEmpty {
+                Section("Synopsis") {
                     Text(synopsis)
                         .font(.body)
                 }
             }
-            
-            // Keep literature-specific section for additional details
-            if currentItem.type.isLiterature {
-                Section("Additional Details") {
-                    if let publisher = currentItem.publisher {
-                        DetailRow(label: "Publisher", value: publisher)
+        }
+        .environment(\.editMode, .constant(.inactive))
+        .navigationTitle(currentItem.title)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Menu {
+                    Button {
+                        showingEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
                     }
-                    if let isbn = currentItem.isbn {
-                        DetailRow(label: "ISBN", value: isbn)
+                    
+                    Button(role: .destructive) {
+                        showingDeleteAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
-        .navigationTitle(currentItem.title)
         .gesture(
             DragGesture()
                 .onChanged { gesture in
@@ -241,45 +247,38 @@ struct ItemDetailView: View {
                 }
                 .onEnded { gesture in
                     guard !isTransitioning else { return }
-                    let threshold: CGFloat = 50
-                    let dragX = gesture.translation.width
-                    let velocity = gesture.predictedEndTranslation.width - gesture.translation.width
+                    // Reset drag offset
+                    dragOffset = .zero
                     
-                    // Make swipe more responsive to quick flicks
-                    let shouldTrigger = abs(dragX) > threshold || abs(velocity) > 200
-                    
-                    if dragX > 0 && hasPreviousItem && shouldTrigger {
-                        if let index = currentIndex {
-                            let previousItem = filteredItems[index - 1]
-                            switchToItem(previousItem)
-                        }
-                    } else if dragX < 0 && hasNextItem && shouldTrigger {
-                        if let index = currentIndex {
-                            let nextItem = filteredItems[index + 1]
-                            switchToItem(nextItem)
-                        }
-                    } else {
-                        // Snappier reset animation
-                        withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
-                            dragOffset = .zero
-                        }
+                    // If the drag was significant enough, navigate to the next/previous item
+                    let threshold: CGFloat = 50 // Minimum drag distance to trigger navigation
+                    if gesture.translation.width > threshold && hasPreviousItem {
+                        navigateToPreviousItem()
+                    } else if gesture.translation.width < -threshold && hasNextItem {
+                        navigateToNextItem()
                     }
                 }
         )
-        .offset(x: dragOffset.width)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Button("Edit") {
-                        showingEditSheet = true
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker { newImage in
+                if let data = newImage.jpegData(compressionQuality: 0.8) {
+                    var updatedItem = currentItem
+                    updatedItem.customImageData = data
+                    updatedItem.imageSource = .custom
+                    
+                    do {
+                        currentItem = try inventoryViewModel.updateItem(updatedItem)
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        showError = true
                     }
-                    Button("Delete", role: .destructive) {
-                        showingDeleteAlert = true
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
             }
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
         .sheet(isPresented: $showingEditSheet, onDismiss: {
             // When the edit sheet is dismissed, refresh the current item with the latest data
@@ -308,11 +307,78 @@ struct ItemDetailView: View {
     
     private func loadThumbnail() {
         if let existingURL = currentItem.thumbnailURL {
-            print("DEBUG: Loading thumbnail URL: \(existingURL)")
-            thumbnailURL = existingURL
+            // Create a more robust URL by ensuring it uses HTTPS
+            if existingURL.absoluteString.hasPrefix("http://") {
+                let secureString = existingURL.absoluteString.replacingOccurrences(of: "http://", with: "https://")
+                thumbnailURL = URL(string: secureString)
+            } else {
+                thumbnailURL = existingURL
+            }
+            
+            print("Loading thumbnail from URL: \(thumbnailURL?.absoluteString ?? "nil")")
         } else {
-            print("DEBUG: No thumbnail URL available for current item")
             thumbnailURL = nil
+            print("No thumbnail URL available")
+        }
+    }
+    
+    private func navigateToNextItem() {
+        guard let index = currentIndex, hasNextItem else { return }
+        isTransitioning = true
+        let nextItem = filteredItems[index + 1]
+        
+        // Animate out current item, then update
+        withAnimation(.easeInOut(duration: 0.3)) {
+            dragOffset.width = -UIScreen.main.bounds.width
+        }
+        
+        // After animation, update to the next item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            currentItem = nextItem
+            loadThumbnail()
+            
+            // Prepare for entry animation
+            dragOffset.width = UIScreen.main.bounds.width
+            
+            // Animate back in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                dragOffset = .zero
+            }
+            
+            // Reset transition flag
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isTransitioning = false
+            }
+        }
+    }
+    
+    private func navigateToPreviousItem() {
+        guard let index = currentIndex, hasPreviousItem else { return }
+        isTransitioning = true
+        let previousItem = filteredItems[index - 1]
+        
+        // Animate out current item, then update
+        withAnimation(.easeInOut(duration: 0.3)) {
+            dragOffset.width = UIScreen.main.bounds.width
+        }
+        
+        // After animation, update to the previous item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            currentItem = previousItem
+            loadThumbnail()
+            
+            // Prepare for entry animation
+            dragOffset.width = -UIScreen.main.bounds.width
+            
+            // Animate back in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                dragOffset = .zero
+            }
+            
+            // Reset transition flag
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isTransitioning = false
+            }
         }
     }
     
@@ -339,5 +405,7 @@ struct ItemDetailView: View {
         ItemDetailView(item: sampleItem)
             .environmentObject(locationManager)
             .environmentObject(inventoryViewModel)
+            .environmentObject(NavigationCoordinator())
     }
 } 
+

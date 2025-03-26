@@ -22,11 +22,22 @@ class InventoryViewModel: ObservableObject {
         self.storage = storage
         self.locationManager = locationManager
         
+        print("Initializing InventoryViewModel and loading items from storage")
+        
         // Load existing items
         do {
             items = try storage.loadItems()
+            print("Successfully loaded \(items.count) items from storage")
+            
+            // Calculate statistics based on loaded items
+            calculatePriceStats()
+            
+        } catch let error as DatabaseManager.DatabaseError {
+            print("Database error loading items: \(error.localizedDescription)")
+            items = []
         } catch {
             print("Error loading items: \(error.localizedDescription)")
+            items = []
         }
     }
     
@@ -86,13 +97,35 @@ class InventoryViewModel: ObservableObject {
     // Update addItem method
     @discardableResult
     func addItem(_ item: InventoryItem) throws -> InventoryItem {
+        print("Adding item: \(item.title)")
         try validateItem(item)
+        
         var newItem = item
         // Clean up series name before adding
         newItem.series = cleanupSeriesName(item.series)
-        try storage.save(newItem)
-        items = try storage.loadItems()
-        return newItem
+        
+        do {
+            // Try to save the item and log success
+            try storage.save(newItem)
+            print("Successfully saved item to storage")
+            
+            // Explicitly reload items to ensure the UI is updated
+            do {
+                items = try storage.loadItems()
+                print("Reloaded \(items.count) items from storage")
+            } catch {
+                // If loading fails after saving, just add the new item manually
+                // to the in-memory items array to prevent the error
+                print("Error reloading items: \(error.localizedDescription)")
+                print("Adding item manually to in-memory collection")
+                items.append(newItem)
+            }
+            
+            return newItem
+        } catch {
+            print("Error saving item: \(error.localizedDescription)")
+            throw error
+        }
     }
     
     func deleteItem(_ item: InventoryItem) throws {
@@ -676,20 +709,27 @@ class InventoryViewModel: ObservableObject {
         let type = detectItemType(book)
         print("Final type: \(type)")
         
+        // Safely handle the thumbnail URL
+        var thumbnailURL: URL? = nil
+        if let thumbnailString = book.volumeInfo.imageLinks?.thumbnail {
+            // Make sure we're using https not http
+            let secureUrlString = thumbnailString.replacingOccurrences(of: "http://", with: "https://")
+            // Add zooming parameter to get larger, correctly-sized images
+            let finalUrlString = secureUrlString.replacingOccurrences(of: "&zoom=1", with: "&zoom=0")
+            thumbnailURL = URL(string: finalUrlString)
+            print("Thumbnail URL: \(finalUrlString)")
+        }
+        
+        // Create the item with safe values for all fields
         let item = InventoryItem(
             title: book.volumeInfo.title,
             type: type,
             series: series,
             volume: volume,
             condition: .good,
+            locationId: nil, // Ensure explicit nil for locationId
             barcode: book.volumeInfo.industryIdentifiers?.first?.identifier,
-            thumbnailURL: book.volumeInfo.imageLinks?.thumbnail.flatMap { urlString -> URL? in
-                var secureUrlString = urlString
-                if urlString.hasPrefix("http://") {
-                    secureUrlString = "https://" + urlString.dropFirst(7)
-                }
-                return URL(string: secureUrlString)
-            },
+            thumbnailURL: thumbnailURL,
             author: book.volumeInfo.authors?.first,
             originalPublishDate: parseDate(book.volumeInfo.publishedDate),
             publisher: book.volumeInfo.publisher,
@@ -697,6 +737,7 @@ class InventoryViewModel: ObservableObject {
             synopsis: book.volumeInfo.description,
             imageSource: .googleBooks
         )
+        
         print("Created item - title: \(item.title), type: \(item.type), series: \(item.series ?? "nil"), volume: \(item.volume ?? -1)")
         print("========================")
         return item
