@@ -189,12 +189,11 @@ struct SearchView: View {
                     if !locationResults.isEmpty {
                         Section(header: Text("Locations")) {
                             ForEach(locationResults) { location in
-                                NavigationLink {
-                                    LocationItemsView(location: location)
-                                        .environmentObject(locationManager)
-                                        .environmentObject(inventoryViewModel)
-                                        .environmentObject(navigationCoordinator)
-                                } label: {
+                                NavigationLink(destination: LocationItemsView(location: location)
+                                    .environmentObject(locationManager)
+                                    .environmentObject(inventoryViewModel)
+                                    .environmentObject(navigationCoordinator)
+                                ) {
                                     HStack {
                                         Image(systemName: location.type.icon)
                                             .foregroundColor(.accentColor)
@@ -267,26 +266,6 @@ struct SearchView: View {
     SearchView()
         .environmentObject(InventoryViewModel(locationManager: LocationManager()))
         .environmentObject(NavigationCoordinator())
-}
-
-// MARK: - Empty Search View
-private struct EmptySearchView: View {
-    let query: String
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("No results found for \"\(query)\"")
-                .font(.headline)
-            Text("Try adjusting your search terms")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-    }
 }
 
 enum SearchFilter: String, CaseIterable {

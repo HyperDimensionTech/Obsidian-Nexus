@@ -115,205 +115,36 @@ struct CombinedSearchTabView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject var locationManager: LocationManager
-    @State private var searchText = ""
-    @State private var selectedFilter: SearchFilter = .all
-    @State private var showingSearchResults = false
-    @State private var selectedSortOption: SortOption = .titleAsc
-    @State private var showingSortOptions = false
     @State private var showingQRScanner = false
-    
-    // Store results in state variables instead of computed properties
-    @State private var cachedSearchResults: [SearchResultItem] = []
-    @State private var cachedItemResults: [InventoryItem] = []
-    @State private var cachedLocationResults: [StorageLocation] = []
-    
-    // Create a search result type to handle different result types
-    enum SearchResultItem: Identifiable {
-        case item(InventoryItem)
-        case location(StorageLocation)
-        
-        var id: String {
-            switch self {
-            case .item(let item):
-                return "item-\(item.id)"
-            case .location(let location):
-                return "location-\(location.id)"
-            }
-        }
-    }
     
     var body: some View {
         NavigationStack(path: $navigationCoordinator.path) {
-            VStack(spacing: 0) {
-                // Search bar at the top
-                SearchBar(text: $searchText)
-                    .padding()
-                    .onChange(of: searchText) { _, newValue in
-                        // Safely handle state changes outside view update cycle
-                        DispatchQueue.main.async {
-                            showingSearchResults = !newValue.isEmpty
-                            if !newValue.isEmpty {
-                                performSearch(query: newValue)
-                            } else {
-                                // Clear results when search is empty
-                                cachedSearchResults = []
-                                cachedItemResults = []
-                                cachedLocationResults = []
-                            }
-                        }
-                    }
-                    
-                // Filter bar below search
-                SearchFilterBar(selectedFilter: $selectedFilter)
-                    .onChange(of: selectedFilter) { _, _ in
-                        // Re-run search when filter changes
-                        if !searchText.isEmpty {
-                            DispatchQueue.main.async {
-                                performSearch(query: searchText)
-                            }
-                        }
-                    }
-                
-                // Main content area
-                if showingSearchResults {
-                    // Show search results
-                    if cachedSearchResults.isEmpty {
-                        EmptySearchView(query: searchText)
-                    } else {
-                        VStack(spacing: 0) {
-                            // Sort options bar
-                            HStack {
-                                Text("\(cachedSearchResults.count) results")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    // Safely modify state outside of view update cycle
-                                    DispatchQueue.main.async {
-                                        showingSortOptions = true
-                                    }
-                                }) {
-                                    HStack {
-                                        Text("Sort: \(selectedSortOption.rawValue)")
-                                            .font(.subheadline)
-                                        Image(systemName: "arrow.up.arrow.down")
-                                    }
-                                    .foregroundColor(.primary)
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(8)
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-                            
-                            // Results list
-                            List {
-                                // Show locations section
-                                if !cachedLocationResults.isEmpty {
-                                    Section("Locations") {
-                                        ForEach(cachedLocationResults) { location in
-                                            NavigationLink(destination: LocationItemsView(location: location)
-                                                .environmentObject(locationManager)
-                                                .environmentObject(inventoryViewModel)
-                                                .environmentObject(navigationCoordinator)
-                                            ) {
-                                                HStack {
-                                                    Image(systemName: location.type.icon)
-                                                        .foregroundColor(.accentColor)
-                                                    Text(location.name)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                // Show items section
-                                if !cachedItemResults.isEmpty {
-                                    Section("Items") {
-                                        ForEach(cachedItemResults) { item in
-                                            NavigationLink(destination: ItemDetailView(item: item)
-                                                .environmentObject(locationManager)
-                                                .environmentObject(inventoryViewModel)
-                                                .environmentObject(navigationCoordinator)
-                                            ) {
-                                                ItemRow(item: item)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .listStyle(.insetGrouped)
-                        }
-                        .confirmationDialog("Sort By", isPresented: $showingSortOptions, titleVisibility: .visible) {
-                            ForEach(SortOption.allCases) { option in
-                                Button(option.rawValue) {
-                                    DispatchQueue.main.async {
-                                        selectedSortOption = option
-                                        performSearch(query: searchText)
-                                    }
-                                }
-                            }
-                            Button("Cancel", role: .cancel) {}
-                        }
-                    }
-                } else {
-                    // Show collections grid when not searching
-                    ScrollView {
-                        VStack(alignment: .leading) {
-                            Text("Collections")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-                                .padding(.top)
-                            
-                            LazyVGrid(columns: [
-                                GridItem(.flexible(), spacing: 16),
-                                GridItem(.flexible(), spacing: 16)
-                            ], spacing: 16) {
-                                ForEach(CollectionType.literatureTypes, id: \.self) { type in
-                                    NavigationLink(value: type) {
-                                        CollectionCard(type: type)
-                                            .frame(maxWidth: .infinity)
-                                    }
-                                }
-                            }
-                            .padding()
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Browse & Search")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        // Safely modify state outside of view update cycle
-                        DispatchQueue.main.async {
+            FixedSearchContainer()
+                .navigationTitle("Browse & Search")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: {
                             showingQRScanner = true
+                        }) {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.system(size: 18))
                         }
-                    }) {
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.system(size: 18))
                     }
                 }
-            }
-            .navigationDestination(for: CollectionType.self) { type in
-                CollectionDetailView(type: type)
-            }
-            .navigationDestination(for: NavigationDestination.self) { destination in
-                switch destination {
-                case .scannedLocation(let location):
-                    LocationItemsView(location: location)
-                        .environmentObject(locationManager)
-                        .environmentObject(inventoryViewModel)
-                        .environmentObject(navigationCoordinator)
-                default:
-                    EmptyView()
+                .navigationDestination(for: CollectionType.self) { type in
+                    CollectionDetailView(type: type)
                 }
-            }
+                .navigationDestination(for: NavigationDestination.self) { destination in
+                    switch destination {
+                    case .scannedLocation(let location):
+                        LocationItemsView(location: location)
+                            .environmentObject(locationManager)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
+                    default:
+                        EmptyView()
+                    }
+                }
         }
         .sheet(isPresented: $showingQRScanner) {
             NavigationView {
@@ -328,82 +159,16 @@ struct CombinedSearchTabView: View {
                 forName: Notification.Name("TabDoubleTapped"),
                 object: nil,
                 queue: .main
-            ) { notification in
+            ) { [weak navigationCoordinator] notification in
                 // Only respond to search tab double-taps
                 if let tab = notification.object as? String, tab == "Browse & Search" {
-                    // Clear search when tab is double-tapped
-                    DispatchQueue.main.async {
-                        searchText = ""
-                        selectedFilter = .all
-                        showingSearchResults = false
-                        
-                        // Reset navigation
-                        navigationCoordinator.navigateToRoot()
+                    // Reset navigation when Search tab is double-tapped
+                    Task { @MainActor [weak navigationCoordinator] in
+                        navigationCoordinator?.navigateToRoot()
                     }
                 }
             }
         }
-    }
-    
-    private func performSearch(query: String) {
-        guard !query.isEmpty else {
-            cachedSearchResults = []
-            cachedItemResults = []
-            cachedLocationResults = []
-            return
-        }
-        
-        var results: [SearchResultItem] = []
-        
-        // Get item results and filter if needed
-        let itemResults = inventoryViewModel.searchItems(query: query)
-        let filteredItems = selectedFilter == .all ? 
-            itemResults : 
-            itemResults.filter { $0.type == selectedFilter.collectionType }
-        
-        // Apply sorting to items
-        let sortedItems = selectedSortOption.sortItems(filteredItems)
-        results.append(contentsOf: sortedItems.map { SearchResultItem.item($0) })
-        
-        // Add location results if not filtering by collection type
-        if selectedFilter == .all {
-            let locationResults = locationManager.searchLocations(query: query)
-            results.append(contentsOf: locationResults.map { SearchResultItem.location($0) })
-        }
-        
-        cachedSearchResults = results
-        cachedItemResults = results.compactMap { result -> InventoryItem? in
-            if case .item(let item) = result {
-                return item
-            }
-            return nil
-        }
-        cachedLocationResults = results.compactMap { result -> StorageLocation? in
-            if case .location(let location) = result {
-                return location
-            }
-            return nil
-        }
-    }
-}
-
-// Empty search view
-private struct EmptySearchView: View {
-    let query: String
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("No results found for \"\(query)\"")
-                .font(.headline)
-            Text("Try adjusting your search terms")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding()
     }
 }
 

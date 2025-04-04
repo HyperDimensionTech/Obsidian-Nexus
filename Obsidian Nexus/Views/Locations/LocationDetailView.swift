@@ -95,9 +95,11 @@ struct LocationDetailView: View {
                     } else {
                         LazyVStack(spacing: 8) {
                             ForEach(children) { childLocation in
-                                Button {
-                                    navigationCoordinator.navigate(to: .locationDetail(childLocation))
-                                } label: {
+                                NavigationLink(destination: LocationItemsView(location: childLocation)
+                                    .environmentObject(locationManager)
+                                    .environmentObject(inventoryViewModel)
+                                    .environmentObject(navigationCoordinator)
+                                ) {
                                     HStack {
                                         Image(systemName: childLocation.type.icon)
                                             .foregroundColor(.accentColor)
@@ -126,8 +128,10 @@ struct LocationDetailView: View {
         .navigationTitle("Location Details")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            print("🔄 LocationDetailView.onAppear() for \(location.name)")
             loadItems()
         }
+        .id(location.id) // Force view refresh when location changes
         .sheet(isPresented: $showingQRCode) {
             NavigationView {
                 LocationQRCodeView(location: location)
@@ -137,12 +141,15 @@ struct LocationDetailView: View {
     
     private func loadItems() {
         isLoading = true
+        print("⏰ Loading items for location \(location.name) (ID: \(location.id))")
         // Get all items in this location, including nested items
         DispatchQueue.global(qos: .userInitiated).async {
             let allItems = locationManager.getAllItemsInLocation(locationId: location.id, inventoryViewModel: inventoryViewModel)
+            print("✅ Found \(allItems.count) items for location \(location.name)")
             DispatchQueue.main.async {
                 items = allItems
                 isLoading = false
+                print("✅ UI updated with \(allItems.count) items, isLoading = false")
             }
         }
     }

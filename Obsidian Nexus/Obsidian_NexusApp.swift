@@ -25,7 +25,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         print("🚀 APP LAUNCH: Database exists: \(fm.fileExists(atPath: dbURL.path))")
         
         // Force StorageManager initialization
-        let storage = StorageManager.shared
+        _ = StorageManager.shared
         
         return true
     }

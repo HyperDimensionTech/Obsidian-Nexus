@@ -3,7 +3,7 @@ import SQLite3
 
 class DatabaseManager {
     static let shared = DatabaseManager()
-    private let currentVersion = 2
+    private let currentVersion = 3
     
     private(set) var connection: OpaquePointer?
     
@@ -68,8 +68,9 @@ class DatabaseManager {
         
         // Check if file is readable
         if fileExists {
-            print("🔹 DATABASE 🔹 File size: \(try? fileManager.attributesOfItem(atPath: fileURL.path)[.size] ?? 0) bytes")
-            print("🔹 DATABASE 🔹 File permissions: \(try? fileManager.attributesOfItem(atPath: fileURL.path)[.posixPermissions] ?? 0)")
+            let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
+            print("🔹 DATABASE 🔹 File size: \(attributes?[.size] as? Int ?? 0) bytes")
+            print("🔹 DATABASE 🔹 File permissions: \(attributes?[.posixPermissions] as? Int ?? 0)")
         }
         
         let needsSetup = !fileExists
@@ -83,7 +84,11 @@ class DatabaseManager {
         print("🔹 DATABASE 🔹 Successfully opened connection")
         
         // Enable foreign keys
-        executeStatement("PRAGMA foreign_keys = ON;")
+        do {
+            try executeStatement("PRAGMA foreign_keys = ON;")
+        } catch {
+            print("🔹 DATABASE 🔹 Error enabling foreign keys: \(error.localizedDescription)")
+        }
         
         // Set WAL mode with proper error handling
         var statement: OpaquePointer?
@@ -114,85 +119,161 @@ class DatabaseManager {
     
     private func createTables() {
         // Create tables in correct order
-        createMetadataTable()
-        
-        // Create core tables
-        let createLocationsTable = """
-            CREATE TABLE IF NOT EXISTS locations (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                parent_id TEXT,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                deleted_at INTEGER,
-                FOREIGN KEY (parent_id) REFERENCES locations (id)
-            );
-        """
-        
-        let createItemsTable = """
-            CREATE TABLE IF NOT EXISTS items (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                type TEXT NOT NULL,
-                series TEXT,
-                volume INTEGER,
-                condition TEXT NOT NULL,
-                location_id TEXT,
-                notes TEXT,
-                date_added INTEGER NOT NULL,
-                barcode TEXT,
-                thumbnail_url TEXT,
-                author TEXT,
-                manufacturer TEXT,
-                original_publish_date INTEGER,
-                publisher TEXT,
-                isbn TEXT,
-                price REAL,
-                purchase_date INTEGER,
-                synopsis TEXT,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                deleted_at INTEGER,
-                custom_image_data BLOB,
-                image_source TEXT,
-                FOREIGN KEY (location_id) REFERENCES locations(id)
-            );
-        """
-        
-        let createCustomFieldsTable = """
-            CREATE TABLE IF NOT EXISTS custom_fields (
-                id TEXT PRIMARY KEY,
-                item_id TEXT NOT NULL,
-                key TEXT NOT NULL,
-                value TEXT,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL,
-                FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
-                UNIQUE(item_id, key)
-            );
-        """
-        
-        let createClassificationRulesTable = """
-            CREATE TABLE IF NOT EXISTS classification_rules (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                pattern TEXT NOT NULL,
-                pattern_type TEXT NOT NULL,
-                priority INTEGER NOT NULL,
-                media_type TEXT NOT NULL,
-                created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
-            );
-        """
-        
-        // Execute in correct order with error handling
         do {
+            try createMetadataTable()
+            
+            // Create core tables
+            let createLocationsTable = """
+                CREATE TABLE IF NOT EXISTS locations (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    parent_id TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    deleted_at INTEGER,
+                    FOREIGN KEY (parent_id) REFERENCES locations (id)
+                );
+            """
+            
+            let createItemsTable = """
+                CREATE TABLE IF NOT EXISTS items (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    series TEXT,
+                    volume INTEGER,
+                    condition TEXT NOT NULL,
+                    location_id TEXT,
+                    notes TEXT,
+                    date_added INTEGER NOT NULL,
+                    barcode TEXT,
+                    thumbnail_url TEXT,
+                    author TEXT,
+                    manufacturer TEXT,
+                    original_publish_date INTEGER,
+                    publisher TEXT,
+                    isbn TEXT,
+                    price REAL,
+                    purchase_date INTEGER,
+                    synopsis TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    deleted_at INTEGER,
+                    custom_image_data BLOB,
+                    image_source TEXT,
+                    serial_number TEXT,
+                    model_number TEXT,
+                    character TEXT,
+                    franchise TEXT,
+                    dimensions TEXT,
+                    weight TEXT,
+                    release_date INTEGER,
+                    limited_edition_number TEXT,
+                    has_original_packaging INTEGER,
+                    platform TEXT,
+                    developer TEXT,
+                    genre TEXT,
+                    age_rating TEXT,
+                    technical_specs TEXT,
+                    warranty_expiry INTEGER,
+                    FOREIGN KEY (location_id) REFERENCES locations(id),
+                    UNIQUE(series, volume, deleted_at) WHERE deleted_at IS NULL
+                );
+            """
+            
+            let createCustomFieldsTable = """
+                CREATE TABLE IF NOT EXISTS custom_fields (
+                    id TEXT PRIMARY KEY,
+                    item_id TEXT NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
+                    UNIQUE(item_id, key)
+                );
+            """
+            
+            let createClassificationRulesTable = """
+                CREATE TABLE IF NOT EXISTS classification_rules (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pattern TEXT NOT NULL,
+                    pattern_type TEXT NOT NULL,
+                    priority INTEGER NOT NULL,
+                    media_type TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                );
+            """
+            
+            let createISBNMappingsTable = """
+                CREATE TABLE IF NOT EXISTS isbn_mappings (
+                    incorrect_isbn TEXT PRIMARY KEY,
+                    google_books_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    is_reprint INTEGER NOT NULL DEFAULT 1,
+                    date_added INTEGER NOT NULL
+                );
+            """
+            
+            let createAttachmentsTable = """
+                CREATE TABLE IF NOT EXISTS attachments (
+                  id TEXT PRIMARY KEY,
+                  item_id TEXT NOT NULL,
+                  attachment_type TEXT NOT NULL,
+                  file_name TEXT NOT NULL,
+                  mime_type TEXT NOT NULL,
+                  file_data BLOB NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE
+                );
+            """
+            
+            let createItemImagesTable = """
+                CREATE TABLE IF NOT EXISTS item_images (
+                  id TEXT PRIMARY KEY,
+                  item_id TEXT NOT NULL,
+                  image_type TEXT NOT NULL,
+                  image_data BLOB NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE
+                );
+            """
+            
+            let createCategoriesTable = """
+                CREATE TABLE IF NOT EXISTS categories (
+                  id TEXT PRIMARY KEY,
+                  parent_id TEXT,
+                  name TEXT NOT NULL,
+                  type TEXT NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(parent_id) REFERENCES categories(id)
+                );
+            """
+            
+            let createItemCategoriesTable = """
+                CREATE TABLE IF NOT EXISTS item_categories (
+                  item_id TEXT NOT NULL,
+                  category_id TEXT NOT NULL,
+                  PRIMARY KEY(item_id, category_id),
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
+                  FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE CASCADE
+                );
+            """
+            
+            // Execute in correct order with error handling
             try beginTransaction()
             
-            executeStatement(createLocationsTable)
-            executeStatement(createItemsTable)
-            executeStatement(createCustomFieldsTable)
-            executeStatement(createClassificationRulesTable)
+            try executeStatement(createLocationsTable)
+            try executeStatement(createItemsTable)
+            try executeStatement(createCustomFieldsTable)
+            try executeStatement(createClassificationRulesTable)
+            try executeStatement(createISBNMappingsTable)
+            try executeStatement(createAttachmentsTable)
+            try executeStatement(createItemImagesTable)
+            try executeStatement(createCategoriesTable)
+            try executeStatement(createItemCategoriesTable)
             
             // Create indexes
             let createIndexes = [
@@ -200,11 +281,20 @@ class DatabaseManager {
                 "CREATE INDEX IF NOT EXISTS idx_items_series ON items(series);",
                 "CREATE INDEX IF NOT EXISTS idx_items_location ON items(location_id);",
                 "CREATE INDEX IF NOT EXISTS idx_locations_parent ON locations(parent_id);",
-                "CREATE INDEX IF NOT EXISTS idx_custom_fields_item ON custom_fields(item_id);"
+                "CREATE INDEX IF NOT EXISTS idx_custom_fields_item ON custom_fields(item_id);",
+                "CREATE INDEX IF NOT EXISTS idx_isbn_mappings_isbn ON isbn_mappings(incorrect_isbn);",
+                "CREATE INDEX IF NOT EXISTS idx_items_serial_number ON items(serial_number);",
+                "CREATE INDEX IF NOT EXISTS idx_items_model_number ON items(model_number);",
+                "CREATE INDEX IF NOT EXISTS idx_items_franchise ON items(franchise);",
+                "CREATE INDEX IF NOT EXISTS idx_items_platform ON items(platform);",
+                "CREATE INDEX IF NOT EXISTS idx_attachments_item_id ON attachments(item_id);",
+                "CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);",
+                "CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);",
+                "CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type);"
             ]
             
             for index in createIndexes {
-                executeStatement(index)
+                try executeStatement(index)
             }
             
             // Add initial rules if table is empty
@@ -233,8 +323,8 @@ class DatabaseManager {
                     ('graphic novel', 'title', 2, 'comics', ?, ?);
                 """
                 
-                let parameters = Array(repeating: timestamp, count: 18) // 9 rules * 2 timestamps each
-                executeStatement(initialRules, parameters: parameters)
+                let parameters = Array(repeating: timestamp, count: 32) // 16 rules * 2 timestamps each
+                try executeStatement(initialRules, parameters: parameters)
             }
             
             try commitTransaction()
@@ -244,19 +334,19 @@ class DatabaseManager {
         }
     }
     
-    private func createMetadataTable() {
+    private func createMetadataTable() throws {
         let sql = """
             CREATE TABLE IF NOT EXISTS metadata (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
         """
-        executeStatement(sql)
+        try executeStatement(sql)
         
         // Set initial version if not exists
         let version = getDatabaseVersion()
         if version == 0 {
-            setDatabaseVersion(1)
+            try setDatabaseVersion(1)
         }
     }
     
@@ -276,20 +366,12 @@ class DatabaseManager {
         return version
     }
     
-    private func setDatabaseVersion(_ version: Int) {
+    private func setDatabaseVersion(_ version: Int) throws {
         let sql = """
             INSERT OR REPLACE INTO metadata (key, value)
             VALUES ('version', ?);
         """
-        var statement: OpaquePointer?
-        
-        if sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK {
-            sqlite3_bind_text(statement, 1, String(version).cString(using: .utf8), -1, nil)
-            if sqlite3_step(statement) != SQLITE_DONE {
-                print("Error setting database version")
-            }
-        }
-        sqlite3_finalize(statement)
+        try executeStatement(sql, parameters: [String(version)])
     }
     
     private func migrateIfNeeded() {
@@ -308,8 +390,19 @@ class DatabaseManager {
                 migrateToV2()
             }
             
+            // Add migration for expanded item fields and new tables
+            if currentDBVersion < 3 {
+                migrateToV3()
+            }
+            
             // Set the new version
-            setDatabaseVersion(currentVersion)
+            do {
+                try setDatabaseVersion(currentVersion)
+            } catch {
+                print("🔹 DATABASE 🔹 Error setting database version: \(error.localizedDescription)")
+                // Consider if we need to handle this error more robustly
+                // For now, we log it but the app can continue since the schema updates were applied
+            }
         }
     }
     
@@ -318,33 +411,147 @@ class DatabaseManager {
     }
     
     private func migrateToV2() {
-        // Create isbn_mappings table
-        let createISBNMappingsTable = """
-            CREATE TABLE IF NOT EXISTS isbn_mappings (
-                incorrect_isbn TEXT PRIMARY KEY,
-                google_books_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                is_reprint INTEGER NOT NULL DEFAULT 1,
-                date_added INTEGER NOT NULL
-            );
-        """
-        executeStatement(createISBNMappingsTable)
-        
-        // Create index for performance
-        let createISBNIndex = """
-            CREATE INDEX IF NOT EXISTS idx_isbn_mappings_isbn
-            ON isbn_mappings (incorrect_isbn);
-        """
-        executeStatement(createISBNIndex)
+        do {
+            // Create isbn_mappings table
+            let createISBNMappingsTable = """
+                CREATE TABLE IF NOT EXISTS isbn_mappings (
+                    incorrect_isbn TEXT PRIMARY KEY,
+                    google_books_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    is_reprint INTEGER NOT NULL DEFAULT 1,
+                    date_added INTEGER NOT NULL
+                );
+            """
+            try executeStatement(createISBNMappingsTable)
+            
+            // Create index for performance
+            let createISBNIndex = """
+                CREATE INDEX IF NOT EXISTS idx_isbn_mappings_isbn
+                ON isbn_mappings (incorrect_isbn);
+            """
+            try executeStatement(createISBNIndex)
+        } catch {
+            print("Error migrating to V2: \(error.localizedDescription)")
+        }
     }
     
-    func executeStatement(_ sql: String, parameters: [Any] = []) {
+    private func migrateToV3() {
+        do {
+            print("🔹 DATABASE 🔹 Starting migration to V3...")
+            
+            try beginTransaction()
+            
+            // Add new columns to items table
+            let alterItemsSQL = [
+                "ALTER TABLE items ADD COLUMN serial_number TEXT;",
+                "ALTER TABLE items ADD COLUMN model_number TEXT;",
+                "ALTER TABLE items ADD COLUMN character TEXT;",
+                "ALTER TABLE items ADD COLUMN franchise TEXT;",
+                "ALTER TABLE items ADD COLUMN dimensions TEXT;",
+                "ALTER TABLE items ADD COLUMN weight TEXT;",
+                "ALTER TABLE items ADD COLUMN release_date INTEGER;",
+                "ALTER TABLE items ADD COLUMN limited_edition_number TEXT;",
+                "ALTER TABLE items ADD COLUMN has_original_packaging INTEGER;",
+                "ALTER TABLE items ADD COLUMN platform TEXT;",
+                "ALTER TABLE items ADD COLUMN developer TEXT;",
+                "ALTER TABLE items ADD COLUMN genre TEXT;",
+                "ALTER TABLE items ADD COLUMN age_rating TEXT;",
+                "ALTER TABLE items ADD COLUMN technical_specs TEXT;",
+                "ALTER TABLE items ADD COLUMN warranty_expiry INTEGER;"
+            ]
+            
+            for sql in alterItemsSQL {
+                try executeStatement(sql)
+            }
+            
+            // Create attachments table
+            let createAttachmentsTable = """
+                CREATE TABLE IF NOT EXISTS attachments (
+                  id TEXT PRIMARY KEY,
+                  item_id TEXT NOT NULL,
+                  attachment_type TEXT NOT NULL,
+                  file_name TEXT NOT NULL,
+                  mime_type TEXT NOT NULL,
+                  file_data BLOB NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE
+                );
+            """
+            try executeStatement(createAttachmentsTable)
+            
+            // Create additional images table
+            let createItemImagesTable = """
+                CREATE TABLE IF NOT EXISTS item_images (
+                  id TEXT PRIMARY KEY,
+                  item_id TEXT NOT NULL,
+                  image_type TEXT NOT NULL,
+                  image_data BLOB NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE
+                );
+            """
+            try executeStatement(createItemImagesTable)
+            
+            // Create categories table
+            let createCategoriesTable = """
+                CREATE TABLE IF NOT EXISTS categories (
+                  id TEXT PRIMARY KEY,
+                  parent_id TEXT,
+                  name TEXT NOT NULL,
+                  type TEXT NOT NULL,
+                  created_at INTEGER NOT NULL,
+                  FOREIGN KEY(parent_id) REFERENCES categories(id)
+                );
+            """
+            try executeStatement(createCategoriesTable)
+            
+            // Create item_categories table
+            let createItemCategoriesTable = """
+                CREATE TABLE IF NOT EXISTS item_categories (
+                  item_id TEXT NOT NULL,
+                  category_id TEXT NOT NULL,
+                  PRIMARY KEY(item_id, category_id),
+                  FOREIGN KEY(item_id) REFERENCES items(id) ON DELETE CASCADE,
+                  FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE CASCADE
+                );
+            """
+            try executeStatement(createItemCategoriesTable)
+            
+            // Add indexes for performance
+            let createIndexes = [
+                "CREATE INDEX IF NOT EXISTS idx_items_serial_number ON items(serial_number);",
+                "CREATE INDEX IF NOT EXISTS idx_items_model_number ON items(model_number);",
+                "CREATE INDEX IF NOT EXISTS idx_items_franchise ON items(franchise);",
+                "CREATE INDEX IF NOT EXISTS idx_items_platform ON items(platform);",
+                "CREATE INDEX IF NOT EXISTS idx_attachments_item_id ON attachments(item_id);",
+                "CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);",
+                "CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id);",
+                "CREATE INDEX IF NOT EXISTS idx_categories_type ON categories(type);"
+            ]
+            
+            for sql in createIndexes {
+                try executeStatement(sql)
+            }
+            
+            try commitTransaction()
+            print("🔹 DATABASE 🔹 Successfully migrated to V3")
+            
+        } catch {
+            do {
+                try rollbackTransaction()
+            } catch {
+                print("🔹 DATABASE 🔹 Error rolling back transaction: \(error.localizedDescription)")
+            }
+            print("🔹 DATABASE 🔹 Error migrating to V3: \(error.localizedDescription)")
+        }
+    }
+    
+    func executeStatement(_ sql: String, parameters: [Any] = []) throws {
         var statement: OpaquePointer?
         
         guard sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK else {
             let error = String(cString: sqlite3_errmsg(connection))
-            print("Error preparing statement: \(error)")
-            return
+            throw DatabaseError.prepareFailed(error)
         }
         
         defer {
@@ -356,38 +563,69 @@ class DatabaseManager {
             
             switch param {
             case let text as String:
-                sqlite3_bind_text(statement, idx, (text as NSString).utf8String, -1, nil)
+                if sqlite3_bind_text(statement, idx, (text as NSString).utf8String, -1, nil) != SQLITE_OK {
+                    throw DatabaseError.invalidData
+                }
             case let int as Int:
-                sqlite3_bind_int64(statement, idx, Int64(int))
+                if sqlite3_bind_int64(statement, idx, Int64(int)) != SQLITE_OK {
+                    throw DatabaseError.invalidData
+                }
+            case let double as Double:
+                if sqlite3_bind_double(statement, idx, double) != SQLITE_OK {
+                    throw DatabaseError.invalidData
+                }
             case let data as Data:
-                _ = data.withUnsafeBytes { bytes in
+                let result = data.withUnsafeBytes { bytes in
                     sqlite3_bind_blob(statement, idx, bytes.baseAddress, Int32(data.count), nil)
                 }
+                if result != SQLITE_OK {
+                    throw DatabaseError.invalidData
+                }
             case is NSNull:
-                sqlite3_bind_null(statement, idx)
+                if sqlite3_bind_null(statement, idx) != SQLITE_OK {
+                    throw DatabaseError.invalidData
+                }
             default:
-                print("Unsupported parameter type: \(type(of: param))")
-                continue
+                throw DatabaseError.invalidData
             }
         }
         
-        if sqlite3_step(statement) != SQLITE_DONE {
+        let result = sqlite3_step(statement)
+        switch result {
+        case SQLITE_DONE:
+            return
+        case SQLITE_CONSTRAINT:
             let error = String(cString: sqlite3_errmsg(connection))
-            print("Error executing statement: \(sql)")
-            print("SQLite error: \(error)")
+            if error.contains("UNIQUE") {
+                // Extract the conflicting values from the error message
+                if error.contains("series") && error.contains("volume") {
+                    throw DatabaseError.constraintViolation("This volume already exists in the series")
+                } else {
+                    throw DatabaseError.constraintViolation(error)
+                }
+            } else {
+                throw DatabaseError.constraintViolation(error)
+            }
+        case SQLITE_BUSY:
+            throw DatabaseError.deadlock
+        case SQLITE_FULL:
+            throw DatabaseError.diskFull
+        default:
+            let error = String(cString: sqlite3_errmsg(connection))
+            throw DatabaseError.queryFailed(error)
         }
     }
     
     func beginTransaction() throws {
-        executeStatement("BEGIN TRANSACTION;")
+        try executeStatement("BEGIN TRANSACTION;")
     }
     
     func commitTransaction() throws {
-        executeStatement("COMMIT;")
+        try executeStatement("COMMIT;")
     }
     
     func rollbackTransaction() throws {
-        executeStatement("ROLLBACK;")
+        try executeStatement("ROLLBACK;")
     }
     
     func executeScalar(_ sql: String) -> Int {

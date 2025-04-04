@@ -103,6 +103,16 @@ class StorageManager {
         }
     }
     
+    func updateBatch(_ items: [InventoryItem]) throws {
+        do {
+            try itemRepository.updateBatch(items)
+        } catch let error as DatabaseManager.DatabaseError {
+            throw error
+        } catch {
+            throw DatabaseManager.DatabaseError.updateFailed
+        }
+    }
+    
     // MARK: - Location Operations
     
     func save(_ location: StorageLocation) throws {
@@ -131,6 +141,12 @@ class StorageManager {
         try locationRepository.fetchById(id)
     }
     
+    func loadLocation(withId id: UUID) async throws -> StorageLocation? {
+        try await Task {
+            try locationRepository.fetchById(id)
+        }.value
+    }
+    
     func loadChildren(of parentId: UUID) throws -> [StorageLocation] {
         try locationRepository.fetchChildren(of: parentId)
     }
@@ -142,7 +158,7 @@ class StorageManager {
     
     // MARK: - Database Management
     
-    func clear() {
+    func clear() throws {
         // Implementation note: This is a destructive operation that should be used carefully
         let dropTables = [
             "DELETE FROM items WHERE 1=1;",
@@ -151,7 +167,7 @@ class StorageManager {
         ]
         
         for sql in dropTables {
-            DatabaseManager.shared.executeStatement(sql)
+            try DatabaseManager.shared.executeStatement(sql)
         }
     }
 

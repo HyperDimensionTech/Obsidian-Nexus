@@ -26,6 +26,23 @@ struct InventoryItem: Identifiable, Codable {
     var customImageData: Data?  // For local images
     var imageSource: ImageSource
     
+    // Additional fields for v3
+    var serialNumber: String?
+    var modelNumber: String?
+    var character: String?
+    var franchise: String?
+    var dimensions: String?
+    var weight: String?
+    var releaseDate: Date?
+    var limitedEditionNumber: String?
+    var hasOriginalPackaging: Bool?
+    var platform: String?
+    var developer: String?
+    var genre: String?
+    var ageRating: String?
+    var technicalSpecs: String?
+    var warrantyExpiry: Date?
+    
     var creator: String? {
         switch type {
         case .books, .manga, .comics:
@@ -71,7 +88,22 @@ struct InventoryItem: Identifiable, Codable {
         purchaseDate: Date? = nil,
         synopsis: String? = nil,
         customImageData: Data? = nil,
-        imageSource: ImageSource = .none
+        imageSource: ImageSource = .none,
+        serialNumber: String? = nil,
+        modelNumber: String? = nil,
+        character: String? = nil,
+        franchise: String? = nil,
+        dimensions: String? = nil,
+        weight: String? = nil,
+        releaseDate: Date? = nil,
+        limitedEditionNumber: String? = nil,
+        hasOriginalPackaging: Bool? = nil,
+        platform: String? = nil,
+        developer: String? = nil,
+        genre: String? = nil,
+        ageRating: String? = nil,
+        technicalSpecs: String? = nil,
+        warrantyExpiry: Date? = nil
     ) {
         self.id = id
         self.title = title
@@ -94,5 +126,20 @@ struct InventoryItem: Identifiable, Codable {
         self.synopsis = synopsis
         self.customImageData = customImageData
         self.imageSource = imageSource
+        self.serialNumber = serialNumber
+        self.modelNumber = modelNumber
+        self.character = character
+        self.franchise = franchise
+        self.dimensions = dimensions
+        self.weight = weight
+        self.releaseDate = releaseDate
+        self.limitedEditionNumber = limitedEditionNumber
+        self.hasOriginalPackaging = hasOriginalPackaging
+        self.platform = platform
+        self.developer = developer
+        self.genre = genre
+        self.ageRating = ageRating
+        self.technicalSpecs = technicalSpecs
+        self.warrantyExpiry = warrantyExpiry
     }
 } 

@@ -28,10 +28,17 @@ struct SearchTabView: View {
                         ItemDetailView(item: item)
                             .environmentObject(locationManager)
                             .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
                     case .locationDetail(let location):
                         LocationDetailView(location: location)
                             .environmentObject(locationManager)
                             .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
+                    case .locationItems(let location):
+                        LocationItemsView(location: location)
+                            .environmentObject(locationManager)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
                     case .scannedLocation(let location):
                         LocationItemsView(location: location)
                             .environmentObject(locationManager)

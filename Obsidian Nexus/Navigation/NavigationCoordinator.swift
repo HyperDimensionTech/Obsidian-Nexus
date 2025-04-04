@@ -81,6 +81,9 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
     /// Navigate to a location's detail view
     case locationDetail(StorageLocation)
     
+    /// Navigate to location items view (for viewing contents of a location)
+    case locationItems(StorageLocation)
+    
     /// Navigate to location settings
     case locationSettings
     
@@ -101,6 +104,8 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
         switch self {
         case .locationDetail(let location):
             return "locationDetail-\(location.id)"
+        case .locationItems(let location):
+            return "locationItems-\(location.id)"
         case .locationSettings:
             return "locationSettings"
         case .addItems(let locationId):
@@ -119,6 +124,8 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
     static func == (lhs: NavigationDestination, rhs: NavigationDestination) -> Bool {
         switch (lhs, rhs) {
         case (.locationDetail(let l), .locationDetail(let r)):
+            return l.id == r.id
+        case (.locationItems(let l), .locationItems(let r)):
             return l.id == r.id
         case (.locationSettings, .locationSettings):
             return true
@@ -141,6 +148,9 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
         switch self {
         case .locationDetail(let location):
             hasher.combine("locationDetail")
+            hasher.combine(location.id)
+        case .locationItems(let location):
+            hasher.combine("locationItems")
             hasher.combine(location.id)
         case .locationSettings:
             hasher.combine("locationSettings")
@@ -201,7 +211,7 @@ class NavigationCoordinator: ObservableObject {
     func navigateToLocation(locationId: UUID) {
         // Find the location by ID
         if let location = LocationManager().location(withId: locationId) {
-            navigate(to: .locationDetail(location))
+            navigate(to: .locationItems(location))
         }
     }
     

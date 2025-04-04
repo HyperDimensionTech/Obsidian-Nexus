@@ -4,8 +4,10 @@ struct AddItemTabView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             AddItemView()
+                .navigationTitle("Add Item")
+                .navigationBarTitleDisplayMode(.large)
         }
     }
 } 

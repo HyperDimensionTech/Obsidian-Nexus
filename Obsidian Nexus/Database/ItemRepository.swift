@@ -19,6 +19,7 @@ protocol ItemRepository {
     func emptyTrash() throws
     func getTrashCount() throws -> Int
     func saveBatch(_ items: [InventoryItem]) throws
+    func updateBatch(_ items: [InventoryItem]) throws
     
     // Add new methods
     func getClassificationRules() -> [MediaTypeRule]
@@ -63,8 +64,11 @@ class SQLiteItemRepository: ItemRepository {
                 notes, date_added, barcode, thumbnail_url, author,
                 manufacturer, original_publish_date, publisher, isbn,
                 price, purchase_date, synopsis, created_at, updated_at,
-                custom_image_data, image_source
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                deleted_at, custom_image_data, image_source, serial_number, model_number,
+                character, franchise, dimensions, weight, release_date,
+                limited_edition_number, has_original_packaging, platform,
+                developer, genre, age_rating, technical_specs, warranty_expiry
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         
         try db.beginTransaction()
@@ -106,8 +110,24 @@ class SQLiteItemRepository: ItemRepository {
                 (item.synopsis, 19),
                 (timestamp, 20),
                 (timestamp, 21),
-                (item.customImageData, 22),
-                (item.imageSource.rawValue, 23)
+                (nil, 22), // deleted_at is null for new items
+                (item.customImageData, 23),
+                (item.imageSource.rawValue, 24),
+                (item.serialNumber, 25),
+                (item.modelNumber, 26),
+                (item.character, 27),
+                (item.franchise, 28),
+                (item.dimensions, 29),
+                (item.weight, 30),
+                (item.releaseDate.map { Int($0.timeIntervalSince1970) }, 31),
+                (item.limitedEditionNumber, 32),
+                (item.hasOriginalPackaging.map { $0 ? 1 : 0 }, 33),
+                (item.platform, 34),
+                (item.developer, 35),
+                (item.genre, 36),
+                (item.ageRating, 37),
+                (item.technicalSpecs, 38),
+                (item.warrantyExpiry.map { Int($0.timeIntervalSince1970) }, 39)
             ]
             
             // Bind each parameter
@@ -173,7 +193,22 @@ class SQLiteItemRepository: ItemRepository {
                 synopsis = ?,
                 updated_at = ?,
                 custom_image_data = ?,
-                image_source = ?
+                image_source = ?,
+                serial_number = ?,
+                model_number = ?,
+                character = ?,
+                franchise = ?,
+                dimensions = ?,
+                weight = ?,
+                release_date = ?,
+                limited_edition_number = ?,
+                has_original_packaging = ?,
+                platform = ?,
+                developer = ?,
+                genre = ?,
+                age_rating = ?,
+                technical_specs = ?,
+                warranty_expiry = ?
             WHERE id = ?;
         """
         
@@ -201,7 +236,22 @@ class SQLiteItemRepository: ItemRepository {
             (timestamp, 18),
             (item.customImageData, 19),
             (item.imageSource.rawValue, 20),
-            (item.id.uuidString, 21)
+            (item.serialNumber, 21),
+            (item.modelNumber, 22),
+            (item.character, 23),
+            (item.franchise, 24),
+            (item.dimensions, 25),
+            (item.weight, 26),
+            (item.releaseDate.map { Int($0.timeIntervalSince1970) }, 27),
+            (item.limitedEditionNumber, 28),
+            (item.hasOriginalPackaging.map { $0 ? 1 : 0 }, 29),
+            (item.platform, 30),
+            (item.developer, 31),
+            (item.genre, 32),
+            (item.ageRating, 33),
+            (item.technicalSpecs, 34),
+            (item.warrantyExpiry.map { Int($0.timeIntervalSince1970) }, 35),
+            (item.id.uuidString, 36)
         ]
         
         // Add debug prints
@@ -277,7 +327,7 @@ class SQLiteItemRepository: ItemRepository {
         let timestamp = Int(Date().timeIntervalSince1970)
         let parameters: [Any] = [timestamp, timestamp, id.uuidString]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     func fetchAll() throws -> [InventoryItem] {
@@ -424,10 +474,31 @@ class SQLiteItemRepository: ItemRepository {
         
         let imageSource = {
             if let sourceText = sqlite3_column_text(statement, 23) {
-                return ImageSource(rawValue: String(cString: sourceText)) ?? .none
+                return InventoryItem.ImageSource(rawValue: String(cString: sourceText)) ?? .none
             }
-            return ImageSource.none
+            return InventoryItem.ImageSource.none
         }()
+        
+        // New fields from v3
+        let serialNumber = sqlite3_column_text(statement, 24).map { String(cString: $0) }
+        let modelNumber = sqlite3_column_text(statement, 25).map { String(cString: $0) }
+        let character = sqlite3_column_text(statement, 26).map { String(cString: $0) }
+        let franchise = sqlite3_column_text(statement, 27).map { String(cString: $0) }
+        let dimensions = sqlite3_column_text(statement, 28).map { String(cString: $0) }
+        let weight = sqlite3_column_text(statement, 29).map { String(cString: $0) }
+        let releaseDate = sqlite3_column_int64(statement, 30) > 0
+            ? Date(timeIntervalSince1970: TimeInterval(sqlite3_column_int64(statement, 30)))
+            : nil
+        let limitedEditionNumber = sqlite3_column_text(statement, 31).map { String(cString: $0) }
+        let hasOriginalPackaging = sqlite3_column_int(statement, 32) > 0 ? true : nil
+        let platform = sqlite3_column_text(statement, 33).map { String(cString: $0) }
+        let developer = sqlite3_column_text(statement, 34).map { String(cString: $0) }
+        let genre = sqlite3_column_text(statement, 35).map { String(cString: $0) }
+        let ageRating = sqlite3_column_text(statement, 36).map { String(cString: $0) }
+        let technicalSpecs = sqlite3_column_text(statement, 37).map { String(cString: $0) }
+        let warrantyExpiry = sqlite3_column_int64(statement, 38) > 0
+            ? Date(timeIntervalSince1970: TimeInterval(sqlite3_column_int64(statement, 38)))
+            : nil
         
         return InventoryItem(
             title: title,
@@ -450,7 +521,22 @@ class SQLiteItemRepository: ItemRepository {
             purchaseDate: purchaseDate,
             synopsis: synopsis,
             customImageData: imageData,
-            imageSource: imageSource
+            imageSource: imageSource,
+            serialNumber: serialNumber,
+            modelNumber: modelNumber,
+            character: character,
+            franchise: franchise,
+            dimensions: dimensions,
+            weight: weight,
+            releaseDate: releaseDate,
+            limitedEditionNumber: limitedEditionNumber,
+            hasOriginalPackaging: hasOriginalPackaging,
+            platform: platform,
+            developer: developer,
+            genre: genre,
+            ageRating: ageRating,
+            technicalSpecs: technicalSpecs,
+            warrantyExpiry: warrantyExpiry
         )
     }
     
@@ -473,7 +559,7 @@ class SQLiteItemRepository: ItemRepository {
         let timestamp = Int(Date().timeIntervalSince1970)
         let parameters: [Any] = [timestamp, id.uuidString]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     // Add method to fetch deleted items
@@ -493,11 +579,11 @@ class SQLiteItemRepository: ItemRepository {
             
             // First delete any custom fields
             let deleteCustomFieldsSQL = "DELETE FROM custom_fields WHERE item_id = ?;"
-            db.executeStatement(deleteCustomFieldsSQL, parameters: [id.uuidString])
+            try db.executeStatement(deleteCustomFieldsSQL, parameters: [id.uuidString])
             
             // Then delete the item
             let deleteItemSQL = "DELETE FROM items WHERE id = ?;"
-            db.executeStatement(deleteItemSQL, parameters: [id.uuidString])
+            try db.executeStatement(deleteItemSQL, parameters: [id.uuidString])
             
             try db.commitTransaction()
         } catch {
@@ -519,11 +605,11 @@ class SQLiteItemRepository: ItemRepository {
                     WHERE deleted_at IS NOT NULL
                 );
             """
-            db.executeStatement(deleteCustomFieldsSQL)
+            try db.executeStatement(deleteCustomFieldsSQL)
             
             // Then delete the items
             let deleteItemsSQL = "DELETE FROM items WHERE deleted_at IS NOT NULL;"
-            db.executeStatement(deleteItemsSQL)
+            try db.executeStatement(deleteItemsSQL)
             
             try db.commitTransaction()
         } catch {
@@ -666,5 +752,148 @@ class SQLiteItemRepository: ItemRepository {
         }
         
         return .books // Default type
+    }
+    
+    func updateBatch(_ items: [InventoryItem]) throws {
+        guard !items.isEmpty else { return }
+        
+        // We use a single transaction for all updates
+        try db.beginTransaction()
+        
+        do {
+            // SQL for updating an item without starting a new transaction
+            let sql = """
+                UPDATE items SET
+                    title = ?, 
+                    type = ?, 
+                    series = ?, 
+                    volume = ?,
+                    condition = ?,
+                    location_id = ?,
+                    notes = ?,
+                    barcode = ?,
+                    thumbnail_url = ?,
+                    author = ?,
+                    manufacturer = ?,
+                    original_publish_date = ?,
+                    publisher = ?,
+                    isbn = ?,
+                    price = ?,
+                    purchase_date = ?,
+                    synopsis = ?,
+                    updated_at = ?,
+                    custom_image_data = ?,
+                    image_source = ?,
+                    serial_number = ?,
+                    model_number = ?,
+                    character = ?,
+                    franchise = ?,
+                    dimensions = ?,
+                    weight = ?,
+                    release_date = ?,
+                    limited_edition_number = ?,
+                    has_original_packaging = ?,
+                    platform = ?,
+                    developer = ?,
+                    genre = ?,
+                    age_rating = ?,
+                    technical_specs = ?,
+                    warranty_expiry = ?
+                WHERE id = ?;
+            """
+            
+            for item in items {
+                let timestamp = Int(Date().timeIntervalSince1970)
+                print("Batch updating item \(item.id)")
+                
+                let parameters: [(Any?, Int32)] = [
+                    (item.title, 1),
+                    (item.type.rawValue, 2),
+                    (item.series, 3),
+                    (item.volume, 4),
+                    (item.condition.rawValue, 5),
+                    (item.locationId?.uuidString, 6),
+                    (item.notes, 7),
+                    (item.barcode, 8),
+                    (item.thumbnailURL?.absoluteString, 9),
+                    (item.author, 10),
+                    (item.manufacturer, 11),
+                    (item.originalPublishDate.map { Int($0.timeIntervalSince1970) }, 12),
+                    (item.publisher, 13),
+                    (item.isbn, 14),
+                    (item.price?.databaseValue, 15),
+                    (item.purchaseDate.map { Int($0.timeIntervalSince1970) }, 16),
+                    (item.synopsis, 17),
+                    (timestamp, 18),
+                    (item.customImageData, 19),
+                    (item.imageSource.rawValue, 20),
+                    (item.serialNumber, 21),
+                    (item.modelNumber, 22),
+                    (item.character, 23),
+                    (item.franchise, 24),
+                    (item.dimensions, 25),
+                    (item.weight, 26),
+                    (item.releaseDate.map { Int($0.timeIntervalSince1970) }, 27),
+                    (item.limitedEditionNumber, 28),
+                    (item.hasOriginalPackaging.map { $0 ? 1 : 0 }, 29),
+                    (item.platform, 30),
+                    (item.developer, 31),
+                    (item.genre, 32),
+                    (item.ageRating, 33),
+                    (item.technicalSpecs, 34),
+                    (item.warrantyExpiry.map { Int($0.timeIntervalSince1970) }, 35),
+                    (item.id.uuidString, 36)
+                ]
+                
+                var statement: OpaquePointer?
+                guard sqlite3_prepare_v2(db.connection, sql, -1, &statement, nil) == SQLITE_OK else {
+                    let error = String(cString: sqlite3_errmsg(db.connection))
+                    print("Failed to prepare batch item update: \(error)")
+                    throw DatabaseManager.DatabaseError.prepareFailed(error)
+                }
+                
+                defer {
+                    sqlite3_finalize(statement)
+                }
+                
+                // Bind all parameters
+                for (value, index) in parameters {
+                    switch value {
+                    case let text as String:
+                        sqlite3_bind_text(statement, index, (text as NSString).utf8String, -1, nil)
+                    case let int as Int:
+                        sqlite3_bind_int64(statement, index, Int64(int))
+                    case let double as Double:
+                        sqlite3_bind_double(statement, index, double)
+                    case let data as Data:
+                        _ = data.withUnsafeBytes { bytes in
+                            sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(data.count), nil)
+                        }
+                    case .none:
+                        sqlite3_bind_null(statement, index)
+                    default:
+                        if let stringValue = value as? CustomStringConvertible {
+                            sqlite3_bind_text(statement, index, (stringValue.description as NSString).utf8String, -1, nil)
+                        } else {
+                            sqlite3_bind_null(statement, index)
+                        }
+                    }
+                }
+                
+                if sqlite3_step(statement) != SQLITE_DONE {
+                    let error = String(cString: sqlite3_errmsg(db.connection))
+                    print("Failed to execute batch item update: \(error)")
+                    throw DatabaseManager.DatabaseError.updateFailed
+                }
+            }
+            
+            try db.commitTransaction()
+            print("Successfully batch updated \(items.count) items")
+            
+        } catch {
+            try? db.rollbackTransaction()
+            print("Error during batch update: \(error.localizedDescription)")
+            throw error
+        }
     }
 } 

@@ -28,12 +28,17 @@ struct ManualEntryView: View {
     @State private var errorMessage = ""
     @State private var showingScanner = false
     @State private var isLoading = false
+    @State private var locationId: UUID?
     @StateObject private var googleBooksService = GoogleBooksService()
     
-    init(type: CollectionType = .books) {
-        _type = State(initialValue: type)
+    init(type: CollectionType = .books, locationId: UUID? = nil) {
+        // Ensure we only use literature types for now
+        let initialType = type.isLiterature ? type : .books
+        _type = State(initialValue: initialType)
         // Will be initialized with userPreferences in onAppear
         _selectedCurrency = State(initialValue: .usd)
+        // Store the preselected location ID
+        _locationId = State(initialValue: locationId)
     }
     
     var body: some View {
@@ -51,7 +56,7 @@ struct ManualEntryView: View {
                 TextField("Title", text: $title)
                 
                 Picker("Type", selection: $type) {
-                    ForEach(CollectionType.allCases, id: \.self) { type in
+                    ForEach(CollectionType.literatureTypes, id: \.self) { type in
                         Text(type.name).tag(type)
                     }
                 }
@@ -323,6 +328,7 @@ struct ManualEntryView: View {
             series: series.isEmpty ? nil : series,
             volume: Int(volume),
             condition: condition,
+            locationId: locationId,
             notes: notes.isEmpty ? nil : notes,
             author: author.isEmpty ? nil : author,
             originalPublishDate: publishDate,

@@ -105,19 +105,10 @@ struct ItemDetailComponent: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    if enableNavigation, let id = item.locationId {
-                        Button {
-                            navigationCoordinator.navigateToLocation(locationId: id)
-                        } label: {
-                            Text(path)
-                                .font(.body)
-                                .multilineTextAlignment(.leading)
-                        }
-                    } else {
-                        Text(path)
-                            .font(.body)
-                            .multilineTextAlignment(.leading)
-                    }
+                    Text(path)
+                        .font(.body)
+                        .foregroundColor(.accentColor)
+                        .multilineTextAlignment(.leading)
                 }
             }
         }
@@ -131,17 +122,9 @@ struct ItemDetailComponent: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    if enableNavigation {
-                        Button {
-                            navigationCoordinator.navigateToSeries(name: series)
-                        } label: {
-                            Text(series)
-                                .font(.body)
-                        }
-                    } else {
-                        Text(series)
-                            .font(.body)
-                    }
+                    Text(series)
+                        .font(.body)
+                        .foregroundColor(.accentColor)
                 }
             }
             

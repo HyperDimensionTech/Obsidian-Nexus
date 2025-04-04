@@ -38,7 +38,7 @@ class SQLiteLocationRepository: LocationRepository {
             timestamp
         ]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     func update(_ location: StorageLocation) throws {
@@ -60,7 +60,7 @@ class SQLiteLocationRepository: LocationRepository {
             location.id.uuidString
         ]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     func delete(_ locationId: UUID) throws {
@@ -71,7 +71,7 @@ class SQLiteLocationRepository: LocationRepository {
         """
         
         let timestamp = Int(Date().timeIntervalSince1970)
-        db.executeStatement(sql, parameters: [
+        try db.executeStatement(sql, parameters: [
             timestamp,
             locationId.uuidString,
             locationId.uuidString
@@ -158,7 +158,7 @@ class SQLiteLocationRepository: LocationRepository {
             locationId.uuidString
         ]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     func updateName(_ locationId: UUID, newName: String) throws {

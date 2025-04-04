@@ -7,6 +7,7 @@ protocol ISBNMappingRepository {
     func fetchByISBN(_ isbn: String) throws -> ISBNMapping?
     func delete(_ isbn: String) throws
     func deleteAll() throws
+    func executeDirectDelete(isbn: String) throws
 }
 
 class SQLiteISBNMappingRepository: ISBNMappingRepository {
@@ -34,7 +35,7 @@ class SQLiteISBNMappingRepository: ISBNMappingRepository {
             dateTimestamp
         ]
         
-        db.executeStatement(sql, parameters: parameters)
+        try db.executeStatement(sql, parameters: parameters)
     }
     
     func fetchAll() throws -> [ISBNMapping] {
@@ -93,20 +94,20 @@ class SQLiteISBNMappingRepository: ISBNMappingRepository {
     
     func delete(_ isbn: String) throws {
         let sql = "DELETE FROM isbn_mappings WHERE incorrect_isbn = ?;"
-        db.executeStatement(sql, parameters: [isbn])
+        try db.executeStatement(sql, parameters: [isbn])
     }
     
     func deleteAll() throws {
         let sql = "DELETE FROM isbn_mappings;"
-        db.executeStatement(sql)
+        try db.executeStatement(sql)
     }
     
     // MARK: - Public Methods
     
     /// Execute a direct SQL delete statement for emergency fixes
-    func executeDirectDelete(isbn: String) {
+    func executeDirectDelete(isbn: String) throws {
         let sql = "DELETE FROM isbn_mappings WHERE incorrect_isbn = ?;"
-        db.executeStatement(sql, parameters: [isbn])
+        try db.executeStatement(sql, parameters: [isbn])
         print("Executed direct SQL delete for ISBN: \(isbn)")
     }
     

@@ -54,7 +54,7 @@ class LocationManager: ObservableObject {
     private weak var inventoryViewModel: InventoryViewModel?
     
     /// Storage manager for persistence
-    private let storage: StorageManager
+    internal let storage: StorageManager
     
     /**
      Initializes the location manager.
@@ -281,12 +281,24 @@ class LocationManager: ObservableObject {
     /**
      Returns the immediate children of a location.
      
-     - Parameter locationId: The ID of the parent location
-     - Returns: An array of child locations, or an empty array if none
+     - Parameter locationId: The ID of the location
+     - Returns: An array of child locations
      */
     func children(of locationId: UUID) -> [StorageLocation] {
-        guard let location = locations[locationId] else { return [] }
-        return location.childIds.compactMap { locations[$0] }
+        guard let parent = locations[locationId] else { return [] }
+        return parent.childIds
+            .compactMap { locations[$0] }
+    }
+    
+    /**
+     Returns the immediate children of a location, sorted by name.
+     
+     - Parameter locationId: The ID of the location
+     - Returns: An array of child locations sorted by name
+     */
+    func childLocations(for locationId: UUID) -> [StorageLocation] {
+        children(of: locationId)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
     
     /**
@@ -406,6 +418,45 @@ class LocationManager: ObservableObject {
      */
     func location(withId id: UUID) -> StorageLocation? {
         locations[id]
+    }
+    
+    /**
+     Asynchronously loads a specific location from the database if not in memory.
+     
+     - Parameter id: The ID of the location to load
+     */
+    func loadLocation(withId id: UUID) async {
+        // Check if we already have this location in memory
+        if locations[id] != nil {
+            return
+        }
+        
+        do {
+            // Load the location from database without capturing self
+            if let location = try await storage.loadLocation(withId: id) {
+                // Use MainActor to safely update the published property
+                await MainActor.run {
+                    // Update our in-memory state safely on the main thread
+                    updateLocationsAfterLoad(location: location)
+                }
+            }
+        } catch {
+            print("Error loading location with ID \(id): \(error.localizedDescription)")
+        }
+    }
+    
+    /// Updates the locations dictionary after loading a location from the database
+    /// This method must be called on the main thread
+    @MainActor private func updateLocationsAfterLoad(location: StorageLocation) {
+        // Add the location to our dictionary
+        locations[location.id] = location
+        
+        // If this location has a parent, update the parent's child relationship
+        if let parentId = location.parentId, var parent = locations[parentId] {
+            if parent.addChild(location.id) {
+                locations[parentId] = parent
+            }
+        }
     }
     
     /**

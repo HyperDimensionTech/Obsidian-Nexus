@@ -106,6 +106,12 @@ struct AddItemView: View {
     @State private var currentFailedISBN = ""
     @State private var showingLinkPrompt = false
     @State private var isProcessingBook = false
+    @State private var preselectedLocationId: UUID?
+    
+    // Add initializer that accepts a locationId
+    init(locationId: UUID? = nil) {
+        _preselectedLocationId = State(initialValue: locationId)
+    }
     
     var sortedResults: [GoogleBook] {
         // First apply the existing volume sorting logic
@@ -131,15 +137,7 @@ struct AddItemView: View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Clean, modern title
-                    Text("Add Item")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        .accessibilityAddTraits(.isHeader)
-                    
+                    // Title is now provided by navigation title
                     searchBarView
                     actionButtonsView
                     continuousModeToggleView
@@ -178,7 +176,6 @@ struct AddItemView: View {
                 }
             }
         }
-        .navigationBarHidden(true) // Hide the default navigation bar title
         .alert("Error", isPresented: $showingError) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -202,7 +199,7 @@ struct AddItemView: View {
         }
         .sheet(isPresented: $showingManualEntry) {
             NavigationView {
-                ManualEntryView(type: selectedType)
+                ManualEntryView(type: selectedType, locationId: preselectedLocationId)
             }
             .accessibilityLabel("Manual Entry")
             .accessibilityHint("Enter item details manually")
@@ -754,8 +751,12 @@ struct AddItemView: View {
         // Create a new inventory item from the book
         let newItem = createInventoryItem(from: book)
         
+        // Set the location ID to the preselected one if available
+        var itemWithLocation = newItem
+        itemWithLocation.locationId = preselectedLocationId
+        
         do {
-            try inventoryViewModel.addItem(newItem)
+            try inventoryViewModel.addItem(itemWithLocation)
             
             // Provide feedback
             triggerSuccessHaptic()
@@ -1090,6 +1091,15 @@ struct AddItemView: View {
         // Re-focus the search field for the next scan
         refocusSearchField()
     }
+    
+    // First, add a method to check if a book already exists in the collection
+    private func bookExistsInCollection(_ book: GoogleBook) -> Bool {
+        // Create a temporary inventory item from the book
+        let tempItem = createInventoryItem(from: book)
+        
+        // Use the InventoryViewModel's duplicate check method
+        return inventoryViewModel.duplicateExists(tempItem)
+    }
 }
 
 // New component for better-looking book results
@@ -1097,6 +1107,7 @@ struct BookResultCard: View {
     let book: GoogleBook
     let onSelect: (GoogleBook) -> Void
     @EnvironmentObject private var scanManager: ScanResultManager
+    @EnvironmentObject private var inventoryViewModel: InventoryViewModel
     
     // Access the continuous mode state
     @Binding var continuousMode: Bool
@@ -1104,6 +1115,33 @@ struct BookResultCard: View {
     // Track when item is added
     @State private var isAdded = false
     @State private var buttonScale = 1.0
+    
+    // Check if item already exists in collection
+    private var alreadyInCollection: Bool {
+        // Create a temporary inventory item from the book
+        let tempItem = InventoryItem(
+            title: book.volumeInfo.title,
+            type: .books, // Default type, sufficient for duplicate check
+            series: nil,
+            volume: nil,
+            condition: .good,
+            notes: nil,
+            dateAdded: Date(),
+            barcode: nil,
+            thumbnailURL: nil,
+            author: book.volumeInfo.authors?.first,
+            manufacturer: nil,
+            originalPublishDate: nil,
+            publisher: book.volumeInfo.publisher,
+            isbn: book.volumeInfo.industryIdentifiers?.first?.identifier,
+            price: nil,
+            purchaseDate: nil,
+            synopsis: nil
+        )
+        
+        // Use the InventoryViewModel's duplicate check method
+        return inventoryViewModel.duplicateExists(tempItem)
+    }
     
     var body: some View {
         Button(action: {
@@ -1208,13 +1246,35 @@ struct BookResultCard: View {
                 
                 Spacer()
                 
-                // Animated add button/checkmark
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(isAdded ? .green : .accentColor)
-                    .scaleEffect(buttonScale)
-                    .padding([.top, .trailing], 6)
-                    .contentTransition(.symbolEffect(.replace))
+                // Animated add button/checkmark or "already in collection" checkmark
+                Group {
+                    if isAdded {
+                        // Show green checkmark when just added
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.green)
+                            .scaleEffect(buttonScale)
+                    } else if alreadyInCollection {
+                        // Show green checkmark with message
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundColor(.green)
+                            
+                            Text("In Collection")
+                                .font(.caption2)
+                                .bold()
+                                .foregroundColor(.green)
+                        }
+                    } else {
+                        // Show plus button for new items
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.accentColor)
+                    }
+                }
+                .padding([.top, .trailing], 6)
+                .contentTransition(.symbolEffect(.replace))
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)

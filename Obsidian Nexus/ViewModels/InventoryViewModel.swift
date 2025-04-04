@@ -530,9 +530,10 @@ class InventoryViewModel: ObservableObject {
             throw BulkUpdateError.noItemsSelected
         }
         
-        try storage.beginTransaction()
-        
         do {
+            // Create updated copies of each item with the selected fields changed
+            var updatedItems: [InventoryItem] = []
+            
             for var item in items {
                 if fields.contains("type") {
                     item.type = updates.type
@@ -549,14 +550,38 @@ class InventoryViewModel: ObservableObject {
                 if fields.contains("purchaseDate") {
                     item.purchaseDate = updates.purchaseDate
                 }
+                if fields.contains("author") {
+                    item.author = updates.author
+                }
+                if fields.contains("publisher") {
+                    item.publisher = updates.publisher
+                }
+                if fields.contains("image") {
+                    item.customImageData = updates.customImageData
+                    item.imageSource = updates.imageSource
+                }
                 
-                try updateItem(item)
+                // Clean up series name for consistency
+                item.series = cleanupSeriesName(item.series)
+                
+                // For validation purposes, we only need to validate items with changed fields
+                // that would trigger validation concerns (ISBN, title, series, volume)
+                if fields.contains("isbn") || fields.contains("title") || 
+                   fields.contains("series") || fields.contains("volume") {
+                    try validateItem(item, isUpdate: true)
+                }
+                
+                updatedItems.append(item)
             }
             
-            try storage.commitTransaction()
+            // Perform the batch update through the storage layer
+            try storage.updateBatch(updatedItems)
+            
+            // Reload items to refresh the UI
+            self.items = try storage.loadItems()
             
         } catch {
-            try storage.rollbackTransaction()
+            print("Bulk update failed: \(error.localizedDescription)")
             throw BulkUpdateError.transactionFailed(error.localizedDescription)
         }
     }

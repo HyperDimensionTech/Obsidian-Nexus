@@ -13,7 +13,6 @@ struct LocationsView: View {
     @State private var expandedLocations: Set<UUID> = []
     @State private var errorMessage: String?
     @State private var showingError = false
-    @State private var showingScanner = false
     
     var body: some View {
         NavigationStack {
@@ -47,14 +46,6 @@ struct LocationsView: View {
                         showingAddLocation = true
                     } label: {
                         Label("Add Location", systemImage: "plus")
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingScanner = true
-                    } label: {
-                        Label("Scan QR Code", systemImage: "qrcode.viewfinder")
                     }
                 }
             }
@@ -104,13 +95,6 @@ struct LocationsView: View {
             .onChange(of: selectedLocation) { oldValue, newValue in
                 // Clear error when selection changes
                 errorMessage = nil
-            }
-        }
-        .sheet(isPresented: $showingScanner) {
-            NavigationView {
-                LocationQRScannerView()
-                    .environmentObject(locationManager)
-                    .environmentObject(navigationCoordinator)
             }
         }
         .onAppear {
