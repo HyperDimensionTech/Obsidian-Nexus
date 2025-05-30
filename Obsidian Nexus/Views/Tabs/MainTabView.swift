@@ -60,10 +60,8 @@ struct MainTabView: View {
         }
         .onChange(of: selectedTab) { oldTab, newTab in
             if newTab == .add {
-                DispatchQueue.main.async {
-                    selectedTab = oldTab
-                    showingAddItem = true
-                }
+                selectedTab = oldTab
+                showingAddItem = true
             } else {
                 // Handle tab changes for navigation
                 handleTabSelection(oldTab: oldTab, newTab: newTab)
@@ -89,9 +87,7 @@ struct MainTabView: View {
                     // Switch to search tab for location viewing
                     selectedTab = .search
                     // Navigate to location items view
-                    DispatchQueue.main.async {
-                        navigationCoordinator.navigate(to: .scannedLocation(location))
-                    }
+                    navigationCoordinator.navigate(to: .scannedLocation(location))
                 }
             }
         }

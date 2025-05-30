@@ -107,9 +107,7 @@ struct LocationsView: View {
                 // Only respond to locations tab double-taps
                 if let tab = notification.object as? String, tab == "Locations" {
                     // Reset navigation when Locations tab is double-tapped
-                    DispatchQueue.main.async {
-                        navigationCoordinator.navigateToRoot()
-                    }
+                    navigationCoordinator.navigateToRoot()
                 }
             }
             
@@ -123,9 +121,7 @@ struct LocationsView: View {
                    let locationId = userInfo["locationId"] as? UUID,
                    let location = locationManager.getLocation(by: locationId) {
                     // Navigate to the location on the main thread
-                    DispatchQueue.main.async {
-                        navigationCoordinator.navigate(to: .locationDetail(location))
-                    }
+                    navigationCoordinator.navigate(to: .locationDetail(location))
                 }
             }
         }

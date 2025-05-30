@@ -337,7 +337,20 @@ class NavigationCoordinator: ObservableObject {
     }
     
     func navigateBack() {
-        path.removeLast()
+        // Determine which path to use based on what's active
+        if homePath.count > 0 {
+            homePath.removeLast()
+        } else if searchPath.count > 0 {
+            searchPath.removeLast()
+        } else if collectionsPath.count > 0 {
+            collectionsPath.removeLast()
+        } else if settingsPath.count > 0 {
+            settingsPath.removeLast()
+        } else if path.count > 0 {
+            path.removeLast()
+        } else {
+            print("Warning: Attempted to navigate back with all empty paths")
+        }
     }
     
     func navigateToRoot() {

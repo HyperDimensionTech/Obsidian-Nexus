@@ -91,6 +91,9 @@ struct ItemListComponent: View {
     /// Optional binding to parent's edit mode to prevent duplicate UI controls
     var parentEditMode: Binding<EditMode>? = nil
     
+    /// Optional binding to parent's selection state
+    var parentSelection: Binding<Set<UUID>>? = nil
+    
     // MARK: - State
     
     @State private var selectedItems: Set<UUID> = []
@@ -146,7 +149,7 @@ struct ItemListComponent: View {
     
     var body: some View {
         if !items.isEmpty {
-            List(selection: enableSelection ? $selectedItems : nil) {
+            List(selection: enableSelection ? (parentSelection ?? $selectedItems) : nil) {
                 ForEach(organizedItems) { group in
                     Section(header: Text(group.title)) {
                         ForEach(group.items) { item in
@@ -170,7 +173,11 @@ struct ItemListComponent: View {
             .environment(\.editMode, parentEditMode ?? (enableEditing ? $isEditMode : .constant(.inactive)))
             .onChange(of: isEditMode) { _, newValue in
                 if newValue == .inactive {
-                    selectedItems.removeAll()
+                    if let parentSelection = parentSelection {
+                        parentSelection.wrappedValue.removeAll()
+                    } else {
+                        selectedItems.removeAll()
+                    }
                 }
             }
             .toolbar {
@@ -183,23 +190,31 @@ struct ItemListComponent: View {
                             }
                         } else {
                             Menu {
-                                Button("Edit Selected (\(selectedItems.count))") {
+                                Button("Edit Selected (\(parentSelection?.wrappedValue.count ?? selectedItems.count))") {
                                     showingBulkEditSheet = true
                                 }
-                                .disabled(selectedItems.isEmpty)
+                                .disabled((parentSelection?.wrappedValue.isEmpty ?? selectedItems.isEmpty))
                                 
                                 Button("Select All") {
-                                    selectedItems = Set(items.map { $0.id })
+                                    if let parentSelection = parentSelection {
+                                        parentSelection.wrappedValue = Set(items.map { $0.id })
+                                    } else {
+                                        selectedItems = Set(items.map { $0.id })
+                                    }
                                 }
                                 
                                 Button("Delete Selected", role: .destructive) {
                                     showingDeleteConfirmation = true
                                 }
-                                .disabled(selectedItems.isEmpty)
+                                .disabled((parentSelection?.wrappedValue.isEmpty ?? selectedItems.isEmpty))
                                 
                                 Button("Done") {
                                     isEditMode = .inactive
-                                    selectedItems.removeAll()
+                                    if let parentSelection = parentSelection {
+                                        parentSelection.wrappedValue.removeAll()
+                                    } else {
+                                        selectedItems.removeAll()
+                                    }
                                 }
                             } label: {
                                 Text("Edit")
@@ -214,7 +229,7 @@ struct ItemListComponent: View {
                     deleteSelectedItems()
                 }
             } message: {
-                Text("Are you sure you want to delete \(selectedItems.count) items? This action cannot be undone.")
+                Text("Are you sure you want to delete \(parentSelection?.wrappedValue.count ?? selectedItems.count) items? This action cannot be undone.")
             }
             .alert("Delete Error", isPresented: $showingDeleteError) {
                 Button("OK", role: .cancel) { }
@@ -223,7 +238,7 @@ struct ItemListComponent: View {
             }
             .sheet(isPresented: $showingBulkEditSheet) {
                 NavigationStack {
-                    EditItemView(items: inventoryViewModel.items.filter { selectedItems.contains($0.id) })
+                    EditItemView(items: inventoryViewModel.items.filter { (parentSelection?.wrappedValue ?? selectedItems).contains($0.id) })
                         .environmentObject(inventoryViewModel)
                         .environmentObject(locationManager)
                 }
@@ -314,9 +329,14 @@ struct ItemListComponent: View {
     
     /// Deletes the selected items
     private func deleteSelectedItems() {
+        let itemsToDelete = parentSelection?.wrappedValue ?? selectedItems
         do {
-            try inventoryViewModel.bulkDeleteItems(with: selectedItems)
-            selectedItems.removeAll()
+            try inventoryViewModel.bulkDeleteItems(with: itemsToDelete)
+            if let parentSelection = parentSelection {
+                parentSelection.wrappedValue.removeAll()
+            } else {
+                selectedItems.removeAll()
+            }
             isEditMode = .inactive
         } catch {
             deleteErrorMessage = error.localizedDescription

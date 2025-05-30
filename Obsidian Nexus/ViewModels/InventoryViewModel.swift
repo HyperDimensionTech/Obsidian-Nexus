@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class InventoryViewModel: ObservableObject {
     @Published private(set) var items: [InventoryItem] = []
     @Published private(set) var trashedItems: [InventoryItem] = []
@@ -799,7 +800,7 @@ class InventoryViewModel: ObservableObject {
         return databaseType
     }
     
-    private func extractSeriesInfo(from title: String) -> (String?, Int?) {
+    public func extractSeriesInfo(from title: String) -> (String?, Int?) {
         print("🔍 Attempting to extract series info from: \(title)")
         
         // Common manga volume patterns

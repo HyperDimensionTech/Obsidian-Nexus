@@ -57,63 +57,69 @@ class DatabaseManager {
     
     private func setupDatabase() {
         let fileManager = FileManager.default
-        let fileURL = try! fileManager
-            .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            .appendingPathComponent("obsidian_nexus.sqlite")
         
-        print("🔹 DATABASE 🔹 Path: \(fileURL.path)")
-        
-        let fileExists = fileManager.fileExists(atPath: fileURL.path)
-        print("🔹 DATABASE 🔹 File exists: \(fileExists)")
-        
-        // Check if file is readable
-        if fileExists {
-            let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
-            print("🔹 DATABASE 🔹 File size: \(attributes?[.size] as? Int ?? 0) bytes")
-            print("🔹 DATABASE 🔹 File permissions: \(attributes?[.posixPermissions] as? Int ?? 0)")
-        }
-        
-        let needsSetup = !fileExists
-        
-        if sqlite3_open(fileURL.path, &connection) != SQLITE_OK {
-            let errorMsg = String(cString: sqlite3_errmsg(connection))
-            print("🔹 DATABASE 🔹 Error opening database: \(errorMsg)")
-            return
-        }
-        
-        print("🔹 DATABASE 🔹 Successfully opened connection")
-        
-        // Enable foreign keys
         do {
-            try executeStatement("PRAGMA foreign_keys = ON;")
-        } catch {
-            print("🔹 DATABASE 🔹 Error enabling foreign keys: \(error.localizedDescription)")
-        }
-        
-        // Set WAL mode with proper error handling
-        var statement: OpaquePointer?
-        if sqlite3_prepare_v2(connection, "PRAGMA journal_mode = WAL;", -1, &statement, nil) == SQLITE_OK {
-            if sqlite3_step(statement) == SQLITE_ROW {
-                let journalMode = sqlite3_column_text(statement, 0).map { String(cString: $0) } ?? "unknown"
-                print("🔹 DATABASE 🔹 Journal mode set to: \(journalMode)")
-                sqlite3_finalize(statement)
+            let fileURL = try fileManager
+                .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                .appendingPathComponent("obsidian_nexus.sqlite")
+            
+            print("🔹 DATABASE 🔹 Path: \(fileURL.path)")
+            
+            let fileExists = fileManager.fileExists(atPath: fileURL.path)
+            print("🔹 DATABASE 🔹 File exists: \(fileExists)")
+            
+            // Check if file is readable
+            if fileExists {
+                let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path)
+                print("🔹 DATABASE 🔹 File size: \(attributes?[.size] as? Int ?? 0) bytes")
+                print("🔹 DATABASE 🔹 File permissions: \(attributes?[.posixPermissions] as? Int ?? 0)")
             }
-        }
-        
-        if needsSetup {
-            print("🔹 DATABASE 🔹 Creating new database...")
-            createTables()
-        } else {
-            print("🔹 DATABASE 🔹 Using existing database")
-            migrateIfNeeded()
             
-            // Verify database has tables
-            let tableCount = executeScalar("SELECT count(*) FROM sqlite_master WHERE type='table';")
-            print("🔹 DATABASE 🔹 Found \(tableCount) tables")
+            let needsSetup = !fileExists
             
-            // Count items
-            let itemCount = executeScalar("SELECT count(*) FROM items WHERE deleted_at IS NULL;")
-            print("🔹 DATABASE 🔹 Found \(itemCount) items")
+            if sqlite3_open(fileURL.path, &connection) != SQLITE_OK {
+                let errorMsg = String(cString: sqlite3_errmsg(connection))
+                print("🔹 DATABASE 🔹 Error opening database: \(errorMsg)")
+                return
+            }
+            
+            print("🔹 DATABASE 🔹 Successfully opened connection")
+            
+            // Enable foreign keys
+            do {
+                try executeStatement("PRAGMA foreign_keys = ON;")
+            } catch {
+                print("🔹 DATABASE 🔹 Error enabling foreign keys: \(error.localizedDescription)")
+            }
+            
+            // Set WAL mode with proper error handling
+            var statement: OpaquePointer?
+            if sqlite3_prepare_v2(connection, "PRAGMA journal_mode = WAL;", -1, &statement, nil) == SQLITE_OK {
+                if sqlite3_step(statement) == SQLITE_ROW {
+                    let journalMode = sqlite3_column_text(statement, 0).map { String(cString: $0) } ?? "unknown"
+                    print("🔹 DATABASE 🔹 Journal mode set to: \(journalMode)")
+                    sqlite3_finalize(statement)
+                }
+            }
+            
+            if needsSetup {
+                print("🔹 DATABASE 🔹 Creating new database...")
+                createTables()
+            } else {
+                print("🔹 DATABASE 🔹 Using existing database")
+                migrateIfNeeded()
+                
+                // Verify database has tables
+                let tableCount = executeScalar("SELECT count(*) FROM sqlite_master WHERE type='table';")
+                print("🔹 DATABASE 🔹 Found \(tableCount) tables")
+                
+                // Count items
+                let itemCount = executeScalar("SELECT count(*) FROM items WHERE deleted_at IS NULL;")
+                print("🔹 DATABASE 🔹 Found \(itemCount) items")
+            }
+        } catch {
+            print("🔹 DATABASE 🔹 CRITICAL ERROR: Failed to get documents directory: \(error.localizedDescription)")
+            print("🔹 DATABASE 🔹 App will continue but database functionality may be limited")
         }
     }
     

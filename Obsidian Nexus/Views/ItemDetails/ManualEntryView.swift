@@ -250,41 +250,8 @@ struct ManualEntryView: View {
     }
     
     private func extractSeriesInfo(from title: String) -> (String?, Int?) {
-        // Simple regex to extract series and volume
-        // Example: "One Piece, Vol. 93" -> ("One Piece", 93)
-        
-        let patterns = [
-            // Common manga format: "Series Name, Vol. ##"
-            #"^(.*),\s*(?:Vol\.|Volume)\s*(\d+)"#,
-            
-            // Alternate format: "Series Name ##"
-            #"^(.*)\s+#(\d+)"#,
-            
-            // Series with parentheses: "Series Name (Book ##)"
-            #"^(.*)\s+\((?:Book|Volume)\s*(\d+)\)"#
-        ]
-        
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-                let range = NSRange(title.startIndex..<title.endIndex, in: title)
-                if let match = regex.firstMatch(in: title, options: [], range: range) {
-                    let seriesRange = Range(match.range(at: 1), in: title)
-                    let volumeRange = Range(match.range(at: 2), in: title)
-                    
-                    if let seriesRange = seriesRange {
-                        let series = String(title[seriesRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        if let volumeRange = volumeRange, 
-                           let volume = Int(String(title[volumeRange])) {
-                            return (series, volume)
-                        }
-                        return (series, nil)
-                    }
-                }
-            }
-        }
-        
-        return (nil, nil)
+        // Use the InventoryViewModel's implementation for consistent series extraction
+        return inventoryViewModel.extractSeriesInfo(from: title)
     }
     
     private func parseDate(_ dateString: String?) -> Date? {

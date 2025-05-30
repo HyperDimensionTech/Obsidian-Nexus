@@ -10,6 +10,7 @@ struct SearchOptions {
         !types.isEmpty || location != nil || condition != nil
     }
     
+    @MainActor
     func matches(_ item: InventoryItem, locationManager: LocationManager) -> Bool {
         // Title match
         if !query.isEmpty {

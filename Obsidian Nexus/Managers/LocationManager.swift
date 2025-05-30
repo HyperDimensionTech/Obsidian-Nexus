@@ -46,6 +46,7 @@ import Foundation
  - Boxes cannot contain other locations
  - Circular references (a location containing one of its ancestors) are not allowed
  */
+@MainActor
 class LocationManager: ObservableObject {
     /// Dictionary of all locations, keyed by their UUID
     @Published private(set) var locations: [UUID: StorageLocation] = [:]

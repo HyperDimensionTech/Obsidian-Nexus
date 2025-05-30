@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class PreviewData {
     static let shared = PreviewData()
     

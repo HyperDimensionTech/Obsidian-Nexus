@@ -142,15 +142,14 @@ struct LocationDetailView: View {
     private func loadItems() {
         isLoading = true
         print("⏰ Loading items for location \(location.name) (ID: \(location.id))")
-        // Get all items in this location, including nested items
-        DispatchQueue.global(qos: .userInitiated).async {
+        
+        // Use Task with @MainActor to properly call main actor isolated methods
+        Task { @MainActor in
             let allItems = locationManager.getAllItemsInLocation(locationId: location.id, inventoryViewModel: inventoryViewModel)
             print("✅ Found \(allItems.count) items for location \(location.name)")
-            DispatchQueue.main.async {
-                items = allItems
-                isLoading = false
-                print("✅ UI updated with \(allItems.count) items, isLoading = false")
-            }
+            items = allItems
+            isLoading = false
+            print("✅ UI updated with \(allItems.count) items, isLoading = false")
         }
     }
 } 

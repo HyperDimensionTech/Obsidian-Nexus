@@ -18,11 +18,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Log app launch with database info
         print("🚀 APP LAUNCH: Obsidian Nexus started")
         let fm = FileManager.default
-        let dbURL = try! fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            .appendingPathComponent("obsidian_nexus.sqlite")
         
-        print("🚀 APP LAUNCH: Database path: \(dbURL.path)")
-        print("🚀 APP LAUNCH: Database exists: \(fm.fileExists(atPath: dbURL.path))")
+        do {
+            let dbURL = try fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                .appendingPathComponent("obsidian_nexus.sqlite")
+            
+            print("🚀 APP LAUNCH: Database path: \(dbURL.path)")
+            print("🚀 APP LAUNCH: Database exists: \(fm.fileExists(atPath: dbURL.path))")
+        } catch {
+            print("🚀 APP LAUNCH ERROR: Failed to get database URL: \(error.localizedDescription)")
+        }
         
         // Force StorageManager initialization
         _ = StorageManager.shared

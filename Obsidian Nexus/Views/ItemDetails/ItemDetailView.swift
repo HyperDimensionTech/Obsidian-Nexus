@@ -1,4 +1,7 @@
 import SwiftUI
+import PhotosUI
+import QuickLook
+import WebKit
 
 struct ItemDetailView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
@@ -17,6 +20,7 @@ struct ItemDetailView: View {
     @State private var currentItem: InventoryItem
     @State private var isTransitioning = false
     @State private var swipeDirection: SwipeDirection = .none
+    @Environment(\.presentationMode) private var presentationMode
     
     // Track swipe animation progress
     enum SwipeDirection {
@@ -381,7 +385,13 @@ struct ItemDetailView: View {
     }
     
     private func dismiss() {
-        navigationCoordinator.navigateBack()
+        // Check if this view is presented as a sheet
+        if presentationMode.wrappedValue.isPresented {
+            presentationMode.wrappedValue.dismiss()
+        } else {
+            // Otherwise use navigation coordinator
+            navigationCoordinator.navigateBack()
+        }
     }
 }
 

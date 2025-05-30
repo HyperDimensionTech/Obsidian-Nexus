@@ -156,8 +156,8 @@ struct LocationItemsView: View {
             parentLocation = nil
             
             // Load data
+            loadLocationHierarchy()
             loadItems()
-            loadLocationRelationships()
         }
         .id(location.id) // Force view refresh when location changes
         .sheet(isPresented: $showingQRCode) {
@@ -174,15 +174,15 @@ struct LocationItemsView: View {
         }
     }
     
-    private func loadLocationRelationships() {
-        print("⏰ Loading location relationships for \(location.name) (ID: \(location.id))")
+    private func loadLocationHierarchy() {
+        print("🔍 Loading location hierarchy for: \(location.name) (ID: \(location.id))")
         if let parentId = location.parentId {
             print("🔍 This location has parent ID: \(parentId)")
         } else {
             print("ℹ️ This is a root location with no parent")
         }
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        Task { @MainActor in
             // Load parent location using the parentId from the location object
             let parentId = location.parentId
             let parent = parentId.flatMap { parentId -> StorageLocation? in
@@ -196,15 +196,11 @@ struct LocationItemsView: View {
             } else if location.parentId != nil {
                 print("⚠️ Parent ID \(location.parentId!) exists but location not found in locationManager")
                 // Try to fetch parent via async method if not found in memory
-                Task {
-                    await locationManager.loadLocation(withId: location.parentId!)
-                    DispatchQueue.main.async {
-                        // Check if parent loaded
-                        if let loadedParent = self.locationManager.location(withId: location.parentId!) {
-                            self.parentLocation = loadedParent
-                            print("✅ Loaded parent from database: \(loadedParent.name)")
-                        }
-                    }
+                await locationManager.loadLocation(withId: location.parentId!)
+                // Check if parent loaded
+                if let loadedParent = self.locationManager.location(withId: location.parentId!) {
+                    self.parentLocation = loadedParent
+                    print("✅ Loaded parent from database: \(loadedParent.name)")
                 }
             } else {
                 print("ℹ️ No parent ID for this location")
@@ -218,11 +214,9 @@ struct LocationItemsView: View {
                 print("📋 Child locations: \(children.map { "\($0.name) (ID: \($0.id))" }.joined(separator: ", "))")
             }
             
-            DispatchQueue.main.async {
-                self.parentLocation = parent
-                self.childLocations = children
-                print("✅ UI updated with parent \(parent?.name ?? "none") and \(children.count) children")
-            }
+            self.parentLocation = parent
+            self.childLocations = children
+            print("✅ UI updated with parent \(parent?.name ?? "none") and \(children.count) children")
         }
     }
     
@@ -230,7 +224,7 @@ struct LocationItemsView: View {
         isLoading = true
         print("⏰ Loading items for location \(location.name) (ID: \(location.id))")
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        Task { @MainActor in
             // Check for direct items in this location
             let directItems = self.inventoryViewModel.items.filter { $0.locationId == self.location.id }
             print("📦 Found \(directItems.count) direct items in this location")
@@ -243,11 +237,9 @@ struct LocationItemsView: View {
                 print("📋 First few items: \(allItems.prefix(3).map { $0.title }.joined(separator: ", ")) ...")
             }
             
-            DispatchQueue.main.async {
-                self.items = allItems
-                self.isLoading = false
-                print("✅ UI updated with \(allItems.count) items, isLoading = false")
-            }
+            self.items = allItems
+            self.isLoading = false
+            print("✅ UI updated with \(allItems.count) items, isLoading = false")
         }
     }
 } 

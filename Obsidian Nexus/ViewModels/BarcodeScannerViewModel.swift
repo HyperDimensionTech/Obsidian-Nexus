@@ -33,20 +33,16 @@ class BarcodeScannerViewModel: NSObject, ObservableObject {
         // Add torch state binding
         scannerService.$isTorchOn
             .sink { [weak self] isTorchOn in
-                DispatchQueue.main.async {
-                    self?.torchEnabled = isTorchOn
-                }
+                self?.torchEnabled = isTorchOn
             }
             .store(in: &cancellables)
         
         // Forward service updates to view model
         scannerService.objectWillChange
             .sink { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.scannedCode = self?.scannerService.scannedCode
-                    self?.isAuthorized = self?.scannerService.isAuthorized ?? false
-                    self?.error = self?.scannerService.error
-                }
+                self?.scannedCode = self?.scannerService.scannedCode
+                self?.isAuthorized = self?.scannerService.isAuthorized ?? false
+                self?.error = self?.scannerService.error
             }
             .store(in: &cancellables)
     }

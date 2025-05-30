@@ -1,10 +1,18 @@
 import SwiftUI
 
 struct ISBNMappingsView: View {
-    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
+    @EnvironmentObject private var serviceContainer: ServiceContainer
     @State private var showingDeleteAlert = false
     @State private var mappingToDelete: ISBNMapping?
     @State private var showingAddMapping = false
+    
+    private var isbnMappingService: ISBNMappingService {
+        serviceContainer.isbnMappingService
+    }
+    
+    private var googleBooksService: GoogleBooksService {
+        serviceContainer.googleBooksService
+    }
     
     var body: some View {
         List {
@@ -134,8 +142,8 @@ struct ISBNMappingsView: View {
 
 struct AddISBNMappingView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var serviceContainer: ServiceContainer
     @ObservedObject var isbnMappingService: ISBNMappingService
-    @StateObject private var googleBooksService = GoogleBooksService()
     @StateObject private var barcodeScannerViewModel = BarcodeScannerViewModel()
     
     @State private var isbn = ""
@@ -145,6 +153,10 @@ struct AddISBNMappingView: View {
     @State private var errorMessage: String?
     @State private var showingError = false
     @State private var showingScanner = false
+    
+    private var googleBooksService: GoogleBooksService {
+        serviceContainer.googleBooksService
+    }
     
     var body: some View {
         List {

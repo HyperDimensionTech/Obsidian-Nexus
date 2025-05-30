@@ -1,66 +1,5 @@
 import SwiftUI
 
-// MARK: - Sort Options
-enum SortOption: String, CaseIterable, Identifiable {
-    case titleAsc = "Title (A-Z)"
-    case titleDesc = "Title (Z-A)"
-    case dateAddedNewest = "Date Added (Newest)"
-    case dateAddedOldest = "Date Added (Oldest)"
-    case authorAsc = "Author (A-Z)"
-    case authorDesc = "Author (Z-A)"
-    case conditionBest = "Condition (Best)"
-    case conditionWorst = "Condition (Worst)"
-    
-    var id: String { rawValue }
-    
-    func sortItems(_ items: [InventoryItem]) -> [InventoryItem] {
-        switch self {
-        case .titleAsc:
-            return items.sorted { $0.title.lowercased() < $1.title.lowercased() }
-        case .titleDesc:
-            return items.sorted { $0.title.lowercased() > $1.title.lowercased() }
-        case .dateAddedNewest:
-            return items.sorted { $0.dateAdded > $1.dateAdded }
-        case .dateAddedOldest:
-            return items.sorted { $0.dateAdded < $1.dateAdded }
-        case .authorAsc:
-            return items.sorted {
-                let author1 = $0.author?.lowercased() ?? ""
-                let author2 = $1.author?.lowercased() ?? ""
-                return author1 < author2
-            }
-        case .authorDesc:
-            return items.sorted {
-                let author1 = $0.author?.lowercased() ?? ""
-                let author2 = $1.author?.lowercased() ?? ""
-                return author1 > author2
-            }
-        case .conditionBest:
-            return items.sorted {
-                let order1 = conditionOrder($0.condition)
-                let order2 = conditionOrder($1.condition)
-                return order1 < order2
-            }
-        case .conditionWorst:
-            return items.sorted {
-                let order1 = conditionOrder($0.condition)
-                let order2 = conditionOrder($1.condition)
-                return order1 > order2
-            }
-        }
-    }
-    
-    private func conditionOrder(_ condition: ItemCondition) -> Int {
-        switch condition {
-        case .new: return 0
-        case .likeNew: return 1
-        case .good: return 2
-        case .fair: return 3
-        case .poor: return 4
-        }
-    }
-}
-
 // Create a search result type to handle different result types
 enum SearchResultItem: Identifiable {
     case item(InventoryItem)
@@ -242,8 +181,8 @@ struct SearchView: View {
     private func performSearch() {
         isLoading = true
         
-        // Use a background thread for search to prevent UI lag
-        DispatchQueue.global(qos: .userInitiated).async {
+        // Perform search on main actor since our view models are MainActor-isolated
+        Task { @MainActor in
             var results: [SearchResultItem] = []
             
             // Search for items
@@ -254,10 +193,8 @@ struct SearchView: View {
             let locationResults = locationManager.searchLocations(query: searchText)
             results.append(contentsOf: locationResults.map { SearchResultItem.location($0) })
             
-            DispatchQueue.main.async {
-                searchResults = results
-                isLoading = false
-            }
+            searchResults = results
+            isLoading = false
         }
     }
 }
@@ -266,20 +203,4 @@ struct SearchView: View {
     SearchView()
         .environmentObject(InventoryViewModel(locationManager: LocationManager()))
         .environmentObject(NavigationCoordinator())
-}
-
-enum SearchFilter: String, CaseIterable {
-    case all = "All"
-    case manga = "Manga"
-    case books = "Books"
-    case comics = "Comics"
-    
-    var collectionType: CollectionType? {
-        switch self {
-        case .all: return nil
-        case .manga: return .manga
-        case .books: return .books
-        case .comics: return .comics
-        }
-    }
 } 

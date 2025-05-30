@@ -67,10 +67,17 @@ enum BookSortOption: String, CaseIterable, Identifiable {
 struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
-    @StateObject private var googleBooksService = GoogleBooksService()
-    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
+    @EnvironmentObject private var serviceContainer: ServiceContainer
     @EnvironmentObject private var scanManager: ScanResultManager
     @EnvironmentObject private var locationManager: LocationManager
+    
+    private var googleBooksService: GoogleBooksService {
+        serviceContainer.googleBooksService
+    }
+    
+    private var isbnMappingService: ISBNMappingService {
+        serviceContainer.isbnMappingService
+    }
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -862,72 +869,9 @@ struct AddItemView: View {
     }
     
     private func extractSeriesInfo(from title: String) -> (series: String?, volume: Int?) {
-        let lowercasedTitle = title.lowercased()
-        
-        // Extract volume number
-        let volumeNumber = extractVolumeNumber(from: title)
-        
-        // Extract series name
-        let seriesName = extractSeriesName(from: title, lowercasedTitle: lowercasedTitle)
-        
-        return (seriesName, volumeNumber)
-    }
-    
-    private func extractVolumeNumber(from title: String) -> Int? {
-        // Common volume indicators with more patterns
-        let volumePatterns = [
-            "vol\\.?\\s*(\\d+)",
-            "volume\\s*(\\d+)",
-            "v(\\d+)",
-            "#(\\d+)",
-            "\\s(\\d+)$",  // Number at end
-            "\\s(\\d+)\\s" // Number surrounded by spaces
-        ]
-        
-        // Try to extract volume number using patterns
-        for pattern in volumePatterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-               let match = regex.firstMatch(in: title, options: [], range: NSRange(title.startIndex..., in: title)),
-               let range = Range(match.range(at: 1), in: title) {
-                return Int(title[range])
-            }
-        }
-        
-        return nil
-    }
-        
-    private func extractSeriesName(from title: String, lowercasedTitle: String) -> String? {
-        // Try different volume separators
-        let separators = [" vol", " volume", " v", "#"]
-        for separator in separators {
-            if let range = lowercasedTitle.range(of: separator, options: .caseInsensitive) {
-                return String(title[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-            }
-        }
-        
-        // If no series name found, try splitting by comma or hyphen
-            if let commaRange = title.range(of: ",") {
-            return String(title[..<commaRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            } else if let hyphenRange = title.range(of: " - ") {
-            return String(title[..<hyphenRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-        }
-        
-        // Special handling for common manga series patterns
-        let knownSeries = [
-            "one piece": "One Piece",
-            "naruto": "Naruto",
-            "dragon ball": "Dragon Ball",
-            "bleach": "Bleach"
-        ]
-        
-        // Check if the title starts with any known series
-        for (key, value) in knownSeries {
-            if lowercasedTitle.starts(with: key) {
-                return value
-            }
-        }
-        
-        return nil
+        // Use the InventoryViewModel's implementation for consistent series extraction
+        let (series, volume) = inventoryViewModel.extractSeriesInfo(from: title)
+        return (series, volume)
     }
     
     // Add static parseDate method for use in BookSortOption

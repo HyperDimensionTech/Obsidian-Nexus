@@ -69,7 +69,8 @@ struct SeriesDetailView: View {
                 sortStyle: .volume,
                 enableSelection: true,
                 enableEditing: true,
-                parentEditMode: $isEditMode
+                parentEditMode: $isEditMode,
+                parentSelection: $selectedItems
             )
         }
         .navigationTitle(series)

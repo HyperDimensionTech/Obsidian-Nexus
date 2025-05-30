@@ -4,9 +4,16 @@ struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = BarcodeScannerViewModel()
     @EnvironmentObject private var inventoryViewModel: InventoryViewModel
-    @StateObject private var googleBooksService = GoogleBooksService()
-    @StateObject private var isbnMappingService = ISBNMappingService(storage: .shared)
+    @EnvironmentObject private var serviceContainer: ServiceContainer
     @EnvironmentObject private var scanManager: ScanResultManager
+    
+    private var googleBooksService: GoogleBooksService {
+        serviceContainer.googleBooksService
+    }
+    
+    private var isbnMappingService: ISBNMappingService {
+        serviceContainer.isbnMappingService
+    }
     
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
@@ -29,6 +36,8 @@ struct BarcodeScannerView: View {
     @State private var showingSuccessMessage = false
     @State private var successMessage = ""
     @State private var isDuplicate = false
+    @State private var isProcessing = false
+    @State private var processingStatus = "Ready to scan next item..."
     
     let onScan: (String) -> Void
     @Namespace private var animation
@@ -95,6 +104,9 @@ struct BarcodeScannerView: View {
                         .padding(.horizontal, 12)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
+                        .onChange(of: continuousScanEnabled) { _, isEnabled in
+                            processingStatus = isEnabled ? "Ready to scan next item..." : "Position barcode within frame"
+                        }
                         
                         Button(action: { viewModel.toggleTorch() }) {
                             Image(systemName: viewModel.torchEnabled ? "flashlight.on.fill" : "flashlight.off.fill")
@@ -141,11 +153,12 @@ struct BarcodeScannerView: View {
                     VStack(spacing: 12) {
                         if continuousScanEnabled {
                             HStack(spacing: 16) {
+                                // Successful scans counter
                                 VStack(alignment: .center) {
-                                    Text("\(scanManager.totalScannedCount)")
+                                    Text("\(scanManager.successfulScans.count)")
                                         .font(.system(size: 28, weight: .bold))
                                         .foregroundColor(.white)
-                                    Text("Scanned")
+                                    Text("Successful")
                                         .font(.caption)
                                         .foregroundColor(.white.opacity(0.8))
                                 }
@@ -164,17 +177,27 @@ struct BarcodeScannerView: View {
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 }
+                                
+                                // Failed scans counter
+                                VStack(alignment: .center) {
+                                    Text("\(scanManager.failedScans.count)")
+                                        .font(.system(size: 28, weight: .bold))
+                                        .foregroundColor(.white)
+                                    Text("Failed")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
                             }
                             .padding(.horizontal)
                             
                             // Review button - More prominent with SF Symbol
-                            if scanManager.totalScannedCount > 0 {
+                            if scanManager.successfulScans.count > 0 || scanManager.failedScans.count > 0 {
                                 Button(action: {
                                     showingResults = true
                                 }) {
                                     HStack {
                                         Image(systemName: "list.bullet.clipboard")
-                                        Text("Review Scanned Items")
+                                        Text("Review Scanned Items (\(scanManager.successfulScans.count + scanManager.failedScans.count))")
                                             .fontWeight(.semibold)
                                     }
                                     .frame(maxWidth: .infinity)
@@ -188,7 +211,7 @@ struct BarcodeScannerView: View {
                             }
                         }
                         
-                        Text(continuousScanEnabled ? "Ready to scan next item..." : "Position barcode within frame")
+                        Text(processingStatus)
                             .font(.subheadline)
                             .foregroundColor(.white)
                             .padding(.bottom, 8)
@@ -208,6 +231,7 @@ struct BarcodeScannerView: View {
         }
         .onAppear {
             viewModel.startScanning()
+            processingStatus = continuousScanEnabled ? "Ready to scan next item..." : "Position barcode within frame"
         }
         .onDisappear {
             if viewModel.torchEnabled {
@@ -287,10 +311,10 @@ struct BarcodeScannerView: View {
         .toolbar {
             if continuousScanEnabled {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Review (\(scanManager.totalScannedCount))") {
+                    Button("Review (\(scanManager.successfulScans.count + scanManager.failedScans.count))") {
                         showingResults = true
                     }
-                    .disabled(scanManager.totalScannedCount == 0)
+                    .disabled(scanManager.successfulScans.isEmpty && scanManager.failedScans.isEmpty)
                 }
             }
         }
@@ -299,6 +323,9 @@ struct BarcodeScannerView: View {
     private func handleContinuousScan(_ code: String) {
         // Stop scanning while processing
         viewModel.stopScanning()
+        // Update processing status
+        isProcessing = true
+        processingStatus = "Processing scan..."
         
         // First check user-defined mappings
         if let mapping = isbnMappingService.getMappingForISBN(code) {
@@ -308,8 +335,14 @@ struct BarcodeScannerView: View {
                     switch result {
                     case .success(let book):
                         self.processFoundBook(book, code)
-                        // Resume scanning after processing
-                        self.viewModel.startScanning()
+                        // Show wait message
+                        self.processingStatus = "Waiting for next scan..."
+                        // Resume scanning after processing with a delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            self.isProcessing = false
+                            self.processingStatus = "Ready to scan next item..."
+                            self.viewModel.startScanning()
+                        }
                     case .failure(_):
                         // If direct fetch fails, try a title search as fallback
                         self.searchByTitle(mapping.title, originalIsbn: code)
@@ -333,13 +366,23 @@ struct BarcodeScannerView: View {
                     self.handleFailedScan(code, reason: error.localizedDescription)
                 }
                 
-                // Resume scanning after processing
-                self.viewModel.startScanning()
+                // Show wait message
+                self.processingStatus = "Waiting for next scan..."
+                // Resume scanning after processing with a delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.isProcessing = false
+                    self.processingStatus = "Ready to scan next item..."
+                    self.viewModel.startScanning()
+                }
             }
         }
     }
     
     private func searchByTitle(_ title: String, originalIsbn: String) {
+        // Update processing status
+        isProcessing = true
+        processingStatus = "Searching for title..."
+        
         googleBooksService.fetchBooks(query: title) { result in
             DispatchQueue.main.async {
                 switch result {
@@ -348,13 +391,19 @@ struct BarcodeScannerView: View {
                         self.processFoundBook(book, originalIsbn)
                     } else {
                         self.handleNoBookFound(originalIsbn)
-            }
+                    }
                 case .failure(let error):
                     self.handleFailedScan(originalIsbn, reason: error.localizedDescription)
                 }
                 
-                // Resume scanning
-                self.viewModel.startScanning()
+                // Show wait message
+                self.processingStatus = "Waiting for next scan..."
+                // Resume scanning with a delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.isProcessing = false
+                    self.processingStatus = "Ready to scan next item..."
+                    self.viewModel.startScanning()
+                }
             }
         }
     }

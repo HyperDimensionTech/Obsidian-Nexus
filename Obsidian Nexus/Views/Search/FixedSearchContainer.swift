@@ -6,6 +6,9 @@ struct FixedSearchContainer: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject var locationManager: LocationManager
     
+    // Configuration
+    let showSearchBar: Bool
+    
     // State
     @State private var searchText = ""
     @State private var selectedFilter: SearchFilter = .all
@@ -22,6 +25,11 @@ struct FixedSearchContainer: View {
     private var isSearching: Bool { !searchText.isEmpty }
     private var hasResults: Bool { !cachedSearchResults.isEmpty }
     
+    // Default initializer that shows search bar
+    init(showSearchBar: Bool = true) {
+        self.showSearchBar = showSearchBar
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -32,17 +40,19 @@ struct FixedSearchContainer: View {
                     // Fixed header section
                     VStack(spacing: 0) {
                         // Search bar with fixed height
-                        SearchBar(text: $searchText)
-                            .frame(height: 44)
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-                        
-                        // Filter bar with fixed height
-                        SearchFilterBar(selectedFilter: $selectedFilter)
-                            .frame(height: 52)
+                        if showSearchBar {
+                            SearchBar(text: $searchText)
+                                .frame(height: 44)
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+                            
+                            // Filter bar with fixed height
+                            SearchFilterBar(selectedFilter: $selectedFilter)
+                                .frame(height: 52)
+                        }
                     }
                     .background(Color(.systemBackground))
-                    .frame(height: 112) // Total fixed header height
+                    .frame(height: showSearchBar ? 112 : 0) // Total fixed header height
                     
                     // Content area
                     ZStack {
@@ -101,12 +111,10 @@ struct FixedSearchContainer: View {
         
         // Get item results and filter if needed
         let itemResults = inventoryViewModel.searchItems(query: query)
-        let filteredItems = selectedFilter == .all ? 
-            itemResults : 
-            itemResults.filter { $0.type == selectedFilter.collectionType }
+        let filteredItems = applyFilter(to: itemResults)
         
-        // Apply sorting to items
-        let sortedItems = selectedSortOption.sortItems(filteredItems)
+        // Apply sorting to items based on selected sort option
+        let sortedItems = sortItems(filteredItems, by: selectedSortOption)
         results.append(contentsOf: sortedItems.map { SearchResultItem.item($0) })
         
         // Add location results if not filtering by collection type
@@ -127,6 +135,46 @@ struct FixedSearchContainer: View {
                 return location
             }
             return nil
+        }
+    }
+    
+    // Add filter helper method
+    private func applyFilter(to items: [InventoryItem]) -> [InventoryItem] {
+        switch selectedFilter {
+        case .all:
+            return items
+        case .books:
+            return items.filter { $0.type == .books }
+        case .manga:
+            return items.filter { $0.type == .manga }
+        case .comics:
+            return items.filter { $0.type == .comics }
+        case .games:
+            return items.filter { $0.type == .games }
+        case .collectibles:
+            return items.filter { $0.type == .collectibles }
+        case .electronics:
+            return items.filter { $0.type == .electronics }
+        case .tools:
+            return items.filter { $0.type == .tools }
+        }
+    }
+    
+    // Add sorting helper method
+    private func sortItems(_ items: [InventoryItem], by sortOption: SortOption) -> [InventoryItem] {
+        switch sortOption {
+        case .titleAsc:
+            return items.sorted { $0.title < $1.title }
+        case .titleDesc:
+            return items.sorted { $0.title > $1.title }
+        case .dateAddedNewest:
+            return items.sorted { $0.dateAdded > $1.dateAdded }
+        case .dateAddedOldest:
+            return items.sorted { $0.dateAdded < $1.dateAdded }
+        case .typeAsc:
+            return items.sorted { $0.type.rawValue < $1.type.rawValue }
+        case .typeDesc:
+            return items.sorted { $0.type.rawValue > $1.type.rawValue }
         }
     }
 }
