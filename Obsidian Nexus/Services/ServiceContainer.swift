@@ -25,6 +25,7 @@ class ServiceContainer: ObservableObject {
     lazy var inventorySearchService = InventorySearchService()
     lazy var inventoryStatsService = InventoryStatsService()
     lazy var collectionManagementService = CollectionManagementService()
+    lazy var enhancedImageProcessingService = EnhancedImageProcessingService.shared
     
     private init() {
         print("🔧 ServiceContainer: Initialized shared services")
