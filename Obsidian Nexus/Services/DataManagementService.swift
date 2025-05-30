@@ -39,6 +39,13 @@ class DataManagementService: NSObject {
         // Copy database file to backup location
         try fileManager.copyItem(at: dbURL, to: backupURL)
         
+        // Set the backup file's creation date to current time (copyItem preserves original dates)
+        let currentDate = Date()
+        try fileManager.setAttributes([
+            .creationDate: currentDate,
+            .modificationDate: currentDate
+        ], ofItemAtPath: backupURL.path)
+        
         return backupURL
     }
     
