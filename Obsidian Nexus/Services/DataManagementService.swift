@@ -30,8 +30,10 @@ class DataManagementService: NSObject {
         try fileManager.createDirectory(at: backupDir, withIntermediateDirectories: true)
         
         // Create backup file with timestamp
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .medium)
-            .replacingOccurrences(of: ":", with: "-")
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM dd, yyyy 'at' hh-mm-ss a"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Ensures consistent formatting
+        let timestamp = dateFormatter.string(from: Date())
         let backupURL = backupDir.appendingPathComponent("backup_\(timestamp).sqlite")
         
         // Copy database file to backup location
