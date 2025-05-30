@@ -20,6 +20,12 @@ class ServiceContainer: ObservableObject {
     lazy var currencyManager = CurrencyManager.shared
     lazy var qrCodeService = QRCodeService.shared
     
+    // New inventory services
+    lazy var inventoryValidationService = InventoryValidationService()
+    lazy var inventorySearchService = InventorySearchService()
+    lazy var inventoryStatsService = InventoryStatsService()
+    lazy var collectionManagementService = CollectionManagementService()
+    
     private init() {
         print("🔧 ServiceContainer: Initialized shared services")
     }

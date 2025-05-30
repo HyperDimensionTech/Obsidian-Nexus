@@ -8,9 +8,16 @@ class InventoryViewModel: ObservableObject {
     @Published var continuousScanEnabled = false
     @Published var pendingItems: [InventoryItem] = []
     
-    // Add persistence layer
+    // Dependencies
     private let storage: StorageManager
     private let locationManager: LocationManager
+    private let services = ServiceContainer.shared
+    
+    // Service shortcuts for cleaner code
+    private var validationService: InventoryValidationService { services.inventoryValidationService }
+    private var searchService: InventorySearchService { services.inventorySearchService }
+    private var statsService: InventoryStatsService { services.inventoryStatsService }
+    private var collectionService: CollectionManagementService { services.collectionManagementService }
     
     // Update the price-related properties
     @Published private(set) var totalValue: Price = Price(amount: 0)
@@ -68,30 +75,21 @@ class InventoryViewModel: ObservableObject {
     
     // Add validation method
     private func validateItem(_ item: InventoryItem, isUpdate: Bool = false) throws {
-        // For updates, we need to exclude the current item from duplicate checks
-        let otherItems = isUpdate ? items.filter({ $0.id != item.id }) : items
-        
-        // Check for duplicate ISBN
-        if let isbn = item.isbn,
-           otherItems.contains(where: { $0.isbn == isbn }) {
-            throw ValidationError.duplicateISBN(isbn)
-        }
-        
-        // For series items, check for duplicate volumes
-        if let series = item.series,
-           let volume = item.volume,
-           otherItems.contains(where: { 
-               $0.series == series && $0.volume == volume && $0.id != item.id
-           }) {
-            throw ValidationError.duplicateInSeries(series, volume)
-        }
-        
-        // For non-series items, check for duplicate titles
-        if item.series == nil,
-           otherItems.contains(where: { 
-               $0.title.lowercased() == item.title.lowercased() && $0.id != item.id
-           }) {
-            throw ValidationError.duplicateTitle(item.title)
+        do {
+            try validationService.validateForDuplicates(item, existingItems: items, isUpdate: isUpdate)
+        } catch let error as InventoryValidationService.ValidationError {
+            // Convert service validation errors to local validation errors for compatibility
+            switch error {
+            case .duplicateISBN(let isbn):
+                throw ValidationError.duplicateISBN(isbn)
+            case .duplicateInSeries(let series, let volume):
+                throw ValidationError.duplicateInSeries(series, volume)
+            case .duplicateTitle(let title):
+                throw ValidationError.duplicateTitle(title)
+            default:
+                // For other validation errors, just rethrow
+                throw error
+            }
         }
     }
     
@@ -176,28 +174,7 @@ class InventoryViewModel: ObservableObject {
     }
     
     func searchItems(query: String) -> [InventoryItem] {
-        guard !query.isEmpty else { return items }
-        
-        let searchTerms = query.lowercased().split(separator: " ").map(String.init)
-        
-        return items.filter { item in
-            // Check if all search terms match any of these fields
-            searchTerms.allSatisfy { term in
-                // Title match (including "the" handling)
-                let normalizedTitle = item.title.lowercased()
-                    .replacingOccurrences(of: "the ", with: "")
-                    .replacingOccurrences(of: "a ", with: "")
-                    .replacingOccurrences(of: "an ", with: "")
-                
-                // Author match (including partial name matches)
-                let authorMatch = item.author?.lowercased().contains(term) ?? false
-                
-                // Series match
-                let seriesMatch = item.series?.lowercased().contains(term) ?? false
-                
-                return normalizedTitle.contains(term) || authorMatch || seriesMatch
-            }
-        }
+        return searchService.searchItems(query: query, in: items)
     }
     
     func mangaSeries() -> [(String, [InventoryItem])] {
@@ -350,23 +327,17 @@ class InventoryViewModel: ObservableObject {
     
     // Check if a location contains any items
     func hasItemsInLocation(_ locationId: UUID) -> Bool {
-        items.contains { $0.locationId == locationId }
+        return statsService.hasItemsInLocation(locationId, in: items)
     }
     
     // Handle orphaned items when a location is deleted
     func handleLocationRemoval(_ locationId: UUID) {
-        for index in items.indices {
-            if items[index].locationId == locationId {
-                items[index].locationId = nil
-            }
-        }
-        saveItems()
+        collectionService.handleLocationRemoval(locationId, items: &items, storage: storage)
     }
     
     // Handle location renames (if needed for UI updates)
     func handleLocationRename(_ locationId: UUID, newName: String) {
-        // Optionally update any cached location names in items
-        // This might not be necessary if you always fetch location names through LocationManager
+        collectionService.handleLocationRename(locationId, newName: newName, items: &items, locationManager: locationManager, storage: storage)
     }
     
     // Helper methods for collections
@@ -414,16 +385,11 @@ class InventoryViewModel: ObservableObject {
     
     // Collection value calculations
     func totalValue(for type: CollectionType? = nil) -> Price {
-        let filteredItems = type == nil ? items : items.filter { $0.type == type }
-        let total = filteredItems.compactMap { $0.price?.amount }.reduce(0, +)
-        return Price(amount: total)
+        return statsService.totalValue(for: type, in: items)
     }
     
     func seriesValue(series: String) -> Price {
-        let total = items.filter { $0.series == series }
-            .compactMap { $0.price?.amount }
-            .reduce(0, +)
-        return Price(amount: total)
+        return statsService.seriesValue(series: series, in: items)
     }
     
     // Total value of all items
@@ -434,22 +400,13 @@ class InventoryViewModel: ObservableObject {
     
     // Value by collection type
     func collectionValue(for type: CollectionType) -> Price {
-        let total = items.filter { $0.type == type }
-            .compactMap { $0.price?.amount }
-            .reduce(0, +)
-        return Price(amount: total)
+        return statsService.collectionValue(for: type, in: items)
     }
     
     // Value and completion for a specific series
     func seriesStats(name: String) -> (value: Price, count: Int, total: Int?) {
-        let seriesItems = items.filter { $0.series == name }
-        let value = seriesItems.compactMap { $0.price?.amount }.reduce(0, +)
-        let count = seriesItems.count
-        
-        // Try to determine total volumes if available
-        let total: Int? = nil // This could be enhanced with a series database
-        
-        return (Price(amount: value), count, total)
+        let stats = statsService.seriesStats(name: name, in: items)
+        return (stats.value, stats.count, stats.total)
     }
     
     // Collection statistics
@@ -504,26 +461,14 @@ class InventoryViewModel: ObservableObject {
     func updateItemLocation(_ item: InventoryItem, to locationId: UUID?) {
         print("Updating item \(item.id) location to \(String(describing: locationId))")
         
-        var updatedItem = item
-        updatedItem.locationId = locationId
+        collectionService.updateItemLocation(item, to: locationId, items: &items, locationManager: locationManager, storage: storage)
         
-        do {
-            try storage.update(updatedItem)
-            
-            // Verify the update
-            if let repo = storage.itemRepository as? SQLiteItemRepository {
-                repo.verifyItemLocation(item.id)
-            }
-            
-            // Update in-memory state
-            if let index = items.firstIndex(where: { $0.id == item.id }) {
-                items[index] = updatedItem
-            }
-            
-            print("Successfully updated item location")
-        } catch {
-            print("Failed to update item location: \(error.localizedDescription)")
+        // Verify the update
+        if let repo = storage.itemRepository as? SQLiteItemRepository {
+            repo.verifyItemLocation(item.id)
         }
+        
+        print("Successfully updated item location")
     }
     
     func bulkUpdateItems(items: [InventoryItem], updates: InventoryItem, fields: Set<String>) throws {
@@ -532,51 +477,21 @@ class InventoryViewModel: ObservableObject {
         }
         
         do {
-            // Create updated copies of each item with the selected fields changed
-            var updatedItems: [InventoryItem] = []
+            // Use collection service for bulk update
+            let updatedItems = try collectionService.bulkUpdateItems(
+                items: items, 
+                updates: updates, 
+                fields: fields, 
+                storage: storage
+            )
             
-            for var item in items {
-                if fields.contains("type") {
-                    item.type = updates.type
-                }
-                if fields.contains("location") {
-                    item.locationId = updates.locationId
-                }
-                if fields.contains("condition") {
-                    item.condition = updates.condition
-                }
-                if fields.contains("price") {
-                    item.price = updates.price
-                }
-                if fields.contains("purchaseDate") {
-                    item.purchaseDate = updates.purchaseDate
-                }
-                if fields.contains("author") {
-                    item.author = updates.author
-                }
-                if fields.contains("publisher") {
-                    item.publisher = updates.publisher
-                }
-                if fields.contains("image") {
-                    item.customImageData = updates.customImageData
-                    item.imageSource = updates.imageSource
-                }
-                
-                // Clean up series name for consistency
-                item.series = cleanupSeriesName(item.series)
-                
-                // For validation purposes, we only need to validate items with changed fields
-                // that would trigger validation concerns (ISBN, title, series, volume)
+            // Validate items that need validation
+            for item in updatedItems {
                 if fields.contains("isbn") || fields.contains("title") || 
                    fields.contains("series") || fields.contains("volume") {
                     try validateItem(item, isUpdate: true)
                 }
-                
-                updatedItems.append(item)
             }
-            
-            // Perform the batch update through the storage layer
-            try storage.updateBatch(updatedItems)
             
             // Reload items to refresh the UI
             self.items = try storage.loadItems()
@@ -641,23 +556,8 @@ class InventoryViewModel: ObservableObject {
         }
         
         do {
-            // Begin transaction
-            try storage.beginTransaction()
-            
-            // Delete each item
-            for id in ids {
-                try storage.deleteItem(id)
-            }
-            
-            // Commit transaction
-            try storage.commitTransaction()
-            
-            // Update the published items array
-            items = items.filter { !ids.contains($0.id) }
-            
+            try collectionService.bulkDeleteItems(with: ids, from: &items, storage: storage)
         } catch {
-            // Rollback on error
-            try? storage.rollbackTransaction()
             throw BulkOperationError.deletionFailed(error.localizedDescription)
         }
     }
@@ -690,14 +590,12 @@ class InventoryViewModel: ObservableObject {
     }
     
     func authorStats(name: String) -> (value: Price, count: Int) {
-        let authorBooks = items.filter { $0.creator == name }
-        let totalValue = authorBooks.compactMap { $0.price?.amount }.reduce(0, +)
-        return (Price(amount: totalValue), authorBooks.count)
+        let stats = statsService.authorStats(name: name, in: items)
+        return (stats.value, stats.count)
     }
     
     func itemsByAuthor(_ author: String) -> [InventoryItem] {
-        items.filter { $0.creator == author }
-            .sorted { $0.title < $1.title }
+        return searchService.itemsByAuthor(author, from: items)
     }
     
     private func cleanupSeriesName(_ name: String?) -> String? {
@@ -867,90 +765,50 @@ class InventoryViewModel: ObservableObject {
     
     // Update the price calculation methods
     private func calculatePriceStats() {
-        let prices = items.compactMap { $0.price?.amount }
-        guard !prices.isEmpty else {
-            totalValue = Price(amount: 0)
-            averagePrice = Price(amount: 0)
-            highestPrice = Price(amount: 0)
-            lowestPrice = Price(amount: 0)
-            medianPrice = Price(amount: 0)
-            return
-        }
+        let stats = statsService.calculatePriceStats(for: items)
         
-        let sum = prices.reduce(0, +)
-        let avg = sum / Decimal(prices.count)
-        let max = prices.max() ?? 0
-        let min = prices.min() ?? 0
-        let sorted = prices.sorted()
-        let median = sorted[sorted.count / 2]
-        
-        totalValue = Price(amount: sum)
-        averagePrice = Price(amount: avg)
-        highestPrice = Price(amount: max)
-        lowestPrice = Price(amount: min)
-        medianPrice = Price(amount: median)
+        totalValue = stats.totalValue
+        averagePrice = stats.averagePrice
+        highestPrice = stats.highestPrice
+        lowestPrice = stats.lowestPrice
+        medianPrice = stats.medianPrice
     }
     
     // Update the price filtering methods
     func itemsWithPriceGreaterThan(_ price: Price) -> [InventoryItem] {
-        items.filter { item in
-            guard let itemPrice = item.price else { return false }
-            return itemPrice.amount > price.amount
-        }
+        return searchService.itemsWithPriceGreaterThan(price, from: items)
     }
     
     func itemsWithPriceLessThan(_ price: Price) -> [InventoryItem] {
-        items.filter { item in
-            guard let itemPrice = item.price else { return false }
-            return itemPrice.amount < price.amount
-        }
+        return searchService.itemsWithPriceLessThan(price, from: items)
     }
     
     func itemsWithPriceBetween(_ min: Price, and max: Price) -> [InventoryItem] {
-        items.filter { item in
-            guard let itemPrice = item.price else { return false }
-            return itemPrice.amount >= min.amount && itemPrice.amount <= max.amount
-        }
+        return searchService.itemsWithPriceBetween(min, and: max, from: items)
     }
     
     func itemsWithPriceEqualTo(_ price: Price) -> [InventoryItem] {
-        items.filter { item in
-            guard let itemPrice = item.price else { return false }
-            return itemPrice.amount == price.amount
-        }
+        return searchService.itemsWithPriceEqualTo(price, from: items)
     }
     
     // Update the price comparison methods
     func itemsWithPriceAboveAverage() -> [InventoryItem] {
-        items.filter { item in
-            guard let itemPrice = item.price else { return false }
-            return itemPrice.amount > averagePrice.amount
-        }
+        return searchService.itemsWithPriceAboveAverage(from: items, averagePrice: averagePrice)
     }
     
     // Update the price sorting methods
     func sortByPrice(ascending: Bool = true) {
-        items.sort { item1, item2 in
-            let price1 = item1.price?.amount ?? 0
-            let price2 = item2.price?.amount ?? 0
-            return ascending ? price1 < price2 : price1 > price2
-        }
+        items = searchService.sortedByPrice(items, ascending: ascending)
     }
     
     // Update the price range calculation
     func priceRange() -> (min: Price, max: Price)? {
-        let prices = items.compactMap { $0.price?.amount }
-        guard let min = prices.min(), let max = prices.max() else { return nil }
-        return (Price(amount: min), Price(amount: max))
+        return statsService.priceRange(for: items)
     }
     
     // Update the price percentile calculation
     func pricePercentile(_ percentile: Double) -> Price? {
-        let prices = items.compactMap { $0.price?.amount }.sorted()
-        guard !prices.isEmpty else { return nil }
-        
-        let index = Int(Double(prices.count - 1) * percentile)
-        return Price(amount: prices[index])
+        return statsService.pricePercentile(percentile, for: items)
     }
     
     // Update the price statistics calculation
