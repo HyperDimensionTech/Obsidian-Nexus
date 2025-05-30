@@ -107,7 +107,9 @@ struct LocationsView: View {
                 // Only respond to locations tab double-taps
                 if let tab = notification.object as? String, tab == "Locations" {
                     // Reset navigation when Locations tab is double-tapped
-                    navigationCoordinator.navigateToRoot()
+                    Task { @MainActor in
+                        navigationCoordinator.navigateToRoot()
+                    }
                 }
             }
             
@@ -118,10 +120,13 @@ struct LocationsView: View {
                 queue: .main
             ) { notification in
                 if let userInfo = notification.userInfo,
-                   let locationId = userInfo["locationId"] as? UUID,
-                   let location = locationManager.getLocation(by: locationId) {
-                    // Navigate to the location on the main thread
-                    navigationCoordinator.navigate(to: .locationDetail(location))
+                   let locationId = userInfo["locationId"] as? UUID {
+                    Task { @MainActor in
+                        if let location = locationManager.getLocation(by: locationId) {
+                            // Navigate to the location on the main thread
+                            navigationCoordinator.navigate(to: .locationDetail(location))
+                        }
+                    }
                 }
             }
         }

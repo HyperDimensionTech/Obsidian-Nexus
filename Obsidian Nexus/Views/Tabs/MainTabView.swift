@@ -82,12 +82,15 @@ struct MainTabView: View {
                 queue: .main
             ) { notification in
                 if let userInfo = notification.userInfo,
-                   let locationId = userInfo["locationId"] as? UUID,
-                   let location = locationManager.getLocation(by: locationId) {
-                    // Switch to search tab for location viewing
-                    selectedTab = .search
-                    // Navigate to location items view
-                    navigationCoordinator.navigate(to: .scannedLocation(location))
+                   let locationId = userInfo["locationId"] as? UUID {
+                    Task { @MainActor in
+                        if let location = locationManager.getLocation(by: locationId) {
+                            // Switch to search tab for location viewing
+                            selectedTab = .search
+                            // Navigate to location items view
+                            navigationCoordinator.navigate(to: .scannedLocation(location))
+                        }
+                    }
                 }
             }
         }

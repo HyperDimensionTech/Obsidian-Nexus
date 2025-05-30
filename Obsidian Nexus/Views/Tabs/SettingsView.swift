@@ -165,7 +165,9 @@ struct SettingsView: View {
                 queue: .main
             ) { notification in
                 if let tab = notification.object as? String, tab == "Settings" {
-                    navigationCoordinator.navigateToRoot()
+                    Task { @MainActor in
+                        navigationCoordinator.navigateToRoot()
+                    }
                 }
             }
         }
