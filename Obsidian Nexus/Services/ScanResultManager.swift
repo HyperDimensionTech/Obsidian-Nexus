@@ -16,10 +16,20 @@ class ScanResultManager: ObservableObject {
         }
     }
     
-    /// Add a failed scan to the results
+    /// Add a failed scan to the results - prevents duplicates
     func addFailedScan(code: String, reason: String) {
         DispatchQueue.main.async {
-            self.failedScans.append((code: code, reason: reason))
+            // Check if this code already exists in failed scans
+            if !self.failedScans.contains(where: { $0.code == code }) {
+                self.failedScans.append((code: code, reason: reason))
+            } else {
+                // Update the reason for existing failed scan if it's different
+                if let index = self.failedScans.firstIndex(where: { $0.code == code }) {
+                    if self.failedScans[index].reason != reason {
+                        self.failedScans[index] = (code: code, reason: reason)
+                    }
+                }
+            }
         }
     }
     
