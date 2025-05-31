@@ -12,7 +12,7 @@ struct FixedSearchContainer: View {
     // State
     @State private var searchText = ""
     @State private var selectedFilter: SearchFilter = .all
-    @State private var selectedSortOption: SortOption = .titleAsc
+    @State private var selectedSortOption: SortOption = .relevance
     @State private var showingSortOptions = false
     @State private var showingQRScanner = false
     
@@ -163,6 +163,9 @@ struct FixedSearchContainer: View {
     // Add sorting helper method
     private func sortItems(_ items: [InventoryItem], by sortOption: SortOption) -> [InventoryItem] {
         switch sortOption {
+        case .relevance:
+            // Don't re-sort relevance results - they're already sorted by score from the search
+            return items
         case .titleAsc:
             return items.sorted { $0.title < $1.title }
         case .titleDesc:

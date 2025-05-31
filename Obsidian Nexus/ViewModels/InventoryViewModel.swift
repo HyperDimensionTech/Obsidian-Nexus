@@ -12,6 +12,7 @@ class InventoryViewModel: ObservableObject {
     private let storage: StorageManager
     private let locationManager: LocationManager
     private let services = ServiceContainer.shared
+    private let duplicateDetectionService = DuplicateDetectionService()
     
     // Service shortcuts for cleaner code
     private var validationService: InventoryValidationService { services.inventoryValidationService }
@@ -55,11 +56,12 @@ class InventoryViewModel: ObservableObject {
     
     // MARK: - Item Management
     
-    // Add validation errors
+    // Enhanced validation errors to include merge information
     enum ValidationError: LocalizedError {
         case duplicateISBN(String)
         case duplicateTitle(String)
         case duplicateInSeries(String, Int)
+        case duplicateMerged(String, InventoryItem) // New case for merged duplicates
         
         var errorDescription: String? {
             switch self {
@@ -69,11 +71,27 @@ class InventoryViewModel: ObservableObject {
                 return "An item titled '\(title)' already exists in your collection"
             case .duplicateInSeries(let series, let volume):
                 return "Volume \(volume) of '\(series)' already exists in your collection"
+            case .duplicateMerged(let title, _):
+                return "Item '\(title)' was already in your collection. Information has been merged."
             }
+        }
+        
+        var isDuplicateMerged: Bool {
+            if case .duplicateMerged = self {
+                return true
+            }
+            return false
+        }
+        
+        var mergedItem: InventoryItem? {
+            if case .duplicateMerged(_, let item) = self {
+                return item
+            }
+            return nil
         }
     }
     
-    // Add validation method
+    // Add validation method for compatibility with existing code
     private func validateItem(_ item: InventoryItem, isUpdate: Bool = false) throws {
         do {
             try validationService.validateForDuplicates(item, existingItems: items, isUpdate: isUpdate)
@@ -93,28 +111,67 @@ class InventoryViewModel: ObservableObject {
         }
     }
     
-    // Update addItem method
+    // Enhanced addItem method with intelligent duplicate detection
     @discardableResult
     func addItem(_ item: InventoryItem) throws -> InventoryItem {
         print("Adding item: \(item.title)")
-        try validateItem(item)
         
+        // Use enhanced duplicate detection
+        let duplicateResult = duplicateDetectionService.detectDuplicate(for: item, in: items)
+        
+        if duplicateResult.isDuplicate {
+            guard let existingItem = duplicateResult.existingItem else {
+                throw ValidationError.duplicateTitle(item.title)
+            }
+            
+            print("Duplicate detected with confidence: \(duplicateResult.confidence), type: \(duplicateResult.matchType)")
+            
+            // Automatically merge items for high confidence matches
+            if duplicateResult.confidence >= 0.85 {
+                let mergedItem = duplicateDetectionService.mergeItems(existing: existingItem, new: item)
+                
+                do {
+                    let updatedItem = try updateItem(mergedItem)
+                    print("Successfully merged duplicate item: \(updatedItem.title)")
+                    
+                    // Throw special error to indicate successful merge
+                    throw ValidationError.duplicateMerged(updatedItem.title, updatedItem)
+                } catch let error as ValidationError {
+                    // Re-throw validation errors (including duplicateMerged)
+                    throw error
+                } catch {
+                    print("Error merging duplicate item: \(error.localizedDescription)")
+                    // Fall back to original validation error
+                    throw ValidationError.duplicateTitle(item.title)
+                }
+            } else {
+                // Lower confidence - use traditional validation
+                switch duplicateResult.matchType {
+                case .exactISBN:
+                    throw ValidationError.duplicateISBN(item.isbn ?? "")
+                case .titleAuthorSeries:
+                    if let series = item.series, let volume = item.volume {
+                        throw ValidationError.duplicateInSeries(series, volume)
+                    }
+                    fallthrough
+                default:
+                    throw ValidationError.duplicateTitle(item.title)
+                }
+            }
+        }
+        
+        // No duplicate detected - proceed with normal add
         var newItem = item
-        // Clean up series name before adding
         newItem.series = cleanupSeriesName(item.series)
         
         do {
-            // Try to save the item and log success
             try storage.save(newItem)
             print("Successfully saved item to storage")
             
-            // Explicitly reload items to ensure the UI is updated
             do {
                 items = try storage.loadItems()
                 print("Reloaded \(items.count) items from storage")
             } catch {
-                // If loading fails after saving, just add the new item manually
-                // to the in-memory items array to prevent the error
                 print("Error reloading items: \(error.localizedDescription)")
                 print("Adding item manually to in-memory collection")
                 items.append(newItem)
@@ -174,7 +231,55 @@ class InventoryViewModel: ObservableObject {
     }
     
     func searchItems(query: String) -> [InventoryItem] {
-        return searchService.searchItems(query: query, in: items)
+        guard !query.isEmpty else { return items }
+        
+        let searchTerm = query.lowercased()
+        
+        // Simple relevance scoring directly in ViewModel
+        let scoredItems = items.compactMap { item -> (item: InventoryItem, score: Int)? in
+            var score = 0
+            let title = item.title.lowercased()
+            let series = item.series?.lowercased() ?? ""
+            let author = item.author?.lowercased() ?? ""
+            
+            // Title scoring (highest priority)
+            if title == searchTerm { 
+                score += 100 
+            } else if title.hasPrefix(searchTerm) { 
+                score += 80 
+            } else if title.contains(searchTerm) { 
+                score += 60 
+            }
+            
+            // Series scoring (high priority for manga/comics)
+            if series == searchTerm { 
+                score += 90 
+            } else if series.hasPrefix(searchTerm) { 
+                score += 70 
+            } else if series.contains(searchTerm) { 
+                score += 50 
+            }
+            
+            // Author scoring
+            if author == searchTerm { 
+                score += 60 
+            } else if author.contains(searchTerm) { 
+                score += 30 
+            }
+            
+            // ISBN/Barcode exact matches
+            if let isbn = item.isbn?.lowercased(), isbn.contains(searchTerm) {
+                score += 95
+            }
+            if let barcode = item.barcode?.lowercased(), barcode.contains(searchTerm) {
+                score += 95
+            }
+            
+            return score > 0 ? (item, score) : nil
+        }
+        
+        // Sort by score (highest first) and return items
+        return scoredItems.sorted { $0.score > $1.score }.map { $0.item }
     }
     
     func mangaSeries() -> [(String, [InventoryItem])] {

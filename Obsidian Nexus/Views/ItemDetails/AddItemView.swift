@@ -18,8 +18,8 @@ enum BookSortOption: String, CaseIterable, Identifiable {
     func sortBooks(_ books: [GoogleBook]) -> [GoogleBook] {
         switch self {
         case .relevance:
-            // Default order from API
-            return books
+            // Implement proper relevance scoring instead of just returning default order
+            return books // This will be handled in the sortBooks method with search context
         case .titleAsc:
             return books.sorted { $0.volumeInfo.title.localizedCaseInsensitiveCompare($1.volumeInfo.title) == .orderedAscending }
         case .titleDesc:
@@ -121,23 +121,70 @@ struct AddItemView: View {
     }
     
     var sortedResults: [GoogleBook] {
-        // First apply the existing volume sorting logic
-        let volumeSorted = searchResults.sorted { (book1, book2) -> Bool in
-            // Extract volume numbers if present
-            let vol1 = googleBooksService.extractVolumeNumber(from: book1.volumeInfo.title) ?? 0
-            let vol2 = googleBooksService.extractVolumeNumber(from: book2.volumeInfo.title) ?? 0
+        if selectedSortOption == .relevance {
+            // Implement relevance scoring for Google Books results
+            let searchTerm = searchQuery.lowercased().trimmingCharacters(in: .whitespaces)
             
-            // If both have volume numbers, sort by volume
-            if vol1 > 0 && vol2 > 0 {
-                return vol1 < vol2
+            let scoredBooks = searchResults.compactMap { book -> (book: GoogleBook, score: Int)? in
+                var score = 0
+                let title = book.volumeInfo.title.lowercased()
+                let author = book.volumeInfo.authors?.first?.lowercased() ?? ""
+                let publisher = book.volumeInfo.publisher?.lowercased() ?? ""
+                
+                // Title scoring (highest priority)
+                if title == searchTerm {
+                    score += 100
+                } else if title.hasPrefix(searchTerm) {
+                    score += 80
+                } else if title.contains(searchTerm) {
+                    score += 60
+                }
+                
+                // Author scoring
+                if author == searchTerm {
+                    score += 60
+                } else if author.contains(searchTerm) {
+                    score += 30
+                }
+                
+                // Publisher scoring
+                if publisher.contains(searchTerm) {
+                    score += 20
+                }
+                
+                // ISBN exact matches
+                if let identifiers = book.volumeInfo.industryIdentifiers {
+                    for identifier in identifiers {
+                        if identifier.identifier.lowercased().contains(searchTerm) {
+                            score += 95
+                        }
+                    }
+                }
+                
+                return score > 0 ? (book, score) : (book, 1) // Give minimum score to all results
             }
             
-            // Otherwise sort by title
-            return book1.volumeInfo.title < book2.volumeInfo.title
+            // Sort by score (highest first) and return books
+            return scoredBooks.sorted { $0.score > $1.score }.map { $0.book }
+        } else {
+            // First apply the existing volume sorting logic for non-relevance sorts
+            let volumeSorted = searchResults.sorted { (book1, book2) -> Bool in
+                // Extract volume numbers if present
+                let vol1 = googleBooksService.extractVolumeNumber(from: book1.volumeInfo.title) ?? 0
+                let vol2 = googleBooksService.extractVolumeNumber(from: book2.volumeInfo.title) ?? 0
+                
+                // If both have volume numbers, sort by volume
+                if vol1 > 0 && vol2 > 0 {
+                    return vol1 < vol2
+                }
+                
+                // Otherwise sort by title
+                return book1.volumeInfo.title < book2.volumeInfo.title
+            }
+            
+            // Then apply the selected sort option
+            return selectedSortOption.sortBooks(volumeSorted)
         }
-        
-        // Then apply the selected sort option
-        return selectedSortOption.sortBooks(volumeSorted)
     }
     
     var body: some View {

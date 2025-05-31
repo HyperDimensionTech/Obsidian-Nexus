@@ -116,7 +116,7 @@ struct CombinedSearchTabView: View {
     @State private var searchText = ""
     @State private var selectedFilter: SearchFilter = .all
     @State private var showingSearchResults = false
-    @State private var selectedSortOption: SortOption = .titleAsc
+    @State private var selectedSortOption: SortOption = .relevance
     @State private var showingSortOptions = false
     @State private var showingQRScanner = false
     
@@ -380,6 +380,9 @@ struct CombinedSearchTabView: View {
     
     private func sortItems(_ items: [InventoryItem]) -> [InventoryItem] {
         switch selectedSortOption {
+        case .relevance:
+            // Don't re-sort relevance results - they're already sorted by score from the search
+            return items
         case .titleAsc:
             return items.sorted { $0.title < $1.title }
         case .titleDesc:
@@ -413,6 +416,7 @@ enum SearchFilter: String, CaseIterable {
 }
 
 enum SortOption: String, CaseIterable, Identifiable {
+    case relevance = "Relevance"
     case titleAsc = "Title A-Z"
     case titleDesc = "Title Z-A"
     case dateAddedNewest = "Newest"

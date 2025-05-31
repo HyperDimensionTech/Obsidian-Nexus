@@ -413,8 +413,8 @@ struct BarcodeScannerView: View {
             // Create a new item from the Google Book
             let newItem = inventoryViewModel.createItemFromGoogleBook(book)
             
-            // Add it to the inventory
-                try inventoryViewModel.addItem(newItem)
+            // Add it to the inventory (this may automatically merge duplicates)
+            try inventoryViewModel.addItem(newItem)
             
             // Update scan count and display
             scanManager.addSuccessfulScan(
@@ -434,8 +434,27 @@ struct BarcodeScannerView: View {
             generator.notificationOccurred(.success)
             
         } catch let error as InventoryViewModel.ValidationError {
-            // Handle duplicate items more gracefully
-            if case .duplicateISBN = error {
+            // Handle enhanced duplicate detection
+            if error.isDuplicateMerged {
+                // Item was successfully merged
+                successMessage = "Updated: \(book.volumeInfo.title)"
+                isDuplicate = true  // Use duplicate styling but success message
+                withAnimation {
+                    showingSuccessMessage = true
+                }
+                
+                // Count as successful (merged) scan
+                scanManager.addSuccessfulScan(
+                    title: book.volumeInfo.title + " (updated)",
+                    isbn: book.volumeInfo.industryIdentifiers?.first?.identifier
+                )
+                
+                // Vibrate for success (but slightly different)
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.success)
+                
+            } else if case .duplicateISBN = error {
+                // Traditional duplicate handling
                 successMessage = "Already in collection: \(book.volumeInfo.title)"
                 isDuplicate = true
                 withAnimation {
@@ -451,7 +470,9 @@ struct BarcodeScannerView: View {
                 // Vibrate differently for duplicates
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.warning)
+                
             } else {
+                // Other validation errors
                 handleFailedScan(originalIsbn, reason: error.localizedDescription)
             }
         } catch {
