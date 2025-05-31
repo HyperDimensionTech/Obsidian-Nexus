@@ -353,7 +353,7 @@ struct BarcodeScannerView: View {
         }
         
         // If no mapping found, perform a regular ISBN search
-        googleBooksService.fetchBooksByISBN(code) { result in
+        googleBooksService.performISBNSearch(code) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let books):

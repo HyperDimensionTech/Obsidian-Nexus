@@ -265,19 +265,27 @@ private extension String {
         if self == other { return 1.0 }
         
         let maxLength = max(selfChars.count, otherChars.count)
-        let matchWindow = maxLength / 2 - 1
+        guard maxLength > 0 else { return 0.0 }
+        
+        let matchWindow = max(0, maxLength / 2 - 1)
         
         var selfMatches = Array(repeating: false, count: selfChars.count)
         var otherMatches = Array(repeating: false, count: otherChars.count)
         
         var matches = 0
         
-        // Find matches
+        // Find matches with safe bounds checking
         for i in 0..<selfChars.count {
             let start = max(0, i - matchWindow)
             let end = min(i + matchWindow + 1, otherChars.count)
             
+            // Ensure start <= end
+            guard start < end else { continue }
+            
             for j in start..<end {
+                // Ensure we don't go out of bounds
+                guard j < otherMatches.count && j < otherChars.count else { break }
+                
                 if otherMatches[j] || selfChars[i] != otherChars[j] { continue }
                 selfMatches[i] = true
                 otherMatches[j] = true
@@ -288,13 +296,21 @@ private extension String {
         
         guard matches > 0 else { return 0.0 }
         
-        // Calculate transpositions
+        // Calculate transpositions with safe bounds checking
         var transpositions = 0
         var k = 0
         
         for i in 0..<selfChars.count {
             if !selfMatches[i] { continue }
-            while !otherMatches[k] { k += 1 }
+            
+            // Find next match in other string
+            while k < otherMatches.count && !otherMatches[k] { 
+                k += 1 
+            }
+            
+            // Ensure we haven't gone out of bounds
+            guard k < otherChars.count && k < otherMatches.count else { break }
+            
             if selfChars[i] != otherChars[k] { transpositions += 1 }
             k += 1
         }

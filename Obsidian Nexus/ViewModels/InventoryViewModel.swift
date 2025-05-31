@@ -116,6 +116,11 @@ class InventoryViewModel: ObservableObject {
     func addItem(_ item: InventoryItem) throws -> InventoryItem {
         print("Adding item: \(item.title)")
         
+        // TEMPORARY: Disable advanced duplicate detection due to crashes
+        // Use simple validation instead until string range issues are resolved
+        try validateItem(item, isUpdate: false)
+        
+        /* DISABLED TEMPORARILY - CAUSES CRASHES
         // Use enhanced duplicate detection
         let duplicateResult = duplicateDetectionService.detectDuplicate(for: item, in: items)
         
@@ -159,6 +164,7 @@ class InventoryViewModel: ObservableObject {
                 }
             }
         }
+        */
         
         // No duplicate detected - proceed with normal add
         var newItem = item

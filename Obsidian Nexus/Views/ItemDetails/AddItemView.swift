@@ -738,39 +738,43 @@ struct AddItemView: View {
         guard !searchQuery.isEmpty else { return }
         isSearching = true
         
-        // Check if it's an ISBN search
+        // Use the enhanced search methods from GoogleBooksService
         let query = searchQuery.trimmingCharacters(in: .whitespaces)
-        if query.hasPrefix("isbn:") {
-            // Extract the ISBN from the query
+        
+        // Check if it's an ISBN search and use the enhanced ISBN search
+        if query.hasPrefix("isbn:") || query.allSatisfy({ $0.isNumber }) {
             let isbnQuery = query.replacingOccurrences(of: "isbn:", with: "")
                 .replacingOccurrences(of: "[^0-9X]", with: "", options: .regularExpression)
             
             if isbnQuery.count == 10 || isbnQuery.count == 13 {
-                // It's a valid ISBN, search for it
-                performISBNSearch(isbnQuery)
+                performEnhancedISBNSearch(isbnQuery)
                 return
             }
         }
         
-        // Regular search
+        // For regular searches, use the enhanced fetchBooks method which includes fallbacks
         googleBooksService.fetchBooks(query: searchQuery) { result in
             DispatchQueue.main.async {
                 self.isSearching = false
                 switch result {
                 case .success(let books):
-                    print("Found \(books.count) results") // Debug print
+                    print("📚 Enhanced Search: Found \(books.count) results")
                     self.searchResults = books
                 case .failure(let error):
-                    self.errorMessage = error.localizedDescription
+                    print("📚 Enhanced Search failed: \(error.localizedDescription)")
+                    self.errorMessage = "Search failed: \(error.localizedDescription)"
                     self.showingError = true
                 }
             }
         }
     }
     
-    private func performISBNSearch(_ isbnQuery: String) {
+    private func performEnhancedISBNSearch(_ isbnQuery: String) {
+        print("📚 Starting Enhanced ISBN Search for: \(isbnQuery)")
+        
         // First check user-defined mappings
         if let mapping = isbnMappingService.getMappingForISBN(isbnQuery) {
+            print("📚 Found user mapping for ISBN: \(isbnQuery)")
             // Use the Google Books ID from user mapping
             googleBooksService.fetchBookById(mapping.correctGoogleBooksID) { result in
                 DispatchQueue.main.async {
@@ -778,35 +782,113 @@ struct AddItemView: View {
                     
                     switch result {
                     case .success(let book):
-                        // Show the result
+                        print("📚 Successfully fetched mapped book: \(book.volumeInfo.title)")
                         self.searchResults = [book]
-                    case .failure(_):
+                    case .failure(let error):
+                        print("📚 Failed to fetch mapped book, trying title search: \(error)")
                         // If direct fetch fails, try a title search as fallback
-                        self.searchByTitle(mapping.title, originalIsbn: isbnQuery)
+                        self.performEnhancedTitleSearch(mapping.title, originalIsbn: isbnQuery)
                     }
                 }
             }
             return
         }
         
-        // If no mapping found, perform a regular ISBN search
-        googleBooksService.fetchBooksByISBN(isbnQuery) { result in
+        // Use the enhanced ISBN search method
+        googleBooksService.performISBNSearch(isbnQuery) { result in
             DispatchQueue.main.async {
                 self.isSearching = false
                 
                 switch result {
                 case .success(let books):
                     if !books.isEmpty {
+                        print("📚 Enhanced ISBN search successful: Found \(books.count) books")
                         self.searchResults = books
                     } else {
+                        print("📚 No results from enhanced ISBN search")
                         self.handleNoBookFound(isbnQuery)
                     }
                 case .failure(let error):
-                    self.errorMessage = "Error searching for ISBN: \(error.localizedDescription)"
+                    print("📚 Enhanced ISBN search failed: \(error)")
+                    self.errorMessage = "ISBN search failed: \(error.localizedDescription)"
                     self.showingError = true
                 }
             }
         }
+    }
+    
+    private func performEnhancedTitleSearch(_ title: String, originalIsbn: String?) {
+        print("📚 Starting Enhanced Title Search for: \(title)")
+        
+        googleBooksService.performTitleSearch(title) { result in
+            DispatchQueue.main.async {
+                self.isSearching = false
+                
+                switch result {
+                case .success(let books):
+                    if !books.isEmpty {
+                        print("📚 Enhanced title search successful: Found \(books.count) books")
+                        self.searchResults = books
+                    } else if let isbn = originalIsbn {
+                        print("📚 No title results, handling as no book found")
+                        self.handleNoBookFound(isbn)
+                    } else {
+                        self.searchResults = []
+                    }
+                case .failure(let error):
+                    print("📚 Enhanced title search failed: \(error)")
+                    if let isbn = originalIsbn {
+                        self.handleNoBookFound(isbn)
+                    } else {
+                        self.errorMessage = "Title search failed: \(error.localizedDescription)"
+                        self.showingError = true
+                    }
+                }
+            }
+        }
+    }
+    
+    private func performISBNSearch(_ isbnQuery: String) {
+        // Redirect to enhanced ISBN search
+        performEnhancedISBNSearch(isbnQuery)
+    }
+    
+    // MARK: - Multi-field Search Support
+    
+    /// Performs a search with specific title and author for more precise results
+    private func performMultiFieldSearch(title: String?, author: String?, publisher: String? = nil) {
+        print("📚 Starting Multi-field Search - Title: \(title ?? "nil"), Author: \(author ?? "nil"), Publisher: \(publisher ?? "nil")")
+        
+        googleBooksService.performMultiFieldSearch(
+            title: title,
+            author: author,
+            publisher: publisher
+        ) { result in
+            DispatchQueue.main.async {
+                self.isSearching = false
+                
+                switch result {
+                case .success(let books):
+                    print("📚 Multi-field search successful: Found \(books.count) books")
+                    self.searchResults = books
+                case .failure(let error):
+                    print("📚 Multi-field search failed: \(error)")
+                    self.errorMessage = "Advanced search failed: \(error.localizedDescription)"
+                    self.showingError = true
+                }
+            }
+        }
+    }
+    
+    // MARK: - Legacy Hybrid Search (Disabled for Safety)
+    
+    /// Performs both ISBN and title search, then picks the result with better metadata
+    private func performHybridSearch(isbnResults: [GoogleBook], originalISBN: String) {
+        // TEMPORARY: Disable hybrid search to prevent crashes during debugging
+        // The new enhanced search methods provide better fallbacks automatically
+        self.isSearching = false
+        self.searchResults = isbnResults
+        return
     }
     
     private func addToCollection(_ book: GoogleBook) {
