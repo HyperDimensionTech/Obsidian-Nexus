@@ -99,6 +99,12 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
     /// Navigate to a location that was scanned via QR code
     case scannedLocation(StorageLocation)
     
+    /// Navigate to series view for a specific collection type
+    case seriesView(CollectionType)
+    
+    /// Navigate to series detail view for a specific series and collection type
+    case seriesDetail(String, CollectionType) // series name, collection type
+    
     /// Unique ID for Identifiable conformance
     var id: String {
         switch self {
@@ -116,6 +122,10 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
             return "locationQRCode-\(location.id)"
         case .scannedLocation(let location):
             return "scannedLocation-\(location.id)"
+        case .seriesView(let type):
+            return "seriesView-\(type.rawValue)"
+        case .seriesDetail(let name, let type):
+            return "seriesDetail-\(name)-\(type.rawValue)"
         }
     }
     
@@ -137,6 +147,10 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
             return l.id == r.id
         case (.scannedLocation(let l), .scannedLocation(let r)):
             return l.id == r.id
+        case (.seriesView(let l), .seriesView(let r)):
+            return l == r
+        case (.seriesDetail(let lName, let lType), .seriesDetail(let rName, let rType)):
+            return lName == rName && lType == rType
         default:
             return false
         }
@@ -166,6 +180,13 @@ enum NavigationDestination: Hashable, Equatable, Identifiable {
         case .scannedLocation(let location):
             hasher.combine("scannedLocation")
             hasher.combine(location.id)
+        case .seriesView(let type):
+            hasher.combine("seriesView")
+            hasher.combine(type.rawValue)
+        case .seriesDetail(let name, let type):
+            hasher.combine("seriesDetail")
+            hasher.combine(name)
+            hasher.combine(type.rawValue)
         }
     }
 }
@@ -191,6 +212,9 @@ class NavigationCoordinator: ObservableObject {
     @Published var searchPath = NavigationPath()
     @Published var collectionsPath = NavigationPath()
     @Published var settingsPath = NavigationPath()
+    
+    /// Track the currently active tab
+    @Published var currentActiveTab: String?
     
     // MARK: - Navigation Helpers for Components
     
@@ -319,19 +343,29 @@ class NavigationCoordinator: ObservableObject {
     func navigate(to destination: NavigationDestination) {
         // Determine which path to use based on the current context
         if let tab = currentTab() {
-            switch tab {
-            case "Home":
-                homePath.append(destination)
-            case "Browse & Search":
-                searchPath.append(destination)
-            case "Collections":
-                collectionsPath.append(destination)
-            case "Settings":
-                settingsPath.append(destination)
-            default:
-                path.append(destination)
-            }
+            navigateInTab(tab, to: destination)
         } else {
+            path.append(destination)
+        }
+    }
+    
+    /**
+     Navigate to a destination within a specific tab context.
+     
+     - Parameter tab: The tab to navigate within
+     - Parameter destination: The destination to navigate to
+     */
+    func navigateInTab(_ tab: String, to destination: NavigationDestination) {
+        switch tab {
+        case "Home":
+            homePath.append(destination)
+        case "Browse & Search":
+            searchPath.append(destination)
+        case "Collections":
+            collectionsPath.append(destination)
+        case "Settings":
+            settingsPath.append(destination)
+        default:
             path.append(destination)
         }
     }
@@ -374,13 +408,35 @@ class NavigationCoordinator: ObservableObject {
     }
     
     private func currentTab() -> String? {
-        // This is a simple implementation. You might want to make this more robust
-        // by actually tracking the current tab in your app's state
-        if homePath.count > 0 { return "Home" }
-        if searchPath.count > 0 { return "Browse & Search" }
-        if collectionsPath.count > 0 { return "Collections" }
-        if settingsPath.count > 0 { return "Settings" }
+        // Use the actively tracked tab first
+        if let activeTab = currentActiveTab {
+            return activeTab
+        }
+        
+        // Fallback to path count detection
+        if homePath.count > 0 { 
+            return "Home" 
+        }
+        if searchPath.count > 0 { 
+            return "Browse & Search" 
+        }
+        if collectionsPath.count > 0 { 
+            return "Collections" 
+        }
+        if settingsPath.count > 0 { 
+            return "Settings" 
+        }
+        
         return nil
+    }
+    
+    /**
+     Set the currently active tab for navigation context.
+     
+     - Parameter tab: The tab name that is currently active
+     */
+    func setActiveTab(_ tab: String) {
+        currentActiveTab = tab
     }
 }
 

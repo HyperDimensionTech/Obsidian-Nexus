@@ -289,17 +289,30 @@ class InventoryViewModel: ObservableObject {
     }
     
     func mangaSeries() -> [(String, [InventoryItem])] {
-        let mangaItems = items.filter { $0.type == .manga }
-        let groupedItems = Dictionary(grouping: mangaItems) { 
-            cleanupSeriesName($0.series ?? "") ?? ""  // Clean up here
+        return seriesForType(.manga)
+    }
+    
+    /// Generic method to get series for any collection type
+    func seriesForType(_ type: CollectionType) -> [(String, [InventoryItem])] {
+        guard type.supportsSeriesGrouping else { return [] }
+        
+        let typeItems = items.filter { $0.type == type }
+        let groupingKeyPath = type.seriesGroupingKey
+        
+        let groupedItems = Dictionary(grouping: typeItems) { item in
+            let seriesValue = item[keyPath: groupingKeyPath]
+            return cleanupSeriesName(seriesValue) ?? "Unknown Series"
         }
-        return groupedItems.map { series, items in
+        
+        return groupedItems.map { series, seriesItems in
             (
-                cleanupSeriesName(series) ?? series,  // And here
-                items.sorted { 
+                cleanupSeriesName(series) ?? series,
+                seriesItems.sorted { 
+                    // Sort by volume number if both have volumes
                     if let vol1 = $0.volume, let vol2 = $1.volume {
                         return vol1 < vol2
                     }
+                    // Fallback to title sorting
                     return $0.title < $1.title
                 }
             )
@@ -632,10 +645,43 @@ class InventoryViewModel: ObservableObject {
     
     // Add these methods
     func booksByAuthor() -> [(String, [InventoryItem])] {
-        let bookItems = items.filter { $0.type == .books }
-        let groupedItems = Dictionary(grouping: bookItems) { $0.author ?? "Unknown Author" }
-        return groupedItems.map { ($0.key, $0.value) }
-            .sorted { $0.0 < $1.0 }
+        return authorGroupingForType(.books)
+    }
+    
+    /// Generic method to get items grouped by author/creator for any collection type
+    func authorGroupingForType(_ type: CollectionType) -> [(String, [InventoryItem])] {
+        guard type.supportsAuthorGrouping else { return [] }
+        
+        let typeItems = items.filter { $0.type == type }
+        let groupingKeyPath = type.authorGroupingKey
+        
+        let groupedItems = Dictionary(grouping: typeItems) { item in
+            let authorValue = item[keyPath: groupingKeyPath]
+            return cleanupAuthorName(authorValue) ?? "Unknown Author"
+        }
+        
+        return groupedItems.map { author, authorItems in
+            (
+                cleanupAuthorName(author) ?? author,
+                authorItems.sorted { $0.title < $1.title }
+            )
+        }
+        .sorted { $0.0 < $1.0 }
+    }
+    
+    /// Helper method to clean up author names (similar to cleanupSeriesName)
+    private func cleanupAuthorName(_ name: String?) -> String? {
+        guard let name = name, !name.isEmpty else { return nil }
+        var cleaned = name
+            .trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: .punctuationCharacters)
+        
+        // Remove trailing commas and spaces if they exist
+        while cleaned.hasSuffix(",") || cleaned.hasSuffix(" ") {
+            cleaned = String(cleaned.dropLast())
+        }
+        
+        return cleaned.isEmpty ? nil : cleaned
     }
     
     func itemCount(for author: String) -> Int {

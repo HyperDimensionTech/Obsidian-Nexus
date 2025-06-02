@@ -2,16 +2,14 @@ import SwiftUI
 
 struct CollectionDetailView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
+    @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     let type: CollectionType
     
     var body: some View {
-        Group {
-            if type == .manga {
-                MangaSeriesView()
-            } else {
-                ItemListView(items: inventoryViewModel.items(for: type))
-            }
-        }
-        .navigationTitle(type.name)
+        CollectionView(type: type)
+            .environmentObject(inventoryViewModel)
+            .environmentObject(locationManager)
+            .environmentObject(navigationCoordinator)
     }
 } 

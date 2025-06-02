@@ -10,11 +10,13 @@ struct CollectionView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
+    @State private var viewMode: ViewMode = .list
     
     let type: CollectionType
     
     enum BookSortStyle {
         case author
+        case series
         case alphabetical
     }
     
@@ -23,65 +25,47 @@ struct CollectionView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
+        // Use native iOS navigation structure for proper scrolling behavior
+        Group {
             if type == .books {
-                Picker("Sort Style", selection: $bookSortStyle) {
-                    Text("By Author").tag(BookSortStyle.author)
-                    Text("Alphabetical").tag(BookSortStyle.alphabetical)
+                // Books get special treatment with sort style picker at the top
+                VStack(spacing: 0) {
+                    // Books sort style picker
+                    Picker("Sort Style", selection: $bookSortStyle) {
+                        Text("By Author").tag(BookSortStyle.author)
+                        Text("By Series").tag(BookSortStyle.series)
+                        Text("Alphabetical").tag(BookSortStyle.alphabetical)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
+                    .background(Color(.systemBackground))
+                    
+                    // Content
+                    contentView
                 }
-                .pickerStyle(.segmented)
-                .padding()
-            }
-            
-            List(selection: $selectedItems) {
-                if type == .manga {
-                    // Group manga by series
-                    ForEach(inventoryViewModel.mangaSeries(), id: \.0) { series, seriesItems in
-                        NavigationLink {
-                            SeriesDetailView(series: series)
-                        } label: {
-                            SeriesGroupRow(series: series, itemCount: seriesItems.count)
-                        }
-                    }
-                } else if type == .books {
-                    if bookSortStyle == .author {
-                        // Books by author grouping
-                        ForEach(inventoryViewModel.booksByAuthor(), id: \.0) { author, authorItems in
-                            NavigationLink {
-                                BooksByAuthorView(author: author)
-                            } label: {
-                                AuthorGroupRow(author: author, itemCount: authorItems.count)
-                            }
-                        }
-                    } else {
-                        // Alphabetical listing
-                        ForEach(items.sorted { $0.title < $1.title }) { item in
-                            NavigationLink {
-                                ItemDetailView(item: item)
-                            } label: {
-                                ItemRow(item: item)
-                            }
-                        }
-                    }
-                } else {
-                    // Show individual items for other collection types
-                    ForEach(items) { item in
-                        NavigationLink {
-                            ItemDetailView(item: item)
-                        } label: {
-                            ItemRow(item: item)
-                        }
-                    }
-                }
+            } else {
+                // Other collection types use direct content
+                contentView
             }
         }
         .navigationTitle(type.name)
+        .navigationBarTitleDisplayMode(.large)
         .environment(\.editMode, $isEditMode)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                // View mode toggle on the right side
+                if shouldShowViewModeToggle {
+                    ViewModeToggle(viewMode: $viewMode)
+                }
+                
+                // 3-dot menu
                 if isEditMode == .inactive {
-                    Button("Select") {
-                        isEditMode = .active
+                    Menu {
+                        Button("Select Items") {
+                            isEditMode = .active
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 } else {
                     Menu {
@@ -131,6 +115,106 @@ struct CollectionView: View {
         }
     }
     
+    // MARK: - Helper Properties
+    
+    private var shouldShowViewModeToggle: Bool {
+        // Show toggle for series grouping or individual items (but not author grouping)
+        if type == .books && bookSortStyle == .author {
+            return false
+        }
+        return !items.isEmpty
+    }
+    
+    // MARK: - Content View
+    
+    @ViewBuilder
+    private var contentView: some View {
+        if type == .books && bookSortStyle == .author {
+            // Books by author - always list view
+            authorListView
+        } else if type == .books && bookSortStyle == .series {
+            // Books by series - can toggle view mode
+            if viewMode == .list {
+                seriesListView(for: .books)
+            } else {
+                seriesCardView(for: .books)
+            }
+        } else if type.supportsSeriesGrouping {
+            // Other collection types with series support
+            if viewMode == .list {
+                seriesListView(for: type)
+            } else {
+                seriesCardView(for: type)
+            }
+        } else {
+            // Individual items view
+            if viewMode == .list {
+                itemsListView
+            } else {
+                itemsCardView
+            }
+        }
+    }
+    
+    // MARK: - View Components
+    
+    private var authorListView: some View {
+        List(selection: $selectedItems) {
+            ForEach(inventoryViewModel.authorGroupingForType(.books), id: \.0) { author, authorItems in
+                NavigationLink {
+                    BooksByAuthorView(author: author)
+                } label: {
+                    AuthorGroupRow(
+                        author: author, 
+                        itemCount: authorItems.count,
+                        terminology: type.authorGroupingTerminology
+                    )
+                }
+            }
+        }
+    }
+    
+    private func seriesListView(for collectionType: CollectionType) -> some View {
+        List(selection: $selectedItems) {
+            ForEach(inventoryViewModel.seriesForType(collectionType), id: \.0) { series, seriesItems in
+                NavigationLink {
+                    SeriesDetailView(series: series, collectionType: collectionType)
+                } label: {
+                    SeriesGroupRow(
+                        series: series, 
+                        itemCount: seriesItems.count,
+                        terminology: collectionType.seriesItemTerminology
+                    )
+                }
+            }
+        }
+    }
+    
+    private func seriesCardView(for collectionType: CollectionType) -> some View {
+        let allItems = inventoryViewModel.seriesForType(collectionType).flatMap { $0.1 }
+        return CardGridView(items: allItems, showSeriesGrouping: true)
+            .environmentObject(inventoryViewModel)
+            .environmentObject(locationManager)
+    }
+    
+    private var itemsListView: some View {
+        List(selection: $selectedItems) {
+            ForEach(items.sorted { $0.title < $1.title }) { item in
+                NavigationLink {
+                    ItemDetailView(item: item)
+                } label: {
+                    ItemRow(item: item)
+                }
+            }
+        }
+    }
+    
+    private var itemsCardView: some View {
+        CardGridView(items: items.sorted { $0.title < $1.title }, showSeriesGrouping: false)
+            .environmentObject(inventoryViewModel)
+            .environmentObject(locationManager)
+    }
+    
     private func deleteSelectedItems() {
         do {
             try inventoryViewModel.bulkDeleteItems(with: selectedItems)
@@ -149,12 +233,13 @@ struct CollectionView: View {
 struct SeriesGroupRow: View {
     let series: String
     let itemCount: Int
+    let terminology: String
     
     var body: some View {
         VStack(alignment: .leading) {
             Text(series)
                 .font(.headline)
-            Text("\(itemCount) volumes")
+            Text("\(itemCount) \(terminology)")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -165,12 +250,13 @@ struct SeriesGroupRow: View {
 struct AuthorGroupRow: View {
     let author: String
     let itemCount: Int
+    let terminology: String
     
     var body: some View {
         VStack(alignment: .leading) {
             Text(author)
                 .font(.headline)
-            Text("\(itemCount) books")
+            Text("\(itemCount) \(terminology)")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

@@ -1,0 +1,670 @@
+{
+  "" : {
+    "const-values" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master.swiftconstvalues",
+    "dependencies" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master.d",
+    "diagnostics" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master.dia",
+    "emit-module-dependencies" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master-emit-module.dia",
+    "swift-dependencies" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian Nexus-master.swiftdeps"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ContentView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ContentView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ContentView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ContentView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Database/DatabaseManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DatabaseManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DatabaseManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DatabaseManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Database/ISBNMappingRepository.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingRepository.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingRepository.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingRepository.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Database/ItemRepository.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRepository.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRepository.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRepository.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Database/LocationRepository.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationRepository.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationRepository.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationRepository.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Database/Schema.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Schema.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Schema.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Schema.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Managers/LocationManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/Collection.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Collection.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Collection.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Collection.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/CollectionTemplate.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionTemplate.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionTemplate.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionTemplate.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/CollectionType.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionType.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionType.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionType.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/DashboardData.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardData.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardData.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardData.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/GoogleBook.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBook.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBook.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBook.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/ISBNMapping.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMapping.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMapping.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMapping.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/InventoryError.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryError.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryError.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryError.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/InventoryItem.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryItem.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryItem.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryItem.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/ItemCategory.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCategory.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCategory.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCategory.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/ItemCondition.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCondition.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCondition.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemCondition.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/ItemType.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemType.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemType.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemType.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/LocationType.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationType.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationType.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationType.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/Price.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Price.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Price.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Price.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/PublisherConfig.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PublisherConfig.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PublisherConfig.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PublisherConfig.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/SearchOptions.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchOptions.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchOptions.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchOptions.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/Series.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Series.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Series.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Series.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/StorageLocation.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageLocation.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageLocation.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageLocation.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/UserPreferences.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/UserPreferences.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/UserPreferences.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/UserPreferences.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Models/ViewMode.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewMode.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewMode.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewMode.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Navigation/NavigationCoordinator.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/NavigationCoordinator.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/NavigationCoordinator.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/NavigationCoordinator.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Obsidian_NexusApp.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian_NexusApp.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian_NexusApp.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/Obsidian_NexusApp.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Preview Content/PreviewData.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PreviewData.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PreviewData.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/PreviewData.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/BarcodeScannerService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/CollectionManagementService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManagementService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManagementService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManagementService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/CurrencyManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CurrencyManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CurrencyManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CurrencyManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/CustomCollectionManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CustomCollectionManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CustomCollectionManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CustomCollectionManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/DataManagementService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DataManagementService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DataManagementService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DataManagementService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/DuplicateDetectionService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DuplicateDetectionService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DuplicateDetectionService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DuplicateDetectionService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/EnhancedImageProcessingService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EnhancedImageProcessingService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EnhancedImageProcessingService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EnhancedImageProcessingService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/GoogleBooksService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBooksService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBooksService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GoogleBooksService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/ISBNMappingService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/ImageCache.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageCache.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageCache.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageCache.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/InventorySearchService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventorySearchService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventorySearchService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventorySearchService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/InventoryStatsService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryStatsService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryStatsService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryStatsService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/InventoryValidationService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryValidationService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryValidationService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryValidationService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/OpenLibraryService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/OpenLibraryService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/OpenLibraryService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/OpenLibraryService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/QRCodeService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/QRCodeService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/QRCodeService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/QRCodeService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/ScanResultManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/ServiceContainer.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ServiceContainer.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ServiceContainer.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ServiceContainer.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/StorageManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StorageManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Services/ThumbnailService.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailService.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailService.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailService.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Utilities/ExportImportManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ExportImportManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ExportImportManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ExportImportManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ViewModels/BarcodeScannerViewModel.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerViewModel.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerViewModel.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerViewModel.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ViewModels/CollectionManager.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManager.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManager.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionManager.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ViewModels/ImportExportViewModel.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportViewModel.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportViewModel.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportViewModel.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/ViewModels/InventoryViewModel.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryViewModel.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryViewModel.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/InventoryViewModel.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/BooksByAuthorView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BooksByAuthorView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BooksByAuthorView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BooksByAuthorView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionCard.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionCard.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionCard.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionCard.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionDetailView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionDetailView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionDetailView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionDetailView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionPickerView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionPickerView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionPickerView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionPickerView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionStatsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionStatsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionStatsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionStatsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CollectionsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/CreateCollectionView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CreateCollectionView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CreateCollectionView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CreateCollectionView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/MangaSeriesView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MangaSeriesView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MangaSeriesView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MangaSeriesView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/SeriesDetailView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesDetailView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesDetailView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesDetailView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/SeriesRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/SeriesView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SeriesView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Common/CameraPreview.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CameraPreview.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CameraPreview.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CameraPreview.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Components/BookSearchResultRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Components/ImagePicker.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImagePicker.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImagePicker.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImagePicker.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Components/ItemImagePicker.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemImagePicker.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemImagePicker.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemImagePicker.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Dashboard/DashboardView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DashboardView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Dashboard/RecentItemsSection.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/RecentItemsSection.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/RecentItemsSection.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/RecentItemsSection.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Dashboard/StatsOverviewCard.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StatsOverviewCard.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StatsOverviewCard.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/StatsOverviewCard.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/AddItemView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/BarcodeScannerView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BarcodeScannerView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/EditItemView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditItemView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditItemView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditItemView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ISBNLinkingView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNLinkingView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNLinkingView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNLinkingView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ItemDetailView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ItemLocationPicker.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemLocationPicker.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemLocationPicker.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemLocationPicker.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/LocationPickerView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPickerView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPickerView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPickerView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ManualEntryView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ManualEntryView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ManualEntryView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ManualEntryView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Locations/LocationDetailView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationDetailView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationDetailView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationDetailView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Locations/LocationItemsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationItemsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationItemsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationItemsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Locations/LocationQRCodeView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRCodeView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRCodeView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRCodeView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Locations/LocationQRScannerView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRScannerView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRScannerView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationQRScannerView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Scanning/BatchMappingView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BatchMappingView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BatchMappingView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BatchMappingView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Scanning/ScanResultsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ScanResultsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/BookSearchResultView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchResultView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/BookSearchRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BookSearchRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/CollectionsGrid.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsGrid.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsGrid.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsGrid.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/EmptySearchView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EmptySearchView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EmptySearchView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EmptySearchView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/FixedSearchContainer.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/FixedSearchContainer.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/FixedSearchContainer.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/FixedSearchContainer.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchBar.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchBar.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchBar.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchBar.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchEmptyState.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchEmptyState.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchEmptyState.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchEmptyState.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchFilterBar.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterBar.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterBar.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterBar.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchFilterView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchFilterView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchResultRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchResultsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchResultsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchSuggestions.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchSuggestions.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchSuggestions.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchSuggestions.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/SearchView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/AddItemsToLocationView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemsToLocationView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemsToLocationView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemsToLocationView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/AddLocationView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddLocationView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddLocationView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddLocationView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/BackupSettingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BackupSettingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BackupSettingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BackupSettingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/EditLocationView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditLocationView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditLocationView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/EditLocationView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/ISBNMappingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ISBNMappingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/ImageProcessingSettingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageProcessingSettingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageProcessingSettingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImageProcessingSettingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/ImportExportView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ImportExportView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/ItemDisplaySettingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplaySettingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplaySettingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplaySettingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationSettingsRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationSettingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationSettingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/LocationsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Settings/MoveLocationView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MoveLocationView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MoveLocationView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MoveLocationView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/BreadcrumbView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BreadcrumbView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BreadcrumbView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/BreadcrumbView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/CardGridView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CardGridView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CardGridView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CardGridView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/DetailRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DetailRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DetailRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/DetailRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemDetailComponent.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailComponent.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailComponent.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDetailComponent.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemDisplayComponent.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplayComponent.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplayComponent.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemDisplayComponent.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemListComponent.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListComponent.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListComponent.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListComponent.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemListView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemListView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemRow.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRow.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRow.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ItemRow.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/LocationIcon.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationIcon.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationIcon.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationIcon.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/LocationPicker.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPicker.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPicker.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationPicker.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/LocationTreeView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTreeView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTreeView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTreeView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/LocationTypePickerView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTypePickerView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTypePickerView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/LocationTypePickerView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ThumbnailImage.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailImage.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailImage.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ThumbnailImage.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ViewModeToggle.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewModeToggle.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewModeToggle.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/ViewModeToggle.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/AddItemTabView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemTabView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemTabView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/AddItemTabView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/CollectionsTabView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsTabView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsTabView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/CollectionsTabView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/HomeView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/HomeView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/HomeView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/HomeView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/MainTabView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MainTabView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MainTabView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/MainTabView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/SearchTabView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchTabView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchTabView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SearchTabView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Tabs/SettingsView.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SettingsView.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SettingsView.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/SettingsView.o"
+  },
+  "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/andrewpalmer/Documents/Obsidian Nexus/build/Obsidian Nexus.build/Release-iphonesimulator/Obsidian Nexus.build/Objects-normal/x86_64/GeneratedAssetSymbols.o"
+  }
+}

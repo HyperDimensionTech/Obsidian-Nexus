@@ -1,0 +1,112 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/ItemDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Item",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metadata",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Series Information",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "Synopsis",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete %@?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 300
+        }
+      }
+    ]
+  },
+  "version": 1
+}

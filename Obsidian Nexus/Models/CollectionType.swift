@@ -73,4 +73,84 @@ extension CollectionType {
     static var literatureTypes: [CollectionType] {
         [.books, .manga, .comics]
     }
+    
+    /// Determines how items of this collection type should be grouped into series
+    var seriesGroupingKey: KeyPath<InventoryItem, String?> {
+        switch self {
+        case .books, .manga, .comics:
+            return \.series
+        case .games:
+            return \.franchise  // Group games by franchise (e.g., "Final Fantasy", "Mario")
+        case .collectibles:
+            return \.franchise  // Group collectibles by franchise (e.g., "Marvel", "Pokemon")
+        case .electronics:
+            return \.series     // Group electronics by product series (e.g., "iPhone", "Galaxy")
+        case .tools:
+            return \.series     // Group tools by tool series (e.g., "DeWalt 20V", "Milwaukee M18")
+        }
+    }
+    
+    /// Alternative grouping key for author-based grouping (primarily for books)
+    var authorGroupingKey: KeyPath<InventoryItem, String?> {
+        switch self {
+        case .books, .manga, .comics:
+            return \.author
+        case .games:
+            return \.developer  // Group games by developer
+        case .collectibles:
+            return \.manufacturer  // Group collectibles by manufacturer
+        case .electronics:
+            return \.manufacturer  // Group electronics by manufacturer
+        case .tools:
+            return \.manufacturer  // Group tools by manufacturer
+        }
+    }
+    
+    /// Whether this collection type supports series grouping
+    var supportsSeriesGrouping: Bool {
+        switch self {
+        case .books, .manga, .comics, .games, .collectibles, .electronics, .tools:
+            return true
+        }
+    }
+    
+    /// Whether this collection type supports author/creator grouping
+    var supportsAuthorGrouping: Bool {
+        switch self {
+        case .books, .manga, .comics, .games, .collectibles, .electronics, .tools:
+            return true
+        }
+    }
+    
+    /// Appropriate terminology for series items
+    var seriesItemTerminology: String {
+        switch self {
+        case .books, .manga, .comics:
+            return "volumes"
+        case .games:
+            return "games"
+        case .collectibles:
+            return "items"
+        case .electronics:
+            return "devices"
+        case .tools:
+            return "tools"
+        }
+    }
+    
+    /// Appropriate terminology for author/creator grouping
+    var authorGroupingTerminology: String {
+        switch self {
+        case .books, .manga, .comics:
+            return "books"
+        case .games:
+            return "games"
+        case .collectibles:
+            return "items"
+        case .electronics:
+            return "devices"  
+        case .tools:
+            return "tools"
+        }
+    }
 } 

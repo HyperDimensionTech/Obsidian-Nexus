@@ -1,0 +1,16 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Collections/SeriesRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld volumes",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 11
+        }
+      }
+    ]
+  },
+  "version": 1
+}

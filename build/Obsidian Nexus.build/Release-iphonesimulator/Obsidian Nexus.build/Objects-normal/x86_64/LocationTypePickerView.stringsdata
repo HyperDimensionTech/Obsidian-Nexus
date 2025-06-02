@@ -1,0 +1,16 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/LocationTypePickerView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Type",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 22
+        }
+      }
+    ]
+  },
+  "version": 1
+}

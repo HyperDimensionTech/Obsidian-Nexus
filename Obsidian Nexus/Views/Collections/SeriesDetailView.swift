@@ -12,6 +12,7 @@ struct SeriesDetailView: View {
     @State private var deleteErrorMessage = ""
     
     let series: String
+    let collectionType: CollectionType
     
     var seriesItems: [InventoryItem] {
         inventoryViewModel.itemsInSeries(series)
@@ -34,7 +35,7 @@ struct SeriesDetailView: View {
                     }
                     
                     HStack {
-                        Text("Volumes Owned")
+                        Text("\(collectionType.seriesItemTerminology.capitalized) Owned")
                         Spacer()
                         Text("\(seriesStats.count)")
                             .foregroundColor(.secondary)
@@ -42,7 +43,7 @@ struct SeriesDetailView: View {
                     
                     if let total = seriesStats.total {
                         HStack {
-                            Text("Total Volumes")
+                            Text("Total \(collectionType.seriesItemTerminology.capitalized)")
                             Spacer()
                             Text("\(total)")
                                 .foregroundColor(.secondary)
@@ -61,10 +62,10 @@ struct SeriesDetailView: View {
             .frame(height: seriesStats.total != nil ? 200 : 120)
             .environment(\.editMode, .constant(.inactive))
             
-            // Volumes list using ItemListComponent
+            // Items list using ItemListComponent
             ItemListComponent(
                 items: seriesItems,
-                sectionTitle: "VOLUMES",
+                sectionTitle: collectionType.seriesItemTerminology.uppercased(),
                 groupingStyle: .none,
                 sortStyle: .volume,
                 enableSelection: true,
@@ -142,7 +143,7 @@ struct SeriesDetailView: View {
 
 #Preview {
     NavigationView {
-        SeriesDetailView(series: "Sample Series")
+        SeriesDetailView(series: "Sample Series", collectionType: .manga)
             .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
             .environmentObject(PreviewData.shared.locationManager)
     }

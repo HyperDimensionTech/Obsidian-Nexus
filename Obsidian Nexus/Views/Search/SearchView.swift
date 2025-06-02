@@ -1,9 +1,10 @@
 import SwiftUI
 
-// Create a search result type to handle different result types
+// Enhanced search result type to handle different result types including series
 enum SearchResultItem: Identifiable {
     case item(InventoryItem)
     case location(StorageLocation)
+    case series(String, CollectionType, Int) // series name, type, item count
     
     var id: String {
         switch self {
@@ -11,6 +12,8 @@ enum SearchResultItem: Identifiable {
             return "item-\(item.id)"
         case .location(let location):
             return "location-\(location.id)"
+        case .series(let name, let type, _):
+            return "series-\(type.rawValue)-\(name)"
         }
     }
 }
@@ -33,7 +36,7 @@ struct SearchView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
                     
-                    TextField("Search items...", text: $searchText)
+                    TextField("Search items, series, locations...", text: $searchText)
                         .onChange(of: searchText) { _, newValue in
                             // Only search when at least 2 characters
                             if newValue.count >= 2 {
@@ -77,47 +80,96 @@ struct SearchView: View {
                     .padding()
                 Spacer()
             } else if searchResults.isEmpty {
-                VStack(spacing: 24) {
-                    Spacer()
-                    
-                    if !searchText.isEmpty {
-                        Text("No items found")
+                if !searchText.isEmpty {
+                    // No search results found
+                    VStack(spacing: 24) {
+                        Spacer()
+                        
+                        Text("No results found")
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
                         Text("Try a different search term")
                             .foregroundColor(.gray)
-                    } else {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 50))
-                            .foregroundColor(.gray)
                         
-                        Text("Search for items or scan a code")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        
-                        // QR code scan button
-                        Button(action: {
-                            showingScanner = true
-                        }) {
-                            HStack {
-                                Image(systemName: "qrcode.viewfinder")
-                                Text("Scan QR Code")
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
+                } else {
+                    // Empty state with collections grid
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray)
+                            
+                            Text("Search for items, series, or locations")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            // QR code scan button
+                            Button(action: {
+                                showingScanner = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "qrcode.viewfinder")
+                                    Text("Scan QR Code")
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(Color.accentColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.accentColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            
+                            // Collections grid for easy browsing
+                            CollectionsGrid()
+                                .environmentObject(inventoryViewModel)
+                                .environmentObject(navigationCoordinator)
+                        }
+                        .padding()
+                    }
+                }
+            } else {
+                List {
+                    // Show series first (most relevant for collection browsing)
+                    let seriesResults = searchResults.compactMap { result -> (String, CollectionType, Int)? in
+                        if case .series(let name, let type, let count) = result {
+                            return (name, type, count)
+                        }
+                        return nil
+                    }
+                    
+                    if !seriesResults.isEmpty {
+                        Section(header: Text("Series")) {
+                            ForEach(seriesResults, id: \.0) { seriesName, type, count in
+                                NavigationLink {
+                                    SeriesDetailView(series: seriesName, collectionType: type)
+                                        .environmentObject(locationManager)
+                                        .environmentObject(inventoryViewModel)
+                                        .environmentObject(navigationCoordinator)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: type.iconName)
+                                            .foregroundColor(type.color)
+                                        VStack(alignment: .leading) {
+                                            Text(seriesName)
+                                                .foregroundColor(.primary)
+                                            Text("\(count) \(type.seriesItemTerminology)")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.secondary)
+                                            .font(.caption)
+                                    }
+                                }
+                            }
                         }
                     }
                     
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
-            } else {
-                List {
-                    // Show locations first
+                    // Show locations second
                     let locationResults = searchResults.compactMap { result -> StorageLocation? in
                         if case .location(let location) = result {
                             return location
@@ -144,7 +196,7 @@ struct SearchView: View {
                         }
                     }
                     
-                    // Then show items
+                    // Show individual items last
                     let itemResults = searchResults.compactMap { result -> InventoryItem? in
                         if case .item(let item) = result {
                             return item
@@ -185,7 +237,22 @@ struct SearchView: View {
         Task { @MainActor in
             var results: [SearchResultItem] = []
             
-            // Search for items
+            // Search for series across all collection types
+            let query = searchText.lowercased()
+            for type in CollectionType.allCases {
+                if type.supportsSeriesGrouping {
+                    let seriesData = inventoryViewModel.seriesForType(type)
+                    let matchingSeries = seriesData.filter { seriesName, _ in
+                        seriesName.lowercased().contains(query)
+                    }
+                    
+                    results.append(contentsOf: matchingSeries.map { seriesName, items in
+                        SearchResultItem.series(seriesName, type, items.count)
+                    })
+                }
+            }
+            
+            // Search for individual items
             let itemResults = inventoryViewModel.searchItems(query: searchText)
             results.append(contentsOf: itemResults.map { SearchResultItem.item($0) })
             

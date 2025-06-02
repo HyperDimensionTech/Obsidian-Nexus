@@ -1,0 +1,104 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/ItemDetails/BarcodeScannerView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "ISBN Not Found",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Continuous",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 158
+        }
+      },
+      {
+        "comment": "",
+        "key": "Successful",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last Added:",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Failed",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 186
+        }
+      },
+      {
+        "comment": "",
+        "key": "Review Scanned Items (%lld)",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "Link Now",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 303
+        }
+      },
+      {
+        "comment": "",
+        "key": "Would you like to link this ISBN to a book in Google Books?",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 309
+        }
+      },
+      {
+        "comment": "",
+        "key": "Review (%lld)",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 314
+        }
+      }
+    ]
+  },
+  "version": 1
+}

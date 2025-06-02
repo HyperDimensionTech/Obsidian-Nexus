@@ -62,7 +62,7 @@ private struct MangaSeriesSection: View {
             ForEach(series, id: \.0) { seriesName, items in
                 let stats = inventoryViewModel.seriesStats(name: seriesName)
                 NavigationLink {
-                    SeriesDetailView(series: seriesName)
+                    SeriesDetailView(series: seriesName, collectionType: .manga)
                 } label: {
                     HStack {
                         VStack(alignment: .leading) {

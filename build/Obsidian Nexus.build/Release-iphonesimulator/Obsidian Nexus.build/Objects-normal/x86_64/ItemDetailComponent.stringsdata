@@ -1,0 +1,48 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Shared/ItemDetailComponent.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Path",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Series",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Metadata",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Series Information",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 168
+        }
+      }
+    ]
+  },
+  "version": 1
+}

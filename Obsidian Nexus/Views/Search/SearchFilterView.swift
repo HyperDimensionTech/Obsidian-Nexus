@@ -13,6 +13,11 @@ struct SearchFilterView: View {
                 showPicker: $showingLocationPicker
             )
             ConditionSection(condition: $searchOptions.condition)
+            SeriesSection(
+                showSeriesOnly: $searchOptions.showSeriesOnly,
+                incompleteSeriesOnly: $searchOptions.incompleteSeriesOnly,
+                seriesGrouping: $searchOptions.seriesGrouping
+            )
         }
         .sheet(isPresented: $showingLocationPicker) {
             LocationPickerSheet(location: $searchOptions.location)
@@ -25,7 +30,7 @@ private struct TypesSection: View {
     
     var body: some View {
         Section("Types") {
-            ForEach(CollectionType.literatureTypes, id: \.self) { type in
+            ForEach(CollectionType.allCases, id: \.self) { type in
                 Toggle(type.name, isOn: Binding(
                     get: { types.contains(type) },
                     set: { isEnabled in
@@ -86,6 +91,40 @@ private struct ConditionSection: View {
                     Spacer()
                     Text(condition?.rawValue ?? "Any")
                         .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+}
+
+private struct SeriesSection: View {
+    @Binding var showSeriesOnly: Bool
+    @Binding var incompleteSeriesOnly: Bool
+    @Binding var seriesGrouping: SearchOptions.SeriesGroupingStyle
+    
+    var body: some View {
+        Section("Series Options") {
+            Toggle("Show Series Results Only", isOn: $showSeriesOnly)
+            Toggle("Incomplete Series Only", isOn: $incompleteSeriesOnly)
+            
+            if showSeriesOnly {
+                Menu {
+                    Button("None") {
+                        seriesGrouping = .none
+                    }
+                    Button("Group by Series") {
+                        seriesGrouping = .bySeries
+                    }
+                    Button("Group by Author/Creator") {
+                        seriesGrouping = .byAuthor
+                    }
+                } label: {
+                    HStack {
+                        Text("Grouping")
+                        Spacer()
+                        Text(seriesGrouping.displayName)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }

@@ -22,6 +22,12 @@ struct SearchTabView: View {
                         }
                     }
                 }
+                .navigationDestination(for: CollectionType.self) { type in
+                    CollectionView(type: type)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
+                }
                 .navigationDestination(for: NavigationDestination.self) { destination in
                     switch destination {
                     case .itemDetail(let item):
@@ -44,6 +50,16 @@ struct SearchTabView: View {
                             .environmentObject(locationManager)
                             .environmentObject(inventoryViewModel)
                             .environmentObject(navigationCoordinator)
+                    case .seriesView(let type):
+                        SeriesView(collectionType: type)
+                            .environmentObject(locationManager)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
+                    case .seriesDetail(let seriesName, let collectionType):
+                        SeriesDetailView(series: seriesName, collectionType: collectionType)
+                            .environmentObject(locationManager)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(navigationCoordinator)
                     default:
                         EmptyView()
                     }
@@ -57,6 +73,9 @@ struct SearchTabView: View {
             }
         }
         .onAppear {
+            // Set this as the active tab for navigation context
+            navigationCoordinator.setActiveTab("Browse & Search")
+            
             // Add notification observer when view appears
             NotificationCenter.default.addObserver(
                 forName: Notification.Name("TabDoubleTapped"),

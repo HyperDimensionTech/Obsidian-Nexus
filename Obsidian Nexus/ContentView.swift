@@ -141,7 +141,7 @@ struct CombinedSearchTabView: View {
     }
     
     var body: some View {
-        NavigationStack(path: $navigationCoordinator.path) {
+        NavigationStack(path: navigationCoordinator.bindingForTab("Browse & Search")) {
             VStack(spacing: 0) {
                 // Search bar at the top
                 SearchBar(text: $searchText)
@@ -287,12 +287,40 @@ struct CombinedSearchTabView: View {
                 }
             }
             .navigationDestination(for: CollectionType.self) { type in
-                CollectionDetailView(type: type)
+                CollectionView(type: type)
+                    .environmentObject(locationManager)
+                    .environmentObject(inventoryViewModel)
+                    .environmentObject(navigationCoordinator)
             }
             .navigationDestination(for: NavigationDestination.self) { destination in
                 switch destination {
+                case .itemDetail(let item):
+                    ItemDetailView(item: item)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
+                case .locationDetail(let location):
+                    LocationDetailView(location: location)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
+                case .locationItems(let location):
+                    LocationItemsView(location: location)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
                 case .scannedLocation(let location):
                     LocationItemsView(location: location)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
+                case .seriesView(let type):
+                    SeriesView(collectionType: type)
+                        .environmentObject(locationManager)
+                        .environmentObject(inventoryViewModel)
+                        .environmentObject(navigationCoordinator)
+                case .seriesDetail(let seriesName, let collectionType):
+                    SeriesDetailView(series: seriesName, collectionType: collectionType)
                         .environmentObject(locationManager)
                         .environmentObject(inventoryViewModel)
                         .environmentObject(navigationCoordinator)
@@ -309,6 +337,9 @@ struct CombinedSearchTabView: View {
             }
         }
         .onAppear {
+            // Set this as the active tab for navigation context
+            navigationCoordinator.setActiveTab("Browse & Search")
+            
             // Add notification observer when view appears
             NotificationCenter.default.addObserver(
                 forName: Notification.Name("TabDoubleTapped"),

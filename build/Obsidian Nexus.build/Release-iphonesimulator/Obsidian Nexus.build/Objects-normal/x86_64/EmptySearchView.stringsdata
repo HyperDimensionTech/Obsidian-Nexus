@@ -1,0 +1,24 @@
+{
+  "source": "/Users/andrewpalmer/Documents/Obsidian Nexus/Obsidian Nexus/Views/Search/EmptySearchView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No results found for \"%@\"",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try adjusting your search terms",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 13
+        }
+      }
+    ]
+  },
+  "version": 1
+}

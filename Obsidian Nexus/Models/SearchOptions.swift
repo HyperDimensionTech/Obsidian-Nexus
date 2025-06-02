@@ -5,9 +5,26 @@ struct SearchOptions {
     var types: Set<CollectionType> = []
     var location: StorageLocation? = nil
     var condition: ItemCondition? = nil
+    var showSeriesOnly: Bool = false
+    var incompleteSeriesOnly: Bool = false
+    var seriesGrouping: SeriesGroupingStyle = .none
+    
+    enum SeriesGroupingStyle {
+        case none
+        case bySeries
+        case byAuthor
+        
+        var displayName: String {
+            switch self {
+            case .none: return "None"
+            case .bySeries: return "By Series"
+            case .byAuthor: return "By Author"
+            }
+        }
+    }
     
     var hasFilters: Bool {
-        !types.isEmpty || location != nil || condition != nil
+        !types.isEmpty || location != nil || condition != nil || showSeriesOnly || incompleteSeriesOnly
     }
     
     @MainActor

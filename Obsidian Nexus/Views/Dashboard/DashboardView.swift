@@ -3,77 +3,82 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @State private var refreshTrigger = UUID()
     
     var body: some View {
-        NavigationStack {
-            List {
-                // Collection Overview Section
-                Section {
+        List {
+            // Collection Overview Section
+            Section {
+                NavigationLink {
+                    CollectionStatsView()
+                } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Collection Overview")
+                            .font(.headline)
+                        
+                        HStack {
+                            Text("\(inventoryViewModel.totalItems) Items")
+                            Text("•")
+                            Text(inventoryViewModel.totalCollectionValue.convertedToDefaultCurrency().formatted())
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            
+            // Collections Section
+            Section("Collections") {
+                ForEach(CollectionType.literatureTypes, id: \.self) { type in
                     NavigationLink {
-                        CollectionStatsView()
+                        CollectionView(type: type)
+                            .environmentObject(inventoryViewModel)
+                            .environmentObject(locationManager)
+                            .environmentObject(navigationCoordinator)
                     } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Collection Overview")
-                                .font(.headline)
-                            
+                        Label {
                             HStack {
-                                Text("\(inventoryViewModel.totalItems) Items")
-                                Text("•")
-                                Text(inventoryViewModel.totalCollectionValue.convertedToDefaultCurrency().formatted())
+                                Text(type.name)
+                                Spacer()
+                                Text("\(inventoryViewModel.itemCount(for: type))")
+                                    .foregroundColor(.secondary)
                             }
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                // Collections Section
-                Section("Collections") {
-                    ForEach(CollectionType.literatureTypes, id: \.self) { type in
-                        NavigationLink {
-                            CollectionView(type: type)
-                        } label: {
-                            Label {
-                                HStack {
-                                    Text(type.name)
-                                    Spacer()
-                                    Text("\(inventoryViewModel.itemCount(for: type))")
-                                        .foregroundColor(.secondary)
-                                }
-                            } icon: {
-                                Image(systemName: type.iconName)
-                            }
-                        }
-                    }
-                }
-                
-                // Recent Items Section
-                if !inventoryViewModel.recentItems.isEmpty {
-                    Section("Recent Items") {
-                        ForEach(inventoryViewModel.recentItems) { item in
-                            NavigationLink {
-                                ItemDetailView(item: item)
-                            } label: {
-                                ItemRow(item: item)
-                            }
+                        } icon: {
+                            Image(systemName: type.iconName)
                         }
                     }
                 }
             }
-            .navigationTitle("Dashboard")
-            .id(refreshTrigger) // Force view refresh when this changes
-            .onAppear {
-                // Add notification observer when view appears
-                NotificationCenter.default.addObserver(
-                    forName: Notification.Name("DefaultCurrencyChanged"),
-                    object: nil,
-                    queue: .main
-                ) { _ in
-                    // Force view to refresh by changing the ID
-                    refreshTrigger = UUID()
+            
+            // Recent Items Section
+            if !inventoryViewModel.recentItems.isEmpty {
+                Section("Recent Items") {
+                    ForEach(inventoryViewModel.recentItems) { item in
+                        NavigationLink {
+                            ItemDetailView(item: item)
+                                .environmentObject(inventoryViewModel)
+                                .environmentObject(locationManager)
+                                .environmentObject(navigationCoordinator)
+                        } label: {
+                            ItemRow(item: item)
+                        }
+                    }
                 }
+            }
+        }
+        .navigationTitle("Dashboard")
+        .id(refreshTrigger) // Force view refresh when this changes
+        .onAppear {
+            // Add notification observer when view appears
+            NotificationCenter.default.addObserver(
+                forName: Notification.Name("DefaultCurrencyChanged"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                // Force view to refresh by changing the ID
+                refreshTrigger = UUID()
             }
         }
     }
