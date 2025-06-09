@@ -176,20 +176,8 @@ struct AddItemView: View {
     }
     
     var sortedResults: [GoogleBook] {
-        // First apply the existing volume sorting logic
-        let volumeSorted = searchResults.sorted { (book1, book2) -> Bool in
-            // Extract volume numbers if present
-            let vol1 = googleBooksService.extractVolumeNumber(from: book1.volumeInfo.title) ?? 0
-            let vol2 = googleBooksService.extractVolumeNumber(from: book2.volumeInfo.title) ?? 0
-            
-            // If both have volume numbers, sort by volume
-            if vol1 > 0 && vol2 > 0 {
-                return vol1 < vol2
-            }
-            
-            // Otherwise sort by title
-            return book1.volumeInfo.title < book2.volumeInfo.title
-        }
+        // First apply volume-aware sorting using our new utility
+        let volumeSorted = VolumeExtractor.sortGoogleBooksByVolume(searchResults)
         
         // Then apply the selected sort option
         return selectedSortOption.sortBooks(volumeSorted, searchQuery: searchQuery)

@@ -3,6 +3,7 @@ import SwiftUI
 struct CollectionView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var userPreferences: UserPreferences
     @State private var selectedItems: Set<UUID> = []
     @State private var isEditMode: EditMode = .inactive
     @State private var showingBulkEditSheet = false
@@ -10,7 +11,6 @@ struct CollectionView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
-    @State private var viewMode: ViewMode = .list
     
     let type: CollectionType
     
@@ -55,7 +55,7 @@ struct CollectionView: View {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 // View mode toggle on the right side
                 if shouldShowViewModeToggle {
-                    ViewModeToggle(viewMode: $viewMode)
+                    ViewModeToggle(viewMode: $userPreferences.viewMode)
                 }
                 
                 // 3-dot menu
@@ -134,21 +134,21 @@ struct CollectionView: View {
             authorListView
         } else if type == .books && bookSortStyle == .series {
             // Books by series - can toggle view mode
-            if viewMode == .list {
+            if userPreferences.viewMode == .list {
                 seriesListView(for: .books)
             } else {
                 seriesCardView(for: .books)
             }
         } else if type.supportsSeriesGrouping {
             // Other collection types with series support
-            if viewMode == .list {
+            if userPreferences.viewMode == .list {
                 seriesListView(for: type)
             } else {
                 seriesCardView(for: type)
             }
         } else {
             // Individual items view
-            if viewMode == .list {
+            if userPreferences.viewMode == .list {
                 itemsListView
             } else {
                 itemsCardView

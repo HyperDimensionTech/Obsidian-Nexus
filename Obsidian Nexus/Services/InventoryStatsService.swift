@@ -79,8 +79,6 @@ class InventoryStatsService {
     struct SeriesStatistics {
         let value: Price
         let count: Int
-        let total: Int?
-        let completionPercentage: Double?
         let averageVolumePrice: Price
         let missingVolumes: [Int]
     }
@@ -95,10 +93,6 @@ class InventoryStatsService {
         let volumes = seriesItems.compactMap { $0.volume }.sorted()
         let missingVolumes = calculateMissingVolumes(volumes)
         
-        // Estimate total based on highest volume number
-        let estimatedTotal = volumes.isEmpty ? nil : volumes.max()
-        let completionPercentage = estimatedTotal.map { Double(count) / Double($0) }
-        
         let averageVolumePrice = count > 0 ? 
             Price(amount: value.amount / Decimal(count)) : 
             Price(amount: 0)
@@ -106,8 +100,6 @@ class InventoryStatsService {
         return SeriesStatistics(
             value: value,
             count: count,
-            total: estimatedTotal,
-            completionPercentage: completionPercentage,
             averageVolumePrice: averageVolumePrice,
             missingVolumes: missingVolumes
         )

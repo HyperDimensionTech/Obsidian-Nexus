@@ -380,19 +380,47 @@ class LocationManager: ObservableObject {
     // MARK: - Location Search
     
     /**
-     Searches for locations matching the given query.
+     Searches for locations matching the given query using fuzzy matching.
      
-     This method searches location names case-insensitively.
+     This method searches location names with flexible matching that handles
+     partial words, missing punctuation, and other common user input patterns.
      
      - Parameter query: The search query
-     - Returns: An array of matching locations
+     - Returns: An array of matching locations sorted by relevance
      */
     func searchLocations(query: String) -> [StorageLocation] {
         guard !query.isEmpty else { return [] }
         
-        return allLocations()
-            .filter { $0.name.localizedCaseInsensitiveContains(query) }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        // Use fuzzy matching for more flexible search
+        let matchingLocations = allLocations().filter { location in
+            VolumeExtractor.fuzzyMatches(searchQuery: query, against: location.name)
+        }
+        
+        // Sort by relevance: exact matches first, then prefix matches, then other fuzzy matches
+        let normalizedQuery = query.lowercased()
+        return matchingLocations.sorted { location1, location2 in
+            let name1 = location1.name.lowercased()
+            let name2 = location2.name.lowercased()
+            
+            // Exact matches come first
+            if name1 == normalizedQuery && name2 != normalizedQuery {
+                return true
+            }
+            if name2 == normalizedQuery && name1 != normalizedQuery {
+                return false
+            }
+            
+            // Prefix matches come second
+            if name1.hasPrefix(normalizedQuery) && !name2.hasPrefix(normalizedQuery) {
+                return true
+            }
+            if name2.hasPrefix(normalizedQuery) && !name1.hasPrefix(normalizedQuery) {
+                return false
+            }
+            
+            // Otherwise sort alphabetically
+            return location1.name.localizedCaseInsensitiveCompare(location2.name) == .orderedAscending
+        }
     }
     
     // MARK: - Utility Methods

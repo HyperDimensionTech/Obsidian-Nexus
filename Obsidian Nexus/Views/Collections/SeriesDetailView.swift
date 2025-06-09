@@ -18,7 +18,7 @@ struct SeriesDetailView: View {
         inventoryViewModel.itemsInSeries(series)
     }
     
-    var seriesStats: (value: Price, count: Int, total: Int?) {
+    var seriesStats: (value: Price, count: Int) {
         inventoryViewModel.seriesStats(name: series)
     }
     
@@ -40,26 +40,10 @@ struct SeriesDetailView: View {
                         Text("\(seriesStats.count)")
                             .foregroundColor(.secondary)
                     }
-                    
-                    if let total = seriesStats.total {
-                        HStack {
-                            Text("Total \(collectionType.seriesItemTerminology.capitalized)")
-                            Spacer()
-                            Text("\(total)")
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        HStack {
-                            Text("Completion")
-                            Spacer()
-                            Text("\(Int((Double(seriesStats.count) / Double(total)) * 100))%")
-                                .foregroundColor(.secondary)
-                        }
-                    }
                 }
             }
             .listStyle(InsetGroupedListStyle())
-            .frame(height: seriesStats.total != nil ? 200 : 120)
+            .frame(height: 120)
             .environment(\.editMode, .constant(.inactive))
             
             // Items list using ItemListComponent

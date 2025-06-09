@@ -113,28 +113,15 @@ struct ItemCardView: View {
                 
                 // Metadata row
                 HStack(spacing: 8) {
-                    // Type badge
-                    HStack(spacing: 4) {
-                        Image(systemName: item.type.iconName)
-                            .font(.caption2)
-                        Text(item.type.name)
-                            .font(.caption)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(item.type.color.opacity(0.1))
-                    .foregroundColor(item.type.color)
-                    .cornerRadius(6)
-                    
-                    Spacer()
-                    
-                    // Price
+                    // Price (now aligned to leading edge)
                     if let price = item.price {
                         Text(price.formatted())
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                     }
+                    
+                    Spacer()
                 }
             }
             .padding(.horizontal, 12)
@@ -229,28 +216,15 @@ struct SeriesCardView: View {
                 
                 // Value and completion
                 HStack(spacing: 8) {
-                    // Type badge
-                    HStack(spacing: 4) {
-                        Image(systemName: collectionType.iconName)
-                            .font(.caption2)
-                        Text(collectionType.name)
-                            .font(.caption)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(collectionType.color.opacity(0.1))
-                    .foregroundColor(collectionType.color)
-                    .cornerRadius(6)
-                    
-                    Spacer()
-                    
-                    // Series value
+                    // Series value (now aligned to leading edge)
                     if seriesValue.amount > 0 {
                         Text(seriesValue.formatted())
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                     }
+                    
+                    Spacer()
                 }
             }
             .padding(.horizontal, 12)

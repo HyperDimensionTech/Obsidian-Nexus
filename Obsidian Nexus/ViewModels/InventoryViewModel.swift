@@ -239,41 +239,59 @@ class InventoryViewModel: ObservableObject {
     func searchItems(query: String) -> [InventoryItem] {
         guard !query.isEmpty else { return items }
         
-        let searchTerm = query.lowercased()
-        
-        // Simple relevance scoring directly in ViewModel
+        // Fuzzy search with relevance scoring
         let scoredItems = items.compactMap { item -> (item: InventoryItem, score: Int)? in
             var score = 0
-            let title = item.title.lowercased()
-            let series = item.series?.lowercased() ?? ""
-            let author = item.author?.lowercased() ?? ""
             
-            // Title scoring (highest priority)
-            if title == searchTerm { 
-                score += 100 
-            } else if title.hasPrefix(searchTerm) { 
-                score += 80 
-            } else if title.contains(searchTerm) { 
-                score += 60 
+            // Check title with fuzzy matching
+            if VolumeExtractor.fuzzyMatches(searchQuery: query, against: item.title) {
+                let normalizedQuery = query.lowercased()
+                let normalizedTitle = item.title.lowercased()
+                
+                // Exact match gets highest score
+                if normalizedTitle == normalizedQuery {
+                    score += 100
+                }
+                // Starts with query gets high score
+                else if normalizedTitle.hasPrefix(normalizedQuery) {
+                    score += 80
+                }
+                // Fuzzy match gets good score
+                else {
+                    score += 60
+                }
             }
             
-            // Series scoring (high priority for manga/comics)
-            if series == searchTerm { 
-                score += 90 
-            } else if series.hasPrefix(searchTerm) { 
-                score += 70 
-            } else if series.contains(searchTerm) { 
-                score += 50 
+            // Check series with fuzzy matching
+            if let series = item.series,
+               VolumeExtractor.fuzzyMatches(searchQuery: query, against: series) {
+                let normalizedQuery = query.lowercased()
+                let normalizedSeries = series.lowercased()
+                
+                if normalizedSeries == normalizedQuery {
+                    score += 90
+                } else if normalizedSeries.hasPrefix(normalizedQuery) {
+                    score += 70
+                } else {
+                    score += 50
+                }
             }
             
-            // Author scoring
-            if author == searchTerm { 
-                score += 60 
-            } else if author.contains(searchTerm) { 
-                score += 30 
+            // Check author with fuzzy matching
+            if let author = item.author,
+               VolumeExtractor.fuzzyMatches(searchQuery: query, against: author) {
+                let normalizedQuery = query.lowercased()
+                let normalizedAuthor = author.lowercased()
+                
+                if normalizedAuthor == normalizedQuery {
+                    score += 60
+                } else {
+                    score += 30
+                }
             }
             
-            // ISBN/Barcode exact matches
+            // ISBN/Barcode exact matches (keep original logic)
+            let searchTerm = query.lowercased()
             if let isbn = item.isbn?.lowercased(), isbn.contains(searchTerm) {
                 score += 95
             }
@@ -284,8 +302,13 @@ class InventoryViewModel: ObservableObject {
             return score > 0 ? (item, score) : nil
         }
         
-        // Sort by score (highest first) and return items
-        return scoredItems.sorted { $0.score > $1.score }.map { $0.item }
+        // Sort by score (highest first) then apply volume-aware sorting for items with same score
+        let scoreGrouped = Dictionary(grouping: scoredItems) { $0.score }
+        
+        return scoreGrouped.sorted { $0.key > $1.key }.flatMap { score, items in
+            // Within each score group, use hybrid series/volume sorting
+            VolumeExtractor.sortInventoryItemsByVolume(items.map { $0.item })
+        }
     }
     
     func mangaSeries() -> [(String, [InventoryItem])] {
@@ -528,9 +551,9 @@ class InventoryViewModel: ObservableObject {
     }
     
     // Value and completion for a specific series
-    func seriesStats(name: String) -> (value: Price, count: Int, total: Int?) {
+    func seriesStats(name: String) -> (value: Price, count: Int) {
         let stats = statsService.seriesStats(name: name, in: items)
-        return (stats.value, stats.count, stats.total)
+        return (stats.value, stats.count)
     }
     
     // Collection statistics

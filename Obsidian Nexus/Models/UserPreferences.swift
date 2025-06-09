@@ -128,6 +128,7 @@ class UserPreferences: ObservableObject {
     private let defaults = UserDefaults.standard
     private let themeKey = "userTheme"
     private let viewStyleKey = "viewStyle"
+    private let viewModeKey = "viewMode"
     private let showCompletionStatusKey = "showCompletionStatus"
     private let defaultCollectionKey = "defaultCollection"
     private let defaultCurrencyKey = "defaultCurrency"
@@ -146,6 +147,13 @@ class UserPreferences: ObservableObject {
     @Published var viewStyle: ViewStyle {
         didSet {
             defaults.set(viewStyle.rawValue, forKey: viewStyleKey)
+        }
+    }
+    
+    /// The preferred view mode for collections (list vs card)
+    @Published var viewMode: ViewMode {
+        didSet {
+            defaults.set(viewMode.rawValue, forKey: viewModeKey)
         }
     }
     
@@ -197,6 +205,9 @@ class UserPreferences: ObservableObject {
         
         // Load saved view style or use grid default
         self.viewStyle = ViewStyle(rawValue: defaults.string(forKey: viewStyleKey) ?? "") ?? .grid
+        
+        // Load saved view mode or use list default
+        self.viewMode = ViewMode(rawValue: defaults.string(forKey: viewModeKey) ?? "") ?? .list
         
         // Load saved completion status or use true as default
         self.showCompletionStatus = defaults.bool(forKey: showCompletionStatusKey)

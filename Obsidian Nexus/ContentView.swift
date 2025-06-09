@@ -412,12 +412,14 @@ struct CombinedSearchTabView: View {
     private func sortItems(_ items: [InventoryItem]) -> [InventoryItem] {
         switch selectedSortOption {
         case .relevance:
-            // Don't re-sort relevance results - they're already sorted by score from the search
-            return items
+            // For relevance, use volume-aware sorting to fix numerical order
+            return VolumeExtractor.sortInventoryItemsByVolume(items)
         case .titleAsc:
-            return items.sorted { $0.title < $1.title }
+            // Use volume-aware sorting for ascending title order
+            return VolumeExtractor.sortInventoryItemsByVolume(items)
         case .titleDesc:
-            return items.sorted { $0.title > $1.title }
+            // Use volume-aware sorting then reverse for descending
+            return VolumeExtractor.sortInventoryItemsByVolume(items).reversed()
         case .dateAddedNewest:
             return items.sorted { $0.dateAdded > $1.dateAdded }
         case .dateAddedOldest:

@@ -9,13 +9,13 @@ import SwiftUI
 struct SeriesView: View {
     @EnvironmentObject var inventoryViewModel: InventoryViewModel
     @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var userPreferences: UserPreferences
     @State private var selectedItems: Set<UUID> = []
     @State private var isEditMode: EditMode = .inactive
     @State private var showingBulkEditSheet = false
     @State private var showingDeleteConfirmation = false
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
-    @State private var viewMode: ViewMode = .list
     
     let collectionType: CollectionType
     
@@ -30,7 +30,7 @@ struct SeriesView: View {
     var body: some View {
         // Use native iOS navigation structure for proper scrolling behavior
         Group {
-            if viewMode == .list {
+            if userPreferences.viewMode == .list {
                 listView
             } else {
                 cardView
@@ -43,7 +43,7 @@ struct SeriesView: View {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 // View mode toggle on the right side
                 if !seriesData.isEmpty {
-                    ViewModeToggle(viewMode: $viewMode)
+                    ViewModeToggle(viewMode: $userPreferences.viewMode)
                 }
                 
                 // 3-dot menu
