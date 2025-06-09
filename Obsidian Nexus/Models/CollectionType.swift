@@ -67,11 +67,26 @@ enum CollectionType: String, CaseIterable, Identifiable, Codable {
             return false
         }
     }
+    
+    /// Indicates whether this collection type is ready for production use
+    var isReady: Bool {
+        switch self {
+        case .books, .manga, .comics:
+            return true
+        case .games, .collectibles, .electronics, .tools:
+            return false
+        }
+    }
 }
 
 extension CollectionType {
     static var literatureTypes: [CollectionType] {
         [.books, .manga, .comics]
+    }
+    
+    /// Collection types that are ready for production use
+    static var readyTypes: [CollectionType] {
+        allCases.filter { $0.isReady }
     }
     
     /// Determines how items of this collection type should be grouped into series
