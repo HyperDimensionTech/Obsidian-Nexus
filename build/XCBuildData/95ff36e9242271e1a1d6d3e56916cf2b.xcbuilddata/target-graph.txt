@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'Obsidian Nexus' in project 'Obsidian Nexus' (no dependencies)

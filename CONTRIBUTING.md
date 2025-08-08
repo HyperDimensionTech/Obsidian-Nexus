@@ -1,6 +1,6 @@
-# Contributing to Obsidian Nexus
+# Contributing to Pocket Dimension
 
-Thank you for your interest in contributing to Obsidian Nexus! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Pocket Dimension! This document provides guidelines and instructions for contributing to the project.
 
 ## Code of Conduct
 
@@ -102,14 +102,14 @@ When creating new reusable UI components:
 ## Setting Up the Development Environment
 
 1. Clone the repository
-2. Open `Obsidian Nexus.xcodeproj` in Xcode
+2. Open `Pocket Dimension.xcodeproj` in Xcode
 3. Install any required dependencies
 4. Build and run the project
 
 ## Project Structure
 
 ```
-Obsidian Nexus/
+Pocket Dimension/
 ├── Models/           # Data models
 ├── Views/            # SwiftUI views
 │   ├── Shared/       # Reusable components

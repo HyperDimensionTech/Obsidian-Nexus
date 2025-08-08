@@ -17,7 +17,7 @@ class ImportExportViewModel: ObservableObject {
     }
     
     deinit {
-        print("🔴 ImportExportViewModel (app): Deallocating")
+        print("🔴 ImportExportViewModel: Deallocating")
     }
     
     func loadExportedFiles() async {
@@ -31,15 +31,39 @@ class ImportExportViewModel: ObservableObject {
     
     func exportData() async {
         isLoading = true
-        defer { isLoading = false }
-        
         do {
             let fileURL = try await dataService.exportData()
             await loadExportedFiles()
+            
+            // Present share sheet for the exported file
+            await presentShareSheet(for: fileURL)
         } catch {
-            errorMessage = error.localizedDescription
+            self.errorMessage = error.localizedDescription
             showError = true
         }
+        isLoading = false
+    }
+    
+    @MainActor
+    private func presentShareSheet(for fileURL: URL) async {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootViewController = window.rootViewController else {
+            return
+        }
+        
+        let activityViewController = UIActivityViewController(
+            activityItems: [fileURL], 
+            applicationActivities: nil
+        )
+        
+        // For iPad
+        if let popover = activityViewController.popoverPresentationController {
+            popover.sourceView = rootViewController.view
+            popover.sourceRect = CGRect(x: rootViewController.view.bounds.midX, y: rootViewController.view.bounds.midY, width: 0, height: 0)
+        }
+        
+        rootViewController.present(activityViewController, animated: true)
     }
     
     func deleteExportedFile(_ fileURL: URL) async {
