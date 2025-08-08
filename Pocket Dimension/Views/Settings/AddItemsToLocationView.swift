@@ -136,7 +136,12 @@ struct ItemSelectionRow: View {
 #Preview {
     NavigationView {
         AddItemsToLocationView(locationId: UUID())
-            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+            .environmentObject(InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                  locationManager: LocationManager(storage: StorageManager.shared),
+                                                  validator: ServiceContainer.shared.validator,
+                                                  search: ServiceContainer.shared.search,
+                                                  stats: ServiceContainer.shared.stats,
+                                                  collectionService: CollectionManagementService()))
             .environmentObject(LocationManager())
     }
 } 

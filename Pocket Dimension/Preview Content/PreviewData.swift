@@ -9,7 +9,12 @@ class PreviewData {
     
     private init() {
         locationManager = LocationManager()
-        inventoryViewModel = InventoryViewModel(locationManager: locationManager)
+        inventoryViewModel = InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                locationManager: locationManager,
+                                                validator: ServiceContainer.shared.validator,
+                                                search: ServiceContainer.shared.search,
+                                                stats: ServiceContainer.shared.stats,
+                                                collectionService: CollectionManagementService())
         
         // Load sample data
         locationManager.loadSampleData()

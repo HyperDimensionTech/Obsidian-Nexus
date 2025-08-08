@@ -448,15 +448,20 @@ struct ItemDetailView: View {
 }
 
 #Preview {
-    let locationManager = LocationManager()
-    let inventoryViewModel = InventoryViewModel(locationManager: locationManager)
+    let locationManager = LocationManager(storage: StorageManager.shared)
+    let inventoryViewModel = InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                locationManager: locationManager,
+                                                validator: ServiceContainer.shared.validator,
+                                                search: ServiceContainer.shared.search,
+                                                stats: ServiceContainer.shared.stats,
+                                                collectionService: CollectionManagementService())
     
     let sampleItem = InventoryItem(
         title: "Sample Item",
         type: .books
     )
     
-    return NavigationView {
+    NavigationView {
         ItemDetailView(item: sampleItem)
             .environmentObject(locationManager)
             .environmentObject(inventoryViewModel)

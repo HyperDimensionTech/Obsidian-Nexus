@@ -86,13 +86,16 @@ struct MainView: View {
     @StateObject private var serviceContainer = ServiceContainer.shared
     
     init() {
-        let storage = StorageManager.shared
-        let locationManager = LocationManager(storage: storage)
-        _locationManager = StateObject(wrappedValue: locationManager)
-        _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(storage: storage, locationManager: locationManager))
-        
-        // Initialize the CurrencyManager singleton to ensure it's ready to handle currency changes
+        let storage: InventoryStorage = ServiceContainer.shared.storage
+        let manager = LocationManager(storage: StorageManager.shared)
+        _locationManager = StateObject(wrappedValue: manager)
+        _inventoryViewModel = StateObject(wrappedValue:
+            InventoryViewModel(storage: storage,
+                                locationManager: manager,
+                                validator: ServiceContainer.shared.validator,
+                                search: ServiceContainer.shared.search,
+                                stats: ServiceContainer.shared.stats,
+                                collectionService: CollectionManagementService()))
         _ = CurrencyManager.shared
     }
     

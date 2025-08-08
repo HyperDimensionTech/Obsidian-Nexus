@@ -10,11 +10,16 @@ struct MainTabView: View {
     @State private var notificationObserver: NSObjectProtocol?
     
     init() {
-        let storage = StorageManager.shared
-        let locationManager = LocationManager(storage: storage)
+        let storage: InventoryStorage = ServiceContainer.shared.storage
+        let locationManager = LocationManager(storage: StorageManager.shared)
         _locationManager = StateObject(wrappedValue: locationManager)
         _inventoryViewModel = StateObject(wrappedValue: 
-            InventoryViewModel(storage: storage, locationManager: locationManager))
+            InventoryViewModel(storage: storage,
+                                locationManager: locationManager,
+                                validator: ServiceContainer.shared.validator,
+                                search: ServiceContainer.shared.search,
+                                stats: ServiceContainer.shared.stats,
+                                collectionService: CollectionManagementService()))
     }
     
     enum Tab {
@@ -153,5 +158,10 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
         .environmentObject(PreviewData.shared.locationManager)
-        .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
+        .environmentObject(InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                              locationManager: PreviewData.shared.locationManager,
+                                              validator: ServiceContainer.shared.validator,
+                                              search: ServiceContainer.shared.search,
+                                              stats: ServiceContainer.shared.stats,
+                                              collectionService: CollectionManagementService()))
 } 

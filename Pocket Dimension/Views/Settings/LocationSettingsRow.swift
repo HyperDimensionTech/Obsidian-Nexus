@@ -97,6 +97,11 @@ struct LocationSettingsRow: View {
             selectedLocation: .constant(nil)
         )
         .environmentObject(PreviewData.shared.locationManager)
-        .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
+        .environmentObject(InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                              locationManager: PreviewData.shared.locationManager,
+                                              validator: ServiceContainer.shared.validator,
+                                              search: ServiceContainer.shared.search,
+                                              stats: ServiceContainer.shared.stats,
+                                              collectionService: CollectionManagementService()))
     }
 } 

@@ -1402,13 +1402,14 @@ struct BookResultCard: View {
 }
 
 #Preview {
-    let locationManager = LocationManager()
-    let inventoryViewModel = InventoryViewModel(
-        storage: .shared,
-        locationManager: locationManager
-    )
-    
-    return NavigationView {
+    let locationManager = LocationManager(storage: StorageManager.shared)
+    let inventoryViewModel = InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                locationManager: locationManager,
+                                                validator: ServiceContainer.shared.validator,
+                                                search: ServiceContainer.shared.search,
+                                                stats: ServiceContainer.shared.stats,
+                                                collectionService: CollectionManagementService())
+    NavigationView {
         AddItemView()
             .environmentObject(inventoryViewModel)
             .environmentObject(locationManager)

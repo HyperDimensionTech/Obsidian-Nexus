@@ -128,7 +128,12 @@ struct SeriesDetailView: View {
 #Preview {
     NavigationView {
         SeriesDetailView(series: "Sample Series", collectionType: .manga)
-            .environmentObject(InventoryViewModel(locationManager: PreviewData.shared.locationManager))
+            .environmentObject(InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                  locationManager: PreviewData.shared.locationManager,
+                                                  validator: ServiceContainer.shared.validator,
+                                                  search: ServiceContainer.shared.search,
+                                                  stats: ServiceContainer.shared.stats,
+                                                  collectionService: CollectionManagementService()))
             .environmentObject(PreviewData.shared.locationManager)
     }
 } 

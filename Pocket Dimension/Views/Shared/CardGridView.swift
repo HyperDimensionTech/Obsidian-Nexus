@@ -336,9 +336,14 @@ struct ThumbnailCardView: View {
         )
     ]
     
-    return NavigationView {
+    NavigationView {
         CardGridView(items: sampleItems, showSeriesGrouping: false)
-            .environmentObject(InventoryViewModel(locationManager: LocationManager()))
+            .environmentObject(InventoryViewModel(storage: ServiceContainer.shared.storage,
+                                                  locationManager: LocationManager(storage: StorageManager.shared),
+                                                  validator: ServiceContainer.shared.validator,
+                                                  search: ServiceContainer.shared.search,
+                                                  stats: ServiceContainer.shared.stats,
+                                                  collectionService: CollectionManagementService()))
             .environmentObject(LocationManager())
             .environmentObject(NavigationCoordinator())
             .environmentObject(UserPreferences())

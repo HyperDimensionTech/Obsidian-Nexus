@@ -9,16 +9,13 @@ class InventoryViewModel: ObservableObject {
     @Published var pendingItems: [InventoryItem] = []
     
     // Dependencies
-    private let storage: StorageManager
+    private let storage: InventoryStorage
     private let locationManager: LocationManager
-    private let services = ServiceContainer.shared
+    private let validationService: InventoryValidating
+    private let searchService: InventorySearching
+    private let statsService: CollectionStatsProviding
+    private let collectionService: CollectionManagementService
     private let duplicateDetectionService = DuplicateDetectionService()
-    
-    // Service shortcuts for cleaner code
-    private var validationService: InventoryValidationService { services.inventoryValidationService }
-    private var searchService: InventorySearchService { services.inventorySearchService }
-    private var statsService: InventoryStatsService { services.inventoryStatsService }
-    private var collectionService: CollectionManagementService { services.collectionManagementService }
     
     // Update the price-related properties
     @Published private(set) var totalValue: Price = Price(amount: 0)
@@ -27,9 +24,18 @@ class InventoryViewModel: ObservableObject {
     @Published private(set) var lowestPrice: Price = Price(amount: 0)
     @Published private(set) var medianPrice: Price = Price(amount: 0)
     
-    init(storage: StorageManager = .shared, locationManager: LocationManager) {
+    init(storage: InventoryStorage,
+         locationManager: LocationManager,
+         validator: InventoryValidating,
+         search: InventorySearching,
+         stats: CollectionStatsProviding,
+         collectionService: CollectionManagementService) {
         self.storage = storage
         self.locationManager = locationManager
+        self.validationService = validator
+        self.searchService = search
+        self.statsService = stats
+        self.collectionService = collectionService
         
         print("🟢 InventoryViewModel: Initializing and loading items from storage")
         
@@ -559,8 +565,7 @@ class InventoryViewModel: ObservableObject {
     
     // Value and completion for a specific series
     func seriesStats(name: String) -> (value: Price, count: Int) {
-        let stats = statsService.seriesStats(name: name, in: items)
-        return (stats.value, stats.count)
+        return statsService.seriesValueCount(name: name, in: items)
     }
     
     // Collection statistics
@@ -775,8 +780,7 @@ class InventoryViewModel: ObservableObject {
     }
     
     func authorStats(name: String) -> (value: Price, count: Int) {
-        let stats = statsService.authorStats(name: name, in: items)
-        return (stats.value, stats.count)
+        return statsService.authorValueCount(name: name, in: items)
     }
     
     func itemsByAuthor(_ author: String) -> [InventoryItem] {
@@ -950,8 +954,7 @@ class InventoryViewModel: ObservableObject {
     
     // Update the price calculation methods
     private func calculatePriceStats() {
-        let stats = statsService.calculatePriceStats(for: items)
-        
+        let stats = statsService.statsTuple(for: items)
         totalValue = stats.totalValue
         averagePrice = stats.averagePrice
         highestPrice = stats.highestPrice
