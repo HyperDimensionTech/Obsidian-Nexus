@@ -2,7 +2,7 @@
 extension DataManagementService {
     func exportData() async throws -> URL {
         let items = try await storage.loadItems()
-        let locations = try await storage.locationRepository.fetchAll()
+        let locations = try await storage.loadLocations()
         
         // Create CSV content
         var csvContent = "Title,Type,Series,Author,Publisher,ISBN,Price,Currency,PurchaseDate,Condition,Location,Synopsis\n"
@@ -86,15 +86,21 @@ extension DataManagementService {
             
             // Handle location
             if !columns[10].isEmpty {
-                if let location = try await storage.locationRepository.fetchByName(columns[10]) {
-                    try await storage.save(item)
+                let locations = try await storage.loadLocations()
+                if let location = locations.first(where: { $0.name == columns[10] }) {
+                    var updatedItem = item
+                    updatedItem.locationId = location.id
+                    try await storage.save(updatedItem)
                 } else {
-                    let newLocation = try await storage.locationRepository.create(
+                    let newLocation = StorageLocation(
                         name: columns[10],
                         type: .shelf,
                         parentId: nil
                     )
-                    try await storage.save(item)
+                    let createdLocation = try await storage.createLocation(newLocation)
+                    var updatedItem = item
+                    updatedItem.locationId = createdLocation.id
+                    try await storage.save(updatedItem)
                 }
             } else {
                 try await storage.save(item)

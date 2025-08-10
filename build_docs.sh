@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # build_docs.sh
-# Script to build and export DocC documentation for Obsidian Nexus
+# Script to build and export DocC documentation for Pocket Dimension
 
 # Configuration
-PROJECT_NAME="Obsidian Nexus"
-SCHEME_NAME="Obsidian Nexus"
-DOCC_PATH="Obsidian Nexus/ObsidianNexus.docc"
+PROJECT_NAME="Pocket Dimension"
+SCHEME_NAME="Pocket Dimension"
+DOCC_PATH="Pocket Dimension/PocketDimension.docc"
 OUTPUT_PATH="./docs"
-HOSTING_BASE_PATH="/Obsidian-Nexus"
+HOSTING_BASE_PATH="/Pocket-Dimension"
 
 # Colors for output
 GREEN='\033[0;32m'

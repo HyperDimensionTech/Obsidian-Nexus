@@ -1,10 +1,10 @@
-# Obsidian Nexus
+# Pocket Dimension
 
 A powerful inventory management app for collectors, designed to help organize, track, and search your physical collections.
 
 ## Overview
 
-Obsidian Nexus is a SwiftUI app for iOS and macOS that allows collectors to:
+Pocket Dimension is a SwiftUI app for iOS and macOS that allows collectors to:
 
 - Organize items in a hierarchical location structure
 - Track detailed information about collectibles
@@ -84,7 +84,7 @@ Locations can be organized in a hierarchical structure:
 ### Building the Project
 
 1. Clone the repository
-2. Open `Obsidian Nexus.xcodeproj` in Xcode
+2. Open `Pocket Dimension.xcodeproj` in Xcode
 3. Build and run for your target device
 
 ## Development Guidelines

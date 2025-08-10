@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Google Books API Configuration -->
+	<key>GoogleBooksAPIKey</key>
+	<string>YOUR_GOOGLE_BOOKS_API_KEY_HERE</string>
+	
+	<!-- Firebase Configuration -->
+	<key>FirebaseProjectID</key>
+	<string>your-firebase-project-id</string>
+	<key>FirebaseAPIKey</key>
+	<string>your-firebase-api-key</string>
+	
+	<!-- Supabase Configuration -->
+	<key>SupabaseURL</key>
+	<string>https://your-project.supabase.co</string>
+	<key>SupabaseKey</key>
+	<string>your-supabase-anon-key</string>
+	
+	<!-- Authentication Service Configuration -->
+	<key>AuthServiceBaseURL</key>
+	<string>https://your-backend.com</string>
+	
+	<!-- iCloud Configuration -->
+	<key>iCloudContainerIdentifier</key>
+	<string>iCloud.com.yourcompany.Pocket-Dimension</string>
+	
+	<!-- API Configuration -->
+	<key>APIConfiguration</key>
+	<dict>
+		<key>GoogleBooksMaxResults</key>
+		<integer>40</integer>
+		<key>RequestTimeout</key>
+		<integer>30</integer>
+		<key>EnableDebugLogging</key>
+		<true/>
+	</dict>
+</dict>
+</plist> 
