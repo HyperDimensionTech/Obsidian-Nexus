@@ -235,32 +235,63 @@ struct SearchView: View {
         
         // Perform search on main actor since our view models are MainActor-isolated
         Task { @MainActor in
-            var results: [SearchResultItem] = []
-            
-            // Search for series across all collection types
+            var results: [(item: SearchResultItem, score: Int)] = []
             let query = searchText.lowercased()
+            
+            // Search for series across all collection types with scoring
             for type in CollectionType.allCases {
                 if type.supportsSeriesGrouping {
                     let seriesData = inventoryViewModel.seriesForType(type)
-                    let matchingSeries = seriesData.filter { seriesName, _ in
-                        seriesName.lowercased().contains(query)
+                    let matchingSeries = seriesData.compactMap { seriesName, items -> (SearchResultItem, Int)? in
+                        let normalizedSeries = seriesName.lowercased()
+                        var score = 0
+                        
+                        // Score series matches
+                        if normalizedSeries == query {
+                            score = 85  // High score for exact series match
+                        } else if normalizedSeries.hasPrefix(query) {
+                            score = 75  // Good score for series prefix match
+                        } else if normalizedSeries.contains(query) {
+                            score = 65  // Decent score for series containing query
+                        }
+                        
+                        return score > 0 ? (SearchResultItem.series(seriesName, type, items.count), score) : nil
                     }
                     
-                    results.append(contentsOf: matchingSeries.map { seriesName, items in
-                        SearchResultItem.series(seriesName, type, items.count)
-                    })
+                    results.append(contentsOf: matchingSeries)
                 }
             }
             
-            // Search for individual items
+            // Search for individual items (already scored by InventoryViewModel)
             let itemResults = inventoryViewModel.searchItems(query: searchText)
-            results.append(contentsOf: itemResults.map { SearchResultItem.item($0) })
+            // Items get priority over series by adding +10 to their implicit high scores
+            results.append(contentsOf: itemResults.map { item in
+                (SearchResultItem.item(item), 90) // Items get consistent high score
+            })
             
-            // Search for locations
+            // Search for locations with scoring
             let locationResults = locationManager.searchLocations(query: searchText)
-            results.append(contentsOf: locationResults.map { SearchResultItem.location($0) })
+            let scoredLocations = locationResults.compactMap { location -> (SearchResultItem, Int)? in
+                let normalizedName = location.name.lowercased()
+                var score = 0
+                
+                if normalizedName == query {
+                    score = 70  // Good score for exact location match
+                } else if normalizedName.hasPrefix(query) {
+                    score = 60  // Decent score for location prefix
+                } else if normalizedName.contains(query) {
+                    score = 50  // Lower score for location containing query
+                }
+                
+                return score > 0 ? (SearchResultItem.location(location), score) : nil
+            }
+            results.append(contentsOf: scoredLocations)
             
+            // Sort by score (highest first) and extract items
             searchResults = results
+                .sorted { $0.score > $1.score }
+                .map { $0.item }
+            
             isLoading = false
         }
     }

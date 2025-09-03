@@ -113,16 +113,19 @@ struct VolumeExtractor {
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
                let match = regex.firstMatch(in: query, options: [], range: NSRange(query.startIndex..., in: query)) {
                 
-                let seriesRange = Range(match.range(at: 1), in: query)!
+                // Safe range conversion - avoid crashes
+                guard let seriesRange = Range(match.range(at: 1), in: query) else { continue }
                 let series = String(query[seriesRange]).trimmingCharacters(in: .whitespacesAndNewlines)
                 
                 // Check if text contains the series name
                 if text.contains(series) {
                     // If it's a volume pattern, also check if the volume number matches
-                    if match.numberOfRanges >= 4, let volumeRange = Range(match.range(at: 3), in: query) {
+                    if match.numberOfRanges >= 4, 
+                       let volumeRange = Range(match.range(at: 3), in: query) {
                         let volumeNumber = String(query[volumeRange])
                         return text.contains(volumeNumber)
-                    } else if match.numberOfRanges >= 3, let volumeRange = Range(match.range(at: 2), in: query) {
+                    } else if match.numberOfRanges >= 3, 
+                              let volumeRange = Range(match.range(at: 2), in: query) {
                         let volumeNumber = String(query[volumeRange])
                         return text.contains(volumeNumber)
                     }

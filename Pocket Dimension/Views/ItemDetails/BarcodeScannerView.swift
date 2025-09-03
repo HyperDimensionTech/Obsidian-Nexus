@@ -39,6 +39,10 @@ struct BarcodeScannerView: View {
     @State private var isProcessing = false
     @State private var processingStatus = "Ready to scan next item..."
     
+    // Debouncing state
+    @State private var lastProcessedCode: String = ""
+    @State private var isProcessingCode = false
+    
     let onScan: (String) -> Void
     @Namespace private var animation
     
@@ -321,6 +325,16 @@ struct BarcodeScannerView: View {
     }
     
     private func handleContinuousScan(_ code: String) {
+        // Debouncing: Check if we're already processing this same code
+        if code == lastProcessedCode && isProcessingCode {
+            print("🔍 Scan debounced: \(code) (already processing)")
+            return // Skip duplicate scan
+        }
+        
+        // Update debouncing state
+        lastProcessedCode = code
+        isProcessingCode = true
+        
         // Stop scanning while processing
         viewModel.stopScanning()
         // Update processing status
@@ -342,6 +356,11 @@ struct BarcodeScannerView: View {
                             self.isProcessing = false
                             self.processingStatus = "Ready to scan next item..."
                             self.viewModel.startScanning()
+                        }
+                        
+                        // Release debouncing after 2 seconds to allow same code again if needed
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            self.isProcessingCode = false
                         }
                     case .failure(_):
                         // If direct fetch fails, try a title search as fallback
@@ -374,6 +393,11 @@ struct BarcodeScannerView: View {
                     self.processingStatus = "Ready to scan next item..."
                     self.viewModel.startScanning()
                 }
+                
+                // Release debouncing after 2 seconds to allow same code again if needed
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.isProcessingCode = false
+                }
             }
         }
     }
@@ -403,6 +427,11 @@ struct BarcodeScannerView: View {
                     self.isProcessing = false
                     self.processingStatus = "Ready to scan next item..."
                     self.viewModel.startScanning()
+                }
+                
+                // Release debouncing after 2 seconds to allow same code again if needed
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.isProcessingCode = false
                 }
             }
         }
