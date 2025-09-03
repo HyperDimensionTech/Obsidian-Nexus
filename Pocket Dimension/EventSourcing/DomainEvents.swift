@@ -98,6 +98,7 @@ public struct InventoryItemCreated: Codable, DomainEvent {
     public let originalPublishDate: Date?
     public let publisher: String?
     public let isbn: String?
+    public let allISBNs: [String]?
     public let price: Decimal?
     public let priceCurrency: String?
     public let purchaseDate: Date?
@@ -143,6 +144,7 @@ public struct InventoryItemCreated: Codable, DomainEvent {
         originalPublishDate: Date? = nil,
         publisher: String? = nil,
         isbn: String? = nil,
+        allISBNs: [String]? = nil,
         price: Decimal? = nil,
         priceCurrency: String? = nil,
         purchaseDate: Date? = nil,
@@ -185,6 +187,7 @@ public struct InventoryItemCreated: Codable, DomainEvent {
         self.originalPublishDate = originalPublishDate
         self.publisher = publisher
         self.isbn = isbn
+        self.allISBNs = allISBNs
         self.price = price
         self.priceCurrency = priceCurrency
         self.purchaseDate = purchaseDate

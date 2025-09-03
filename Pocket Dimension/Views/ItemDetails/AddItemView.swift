@@ -134,6 +134,10 @@ struct AddItemView: View {
         serviceContainer.isbnMappingService
     }
     
+    private var consolidationService: ISBNConsolidationService {
+        ISBNConsolidationService()
+    }
+    
     // Move mangaPublishers here as a static property
     private static let mangaPublishers = [
         "viz",
@@ -791,7 +795,16 @@ struct AddItemView: View {
                 case .success(let books):
                     if !books.isEmpty {
                         print("📚 Enhanced ISBN search successful: Found \(books.count) books")
-                        self.searchResults = books
+                        
+                        // Try to consolidate multiple similar results
+                        if let consolidated = self.consolidationService.consolidateResults(books) {
+                            print("📚 Consolidated \(consolidated.sourceBooks.count) books into 1 enhanced result (confidence: \(consolidated.confidence))")
+                            print("📚 All ISBNs: \(consolidated.allISBNs.joined(separator: ", "))")
+                            self.searchResults = [consolidated.consolidatedBook]
+                        } else {
+                            print("📚 No consolidation applied, showing \(books.count) individual results")
+                            self.searchResults = books
+                        }
                     } else {
                         print("📚 No results from enhanced ISBN search")
                         self.handleNoBookFound(isbnQuery)
@@ -931,6 +944,11 @@ struct AddItemView: View {
         // Extract series and volume information
         let (series, volume) = extractSeriesInfo(from: book.volumeInfo.title)
         
+        // Extract all ISBNs from the book
+        let allISBNs = book.volumeInfo.industryIdentifiers?.map { $0.identifier } ?? []
+        let primaryISBN = allISBNs.first
+        let additionalISBNs = allISBNs.count > 1 ? Array(allISBNs.dropFirst()) : nil
+        
         return InventoryItem(
             title: book.volumeInfo.title,
             type: detectedType,
@@ -945,7 +963,8 @@ struct AddItemView: View {
             manufacturer: nil,
             originalPublishDate: parseDate(book.volumeInfo.publishedDate),
             publisher: book.volumeInfo.publisher,
-            isbn: book.volumeInfo.industryIdentifiers?.first?.identifier,
+            isbn: primaryISBN,
+            allISBNs: additionalISBNs,
             price: nil,
             purchaseDate: nil,
             synopsis: book.volumeInfo.description

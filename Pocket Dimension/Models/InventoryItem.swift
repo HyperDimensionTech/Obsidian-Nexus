@@ -18,7 +18,8 @@ public struct InventoryItem: Identifiable, Codable {
     public var manufacturer: String?
     public var originalPublishDate: Date?
     public var publisher: String?
-    public var isbn: String?
+    public var isbn: String? // Primary ISBN for backward compatibility
+    public var allISBNs: [String]? // All ISBN variants (ISBN-10, ISBN-13, etc.)
     public var price: Price?
     public var purchaseDate: Date?
     public var synopsis: String?
@@ -61,6 +62,23 @@ public struct InventoryItem: Identifiable, Codable {
         }
     }
     
+    /// Returns all ISBN variants for this item, including the primary ISBN
+    var allISBNVariants: [String] {
+        var isbns: [String] = []
+        
+        // Add primary ISBN if exists
+        if let primaryISBN = isbn, !primaryISBN.isEmpty {
+            isbns.append(primaryISBN)
+        }
+        
+        // Add additional ISBNs if exists
+        if let additionalISBNs = allISBNs {
+            isbns.append(contentsOf: additionalISBNs.filter { !$0.isEmpty && !isbns.contains($0) })
+        }
+        
+        return isbns
+    }
+    
     public enum ImageSource: String, Codable {
         case googleBooks
         case custom
@@ -84,6 +102,7 @@ public struct InventoryItem: Identifiable, Codable {
         originalPublishDate: Date? = nil,
         publisher: String? = nil,
         isbn: String? = nil,
+        allISBNs: [String]? = nil,
         price: Price? = nil,
         purchaseDate: Date? = nil,
         synopsis: String? = nil,
@@ -121,6 +140,7 @@ public struct InventoryItem: Identifiable, Codable {
         self.originalPublishDate = originalPublishDate
         self.publisher = publisher
         self.isbn = isbn
+        self.allISBNs = allISBNs
         self.price = price
         self.purchaseDate = purchaseDate
         self.synopsis = synopsis

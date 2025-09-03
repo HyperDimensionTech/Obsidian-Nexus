@@ -45,6 +45,7 @@ public class CRDTRepository: ObservableObject {
         author: String? = nil,
         publisher: String? = nil,
         isbn: String? = nil,
+        allISBNs: [String]? = nil,
         price: Price? = nil,
         synopsis: String? = nil,
         thumbnailURL: URL? = nil,
@@ -88,6 +89,7 @@ public class CRDTRepository: ObservableObject {
             author: author,
             publisher: publisher,
             isbn: isbn,
+            allISBNs: allISBNs,
             price: price?.amount,
             priceCurrency: price?.currency.rawValue,
             synopsis: synopsis,
@@ -439,6 +441,7 @@ public class CRDTRepository: ObservableObject {
             author: event.author.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
             publisher: event.publisher.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
             isbn: event.isbn.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
+            allISBNs: event.allISBNs.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
             synopsis: event.synopsis.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
             // Image-related fields
             thumbnailURL: event.thumbnailURL.map { LWWRegister(value: $0, timestamp: vectorClock, deviceId: deviceId) },
@@ -832,6 +835,7 @@ internal struct CRDTInventoryItem: CRDTReplica {
     public var author: LWWRegister<String>?
     public var publisher: LWWRegister<String>?
     public var isbn: LWWRegister<String>?
+    public var allISBNs: LWWRegister<[String]>?
     public var synopsis: LWWRegister<String>?
     
     // Image-related fields
@@ -1000,6 +1004,7 @@ internal struct CRDTInventoryItem: CRDTReplica {
             originalPublishDate: nil,
             publisher: publisher?.value,
             isbn: isbn?.value,
+            allISBNs: allISBNs?.value,
             price: nil,
             purchaseDate: nil,
             synopsis: synopsis?.value,

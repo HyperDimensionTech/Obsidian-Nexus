@@ -60,6 +60,7 @@ class StorageManager {
                 author: item.author,
                 publisher: item.publisher,
                 isbn: item.isbn,
+                allISBNs: item.allISBNs,
                 price: item.price,
                 synopsis: item.synopsis,
                 thumbnailURL: item.thumbnailURL,

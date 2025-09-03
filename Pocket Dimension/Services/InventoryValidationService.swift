@@ -156,10 +156,19 @@ class InventoryValidationService {
         // For updates, exclude the current item from duplicate checks
         let otherItems = isUpdate ? existingItems.filter({ $0.id != item.id }) : existingItems
         
-        // Check for duplicate ISBN
-        if let isbn = item.isbn,
-           otherItems.contains(where: { $0.isbn == isbn }) {
-            throw ValidationError.duplicateISBN(isbn)
+        // Check for duplicate ISBN - enhanced to check all ISBN variants
+        let itemISBNs = item.allISBNVariants
+        if !itemISBNs.isEmpty {
+            for existingItem in otherItems {
+                let existingISBNs = existingItem.allISBNVariants
+                
+                // Check if any ISBN from the new item matches any ISBN from existing items
+                for newISBN in itemISBNs {
+                    if existingISBNs.contains(newISBN) {
+                        throw ValidationError.duplicateISBN(newISBN)
+                    }
+                }
+            }
         }
         
         // For series items, check for duplicate volumes
